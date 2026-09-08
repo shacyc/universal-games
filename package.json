@@ -10,11 +10,14 @@
     "dev": "pnpm --parallel --filter \"./apps/*\" --filter \"./games/*\" dev",
     "build": "pnpm -r build && tsx scripts/assemble.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json && pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "deploy": "pnpm build && wrangler pages deploy dist --project-name ummigames --branch main",
+    "deploy:preview": "pnpm build && wrangler pages deploy dist --project-name ummigames"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "@types/node": "^22.10.2"
+    "wrangler": "^4.129.1"
   }
 }

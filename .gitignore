@@ -2,3 +2,9 @@ node_modules/
 dist/
 .DS_Store
 *.local
+.wrangler/
+
+# Wrangler reads .env for CLOUDFLARE_API_TOKEN. Never tracked.
+.env
+.env.*
+.dev.vars

@@ -27,6 +27,7 @@ one entry in `catalog.json`, and the removal of your slug's placeholder from
 | `apps/shell/**` (except the one `demoData.ts` deletion) | Adding a game must never require shell code. If it does, the design is wrong. |
 | `games/<other-slug>/**` | Another agent is in there right now. |
 | `workers/**`, `scripts/**`, `tsconfig.base.json`, `pnpm-workspace.yaml` | Platform-wide. |
+| `.env`, `.dev.vars`, anything under `.wrangler/` | Deploy credentials. Do not read them, print them, or run a deploy. Shipping the site is not part of writing a game. |
 
 If you believe you need something the SDK does not offer — a new method, a new
 host event, a change to `game.css` — **stop and report it**. Do not work around

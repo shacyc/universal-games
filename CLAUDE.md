@@ -5,6 +5,7 @@ Context for Claude Code. Read this file plus `docs/platform-sdk.md` and
 
 **Writing a game? `docs/building-a-game.md` is the contract — read it first.**
 It says which files you own, which you must not touch, and what "done" means.
+Shipping the site is `docs/deploy.md`.
 
 ## What this project is
 
