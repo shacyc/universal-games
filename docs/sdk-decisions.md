@@ -155,3 +155,52 @@ The host still cannot see everything that obscures a game: a backgrounded tab,
 a locked phone and the browser's own UI never reach it. Games with a clock
 therefore still handle `visibilitychange` themselves. The rule is that the
 *platform's* own overlays are the platform's job.
+
+## 13. Offline stays, and the leaderboard is online-only at submit
+
+The proposal was to drop offline support before leaderboards land, on the
+grounds that runs finished with no network would be a sync problem. Rejected,
+because the two features are not independent and the conflict is not where it
+looks.
+
+**Offline is the precondition of install, not a feature beside it.** Chrome
+fires `beforeinstallprompt` — the custom prompt in `apps/shell/src/install.ts`
+— only for a site with a service worker that answers `start_url` while offline.
+Remove the service workers and Android loses the prompt entirely: what is left
+is the browser menu's "Add to Home screen", which makes a shortcut that opens
+in a tab with browser chrome, not a game in its own window. Per-game
+installability is the whole product idea (CLAUDE.md), so it outranks a sync
+worry about a milestone that has not started.
+
+**The sync ambiguity does not come from offline.** Saves are local-first by
+rule 5 whatever the network does, and a phone loses signal mid-run, gets its
+tab killed, and evicts iOS storage after seven days regardless of whether a
+service worker exists. Dropping offline removes the case where the game still
+plays; it removes none of the cases where a write has to be reconciled later.
+
+**Scores are the easy write.** A leaderboard entry is `max(best)` per player:
+idempotent and order-independent. A queued submission replayed three times, or
+three days late, lands on the same value. It needs a per-run idempotency key
+and nothing resembling a merge.
+
+So the line is drawn at what the data means, not at whether the app runs:
+
+- **Offline covers the app shell, gameplay and the local save.** Exactly what
+  the two service workers cache today. It does not grow to cover server state.
+- **Anything server-backed is online-only at the moment it is submitted.** With
+  no network the submission queues and the UI says so. It never renders a
+  pending score as ranked.
+- **Time-boxed content gets a freshness window.** This is the one real conflict,
+  and Sudoku Daily has it in v0.1: a puzzle finished offline on the 8th and
+  synced on the 11th. The client declares its `dayKey`; the server accepts it
+  for ranking only within N hours of its own clock and otherwise records the run
+  as unranked practice. Ranking always uses the server's receipt timestamp, and
+  the client's clock is never trusted for it — the same defence a purely online
+  submission needs anyway, since any client-sent score is forgeable.
+
+One boundary worth stating because it will be reported as a bug: **"works
+offline" is a promise on Android Chrome and iOS Safari only.** Third-party iOS
+browsers are WKWebView shells with no service worker at all, so a game opened in
+Chrome or Firefox on iOS is a plain web page and a reload with no network fails.
+That is also why `install.ts` shows the Add to Home Screen overlay for iOS
+Safari and stays silent in those browsers.

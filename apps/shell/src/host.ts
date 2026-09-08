@@ -5,8 +5,10 @@ import {
   createSessionCounter,
   createStubAds,
   withFrequencyCap,
+  type AnalyticsAdapter,
   type HostCore,
 } from '@platform/sdk/host';
+import { offerInstall } from './install.js';
 
 /**
  * One host for the whole shell. Games are told apart by the slug the shell
@@ -17,8 +19,30 @@ import {
  */
 const sessions = createSessionCounter();
 
+/**
+ * Picks the moment to offer the install.
+ *
+ * `gameOver` is already the platform's hook (docs/platform-sdk.md), and it
+ * reaches the host as a `run_ended` event, so listening for it here costs no
+ * new SDK surface and no game knows the shell is counting.
+ *
+ * Never on first load: the second finished run, or the first run of a session
+ * the player came back for. Both mean someone who has actually played.
+ */
+function withInstallOffer(inner: AnalyticsAdapter): AnalyticsAdapter {
+  let finishedRuns = 0;
+  return {
+    track(slug, event, props) {
+      inner.track(slug, event, props);
+      if (event !== 'run_ended') return;
+      finishedRuns += 1;
+      if (finishedRuns >= 2 || !sessions.isFirstSession()) offerInstall();
+    },
+  };
+}
+
 export const host: HostCore = createHost({
   storage: createIdbStorage(),
   ads: withFrequencyCap(createStubAds(), { isFirstSession: () => sessions.isFirstSession() }),
-  analytics: createBufferedAnalytics(),
+  analytics: withInstallOffer(createBufferedAnalytics()),
 });

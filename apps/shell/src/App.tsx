@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { findGame } from './catalog.js';
 import { GameFrame } from './GameFrame.js';
 import { HomePage } from './home/HomePage.js';
+import { InstallPrompt } from './InstallPrompt.js';
+import { setInstallTarget } from './install.js';
 import type { HomeGame } from './demo/demoData.js';
 
 /**
@@ -36,7 +38,17 @@ export function App(): JSX.Element {
   };
 
   const game = slug ? findGame(slug) : undefined;
-  if (game) return <GameFrame game={game} onExit={exit} />;
 
-  return <HomePage onPlay={open} />;
+  // Which manifest the document points at decides what an install installs:
+  // the game on a game route, the hub on the hub. See install.ts.
+  useEffect(() => {
+    setInstallTarget(game ?? null);
+  }, [game]);
+
+  return (
+    <>
+      {game ? <GameFrame game={game} onExit={exit} /> : <HomePage onPlay={open} />}
+      <InstallPrompt />
+    </>
+  );
 }

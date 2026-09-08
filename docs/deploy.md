@@ -180,7 +180,13 @@ On a real Android phone, not an emulator:
   home screen with **the game's** icon, opens full-screen, and shows no browser
   chrome.
 - Turn on airplane mode and reopen the installed game. It still plays.
-- On iPhone: Share → Add to Home Screen, same checks.
+- On iPhone: **in Safari**, Share → Add to Home Screen, same checks. It has to be
+  Safari: Chrome, Firefox and Edge on iOS are WKWebView shells with no service
+  worker, so nothing is cached there and a reload with no network fails. That is
+  the platform, not a bug — see decision 13 in `docs/sdk-decisions.md`. Open the
+  installed icon once *with* network before testing airplane mode; an installed
+  iOS app has its own storage and registers its own copy of the service worker
+  on that first launch.
 
 If the installed game opens the hub instead of the game, the manifest `scope`
 or the service worker registration scope is wrong — see decision 10 in
