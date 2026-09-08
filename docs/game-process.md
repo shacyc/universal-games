@@ -134,7 +134,8 @@ around §0 rather than a second copy of it:
 
 ## Existing games
 
-`2048`, `snake` and `sudoku` predate this process and their briefs are still at
-`docs/game-<slug>.md`. `docs/building-a-game.md` §0 Step 2 says what to do about
-that. The rule behind it: migrate a game when work next starts on it, never
-migrate one nobody is working on, and never keep two copies of a brief.
+`2048` and `snake` have been migrated. `sudoku` still has its brief at
+`docs/game-sudoku.md` and gets moved when work next starts on it —
+`docs/building-a-game.md` §0 Step 3 says how. The rule behind it: migrate a game
+when work starts on it, never migrate one nobody is working on, and never keep
+two copies of a brief.

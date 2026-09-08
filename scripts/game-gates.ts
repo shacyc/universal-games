@@ -101,8 +101,13 @@ function runCheck(check: Check, slug: string): Result {
   if (check.check === 'demo-placeholder-removed') {
     const demo = read('apps/shell/src/demo/demoData.ts');
     if (demo === null) return { ok: true, detail: 'demoData.ts not found — nothing to remove' };
-    const still = new RegExp(`slug:\\s*'${slug}'`).test(demo);
-    return { ok: !still, detail: still ? 'placeholder still in demoData.ts — the hub ships two cards' : 'placeholder removed' };
+    // Only DEMO_GAMES. SPOTLIGHT, STATS, BOARDS, YOU and SAVED are keyed by
+    // slug and building-a-game.md §7 says to leave them alone — searching the
+    // whole file would tell an agent to delete a line it must keep.
+    const block = /const DEMO_GAMES[^=]*=\s*\[([\s\S]*?)\n\];/.exec(demo)?.[1];
+    if (block === undefined) return { ok: true, detail: 'no DEMO_GAMES array found' };
+    const still = new RegExp(`slug:\\s*'${slug}'`).test(block);
+    return { ok: !still, detail: still ? 'placeholder still in DEMO_GAMES — the hub ships two cards' : 'not in DEMO_GAMES' };
   }
 
   const rel = (check.path ?? '').replace('<slug>', slug);

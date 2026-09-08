@@ -46,7 +46,7 @@ never the authority.
 | 3 | `docs/platform-sdk.md` | the complete SDK surface — nothing outside it exists | never |
 | 4 | `docs/sdk-decisions.md` | why the SDK is shaped the way it is | you have read it this session |
 | 5 | `games/<slug>/docs/` — `progress.md`, then `brief.md`, `plan.md`, `testplan.md` | where this game actually is | the directory does not exist — that is Case A below |
-| 6 | `games/2048/src/` | the reference implementation: copy its shape, not its rules | you have read it this session |
+| 6 | `games/2048/src/` | the reference implementation: copy its shape, not its rules. `session.ts` for the SDK boundary, `i18n/` for strings, `ui.ts` for chrome that holds no text of its own | you have read it this session |
 | 7 | `docs/game-process.md` | the reasoning behind the four documents and the gates | you accept §0 as given |
 
 State out loud which files you read and which case in Step 3 you landed in,
@@ -70,8 +70,9 @@ If the game has source files under `games/<slug>/src/` but no `docs/`, say so
 plainly — it was built outside the process. Reconstruct `brief.md` from the code
 and have the owner correct it before you change anything.
 
-Older games are a special case: `2048`, `snake` and `sudoku` were specified
-before this process existed and their briefs are still at `docs/game-<slug>.md`.
+Older games are a special case. `2048` and `snake` have been migrated; only
+`sudoku` still has its brief at `docs/game-sudoku.md`, from before this process
+existed.
 Treat that file as the brief, and your first commit moves it — `git mv`, so the
 history follows — to `games/<slug>/docs/brief.md`, restructured into the
 template shape but with **no rule changed**, plus the other three templates.
@@ -400,8 +401,10 @@ export const SUPPORTED = ['en', 'vi'] as const;   // first entry is the fallback
 export const STRINGS: Record<string, Strings> = { en, vi };
 ```
 
-`vi.ts` is typed as `Strings`, so a key you forget to translate is a type error
-rather than a blank on screen. Wire it up once, in `session.ts`, with
+`games/2048/src/i18n/` is the worked example — read it. `vi.ts` there is typed
+as `Strings`, so a key you forget to translate is a type error rather than a
+blank on screen, and the two entries that are not literal translations carry a
+comment saying why. A translation that is wrong for the layout is still a bug. Wire it up once, in `session.ts`, with
 `watchLocale(sdk, SUPPORTED, ...)` — it delivers the current locale first and
 then every change, already resolved from `en-US` or `vi-VN` down to what you
 ship. Re-render on change; do not require a reload.

@@ -1,7 +1,13 @@
 /**
  * The DOM around the board: header, footer and the overlays. Minimal by
  * instruction — no tutorial, no settings screen.
+ *
+ * No user-facing text is written here. Every word comes from `src/i18n/`, and
+ * the language can change while the game is running, so the chrome keeps a
+ * reference to each label node and an overlay knows how to redraw itself.
  */
+
+import type { Strings } from './i18n/index.js';
 
 export interface UiHandlers {
   onNewGame(): void;
@@ -23,6 +29,8 @@ export interface Ui {
   showGameOver(score: number, best: number): void;
   hideOverlay(): void;
   setBusy(busy: boolean): void;
+  /** The platform's language changed. Re-label everything, in place. */
+  setStrings(next: Strings): void;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -43,22 +51,28 @@ function button(className: string, label: string, onClick: () => void): HTMLButt
   return node;
 }
 
-export function createUi(root: HTMLElement, handlers: UiHandlers): Ui {
+export function createUi(root: HTMLElement, handlers: UiHandlers, strings: Strings): Ui {
+  let s = strings;
+
   root.textContent = '';
   root.className = 'game game-safe';
 
   const scoreValue = el('span', 'score__value', '0');
   const bestValue = el('span', 'score__value', '0');
+  const scoreLabel = el('span', 'score__label', s.score_label);
+  const bestLabel = el('span', 'score__label', s.best_label);
 
   const scoreBox = el('div', 'score');
-  scoreBox.append(el('span', 'score__label', 'SCORE'), scoreValue);
+  scoreBox.append(scoreLabel, scoreValue);
   const bestBox = el('div', 'score');
-  bestBox.append(el('span', 'score__label', 'BEST'), bestValue);
+  bestBox.append(bestLabel, bestValue);
+
+  const newButton = button('btn', s.new_short, handlers.onNewGame);
 
   const header = el('header', 'hud');
   const scores = el('div', 'hud__scores');
   scores.append(scoreBox, bestBox);
-  header.append(el('h1', 'hud__brand', '2048'), scores, button('btn', 'New', handlers.onNewGame));
+  header.append(el('h1', 'hud__brand', '2048'), scores, newButton);
 
   const canvas = el('canvas', 'board game-surface');
   const overlay = el('div', 'overlay');
@@ -67,14 +81,24 @@ export function createUi(root: HTMLElement, handlers: UiHandlers): Ui {
   const stage = el('div', 'stage');
   stage.append(canvas, overlay);
 
-  const undoBadge = el('span', 'badge', 'AD');
-  const undoButton = button('btn btn--undo', 'Undo', handlers.onUndo);
-  undoButton.append(undoBadge);
+  const undoBadge = el('span', 'badge', s.ad_badge);
+  // The label is its own node: the badge lives inside the button too, so
+  // rewriting the button's text would delete it.
+  const undoLabel = el('span', undefined, s.undo);
+  const undoButton = button('btn btn--undo', '', handlers.onUndo);
+  undoButton.append(undoLabel, undoBadge);
 
   const footer = el('footer', 'foot');
   footer.append(undoButton);
 
   root.append(header, stage, footer);
+
+  /**
+   * How to redraw whatever overlay is currently open. Held as a closure so a
+   * language change while the game-over card is up re-renders it, rather than
+   * leaving the player looking at the previous language until they tap.
+   */
+  let openPanel: (() => void) | null = null;
 
   const panel = (title: string, note: string, actions: HTMLElement[]): void => {
     overlay.textContent = '';
@@ -87,13 +111,30 @@ export function createUi(root: HTMLElement, handlers: UiHandlers): Ui {
     overlay.hidden = false;
   };
 
+  const win = (): void => {
+    panel(s.win_title, s.win_note, [button('btn btn--primary', s.keep_going, handlers.onKeepGoing)]);
+  };
+
+  const continueOffer = (): void => {
+    panel(s.stuck_title, s.stuck_note, [
+      button('btn btn--primary', s.watch_ad, handlers.onContinueWithAd),
+      button('btn', s.no_thanks, handlers.onDeclineContinue),
+    ]);
+  };
+
+  const gameOver = (score: number, best: number): void => {
+    panel(s.game_over, s.final_score(score, best), [
+      button('btn btn--primary', s.new_game, handlers.onNewGame),
+    ]);
+  };
+
   return {
     canvas,
     stage,
 
     setScore(score, best) {
-      scoreValue.textContent = String(score);
-      bestValue.textContent = String(best);
+      scoreValue.textContent = s.number(score);
+      bestValue.textContent = s.number(best);
     },
 
     setUndo(available, costsAd) {
@@ -102,31 +143,40 @@ export function createUi(root: HTMLElement, handlers: UiHandlers): Ui {
     },
 
     showWin() {
-      panel('You made 2048', 'Keep going for a bigger tile.', [
-        button('btn btn--primary', 'Keep going', handlers.onKeepGoing),
-      ]);
+      openPanel = win;
+      win();
     },
 
     showContinueOffer() {
-      panel('No moves left', 'Watch a short ad to clear the four smallest tiles and carry on.', [
-        button('btn btn--primary', 'Watch ad', handlers.onContinueWithAd),
-        button('btn', 'No thanks', handlers.onDeclineContinue),
-      ]);
+      openPanel = continueOffer;
+      continueOffer();
     },
 
     showGameOver(score, best) {
-      panel('Game over', `Score ${score} · Best ${best}`, [
-        button('btn btn--primary', 'New game', handlers.onNewGame),
-      ]);
+      openPanel = () => gameOver(score, best);
+      openPanel();
     },
 
     hideOverlay() {
+      openPanel = null;
       overlay.hidden = true;
       overlay.textContent = '';
     },
 
     setBusy(busy) {
       root.classList.toggle('game--busy', busy);
+    },
+
+    setStrings(next) {
+      s = next;
+      scoreLabel.textContent = s.score_label;
+      bestLabel.textContent = s.best_label;
+      newButton.textContent = s.new_short;
+      undoLabel.textContent = s.undo;
+      undoBadge.textContent = s.ad_badge;
+      // Scores are formatted per locale, so they are re-rendered by the caller
+      // through setScore; the overlay redraws itself here.
+      openPanel?.();
     },
   };
 }

@@ -58,7 +58,7 @@
           "id": "plan-approved",
           "label": "plan.md is approved",
           "path": "games/<slug>/docs/plan.md",
-          "must": "\\|\\s*Status\\s*\\|\\s*\\*\\*Approved\\*\\*",
+          "must": "\\|\\s*Status\\s*\\|\\s*\\*\\*(Approved|Implemented)\\*\\*",
           "note": "Fill the module map, the SDK call inventory and the task breakdown first."
         },
         {

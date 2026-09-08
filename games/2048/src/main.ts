@@ -9,6 +9,7 @@ import { watchDurations, type Durations } from './anim.js';
 import { createSurface } from './canvas.js';
 import { createInput } from './input.js';
 import { draw, phaseDone, type Phase } from './render.js';
+import { SUPPORTED, stringsFor, type Strings } from './i18n/index.js';
 import { createSession, type SaveState } from './session.js';
 import { createUi } from './ui.js';
 
@@ -20,7 +21,7 @@ if (!root) throw new Error('#app is missing from index.html');
 
 const session = createSession();
 
-/** Persisted state — exactly the shape in docs/game-2048.md. */
+/** Persisted state — exactly the shape in docs/brief.md §5. */
 let grid: Grid = [];
 let score = 0;
 let best = 0;
@@ -52,13 +53,20 @@ const snapshot = (): SaveState => ({
 
 const save = (): void => session.save(snapshot());
 
+/**
+ * Starts in the authoring language so the first frame has real text; the
+ * platform's actual locale arrives from `onLocaleChange` a moment later, and
+ * usually resolves to this same one.
+ */
+let strings: Strings = stringsFor(SUPPORTED[0]);
+
 const ui = createUi(root, {
   onNewGame: () => void newGame(),
   onUndo: () => void requestUndo(),
   onKeepGoing: () => ui.hideOverlay(),
   onContinueWithAd: () => void takeContinue(),
   onDeclineContinue: () => endRun(),
-});
+}, strings);
 
 const surface = createSurface(ui.canvas, ui.stage, () => render(performance.now()));
 
@@ -233,6 +241,15 @@ session.onMuteChange((muted) => {
   root.dataset.muted = String(muted);
 });
 
+session.onLocaleChange((locale) => {
+  strings = stringsFor(locale);
+  // Screen readers and the browser's own translation prompt read this.
+  document.documentElement.lang = locale;
+  ui.setStrings(strings);
+  // The HUD numbers are formatted per locale, so they are re-rendered too.
+  refreshChrome();
+});
+
 async function boot(): Promise<void> {
   await session.ready();
 
@@ -259,7 +276,7 @@ async function boot(): Promise<void> {
 }
 
 void boot().catch((error: unknown) => {
-  root.textContent = `Could not start: ${error instanceof Error ? error.message : String(error)}`;
+  root.textContent = strings.boot_error(error instanceof Error ? error.message : String(error));
 });
 
 if ('serviceWorker' in navigator) {

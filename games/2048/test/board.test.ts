@@ -18,7 +18,7 @@ function grid(...rows: Cell[][]): Grid {
 }
 
 describe('resolveLine — index 0 is the leading edge', () => {
-  // The five cases named in docs/game-2048.md.
+  // The five cases named in docs/brief.md §10.
   it('[2,2,2,2] -> [4,4] — a merged tile cannot merge again', () => {
     expect(line([2, 2, 2, 2])).toEqual([4, 4, null, null]);
   });
@@ -68,7 +68,7 @@ describe('lineIndices', () => {
 
 describe('move', () => {
   it('a single tile at the far edge does not move towards that edge', () => {
-    // docs/game-2048.md: `[null,null,null,2]` unchanged when sliding that way.
+    // docs/brief.md §10: `[null,null,null,2]` unchanged when sliding that way.
     const before = grid(
       [null, null, null, 2],
       [null, null, null, null],

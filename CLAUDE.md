@@ -98,7 +98,7 @@ before adding anything else.
 
 In scope:
 - Shell with a game grid rendered from `catalog.json`, one entry.
-- 2048 fully playable (brief: `docs/game-2048.md`, not yet migrated).
+- 2048 fully playable (brief: `games/2048/docs/brief.md`).
 - SDK implemented with real `save`/`load`/`getUser` (local + anonymous id) and
   **stubbed** `showRewarded`/`showInterstitial` that resolve after a fake 3s
   modal. The call sites must be real; only the ad network is fake.

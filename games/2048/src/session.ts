@@ -1,8 +1,9 @@
 import { createClient, type GameContext } from '@platform/sdk/client';
-import { createSaveSlot, watchMute } from '@platform/sdk/game';
+import { createSaveSlot, watchLocale, watchMute } from '@platform/sdk/game';
 import { CELLS, type Cell } from './board.js';
+import { SUPPORTED } from './i18n/index.js';
 
-/** The saved shape from docs/game-2048.md. */
+/** The saved shape from docs/brief.md §5. */
 export interface SaveState {
   v: 1;
   board: Cell[];
@@ -61,6 +62,12 @@ export interface Session {
   interstitialBeforeNewGame(): Promise<void>;
   track(event: string, props?: Record<string, string | number | boolean>): void;
   onMuteChange(listener: (muted: boolean) => void): () => void;
+  /**
+   * The platform's language, resolved to one this game ships. Fires once with
+   * the current value, then on every change — the shell owns the picker, so a
+   * game that read the handshake once would keep rendering the old language.
+   */
+  onLocaleChange(listener: (locale: string) => void): () => void;
 }
 
 export function createSession(): Session {
@@ -90,5 +97,6 @@ export function createSession(): Session {
 
     track: (event, props) => sdk.track(event, props),
     onMuteChange: (listener) => watchMute(sdk, listener),
+    onLocaleChange: (listener) => watchLocale(sdk, SUPPORTED, listener),
   };
 }
