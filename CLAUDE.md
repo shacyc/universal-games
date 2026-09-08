@@ -91,7 +91,7 @@ before adding anything else.
 
 In scope:
 - Shell with a game grid rendered from `catalog.json`, one entry.
-- 2048 fully playable (`docs/game-2048.md`).
+- 2048 fully playable (brief: `docs/game-2048.md`, not yet migrated).
 - SDK implemented with real `save`/`load`/`getUser` (local + anonymous id) and
   **stubbed** `showRewarded`/`showInterstitial` that resolve after a fake 3s
   modal. The call sites must be real; only the ad network is fake.
@@ -109,10 +109,11 @@ Runs in parallel with the v0 deploy. The point is to prove the platform holds
 when several games are written independently, by different people, at the same
 time: one folder plus one catalog entry, no shell change, no SDK change.
 
-In scope: **Neon Snake** (`docs/game-snake.md`) and **Sudoku Daily**
-(`docs/game-sudoku.md`). Each is written by one agent, in its own branch,
-touching only `games/<slug>/`, `catalog.json` and one deletion in
-`apps/shell/src/demo/demoData.ts`. `docs/building-a-game.md` is the brief.
+In scope: **Neon Snake** and **Sudoku Daily**. Each is written by one agent, in
+its own branch, touching only `games/<slug>/`, `catalog.json` and one deletion
+in `apps/shell/src/demo/demoData.ts`. `docs/building-a-game.md` is the entry
+point; each game's own brief is in `games/<slug>/docs/` once it has been set up
+(`docs/game-process.md`).
 
 Still out of scope, unchanged from v0: accounts, real ads, payments, shop,
 gems, leaderboards, a design system, and any new SDK method. An agent that

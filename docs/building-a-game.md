@@ -56,8 +56,16 @@ and have the owner correct it before you change anything.
 
 Older games are a special case: `2048`, `snake` and `sudoku` were specified
 before this process existed and their briefs are still at `docs/game-<slug>.md`.
-Treat that file as the brief, and your first commit moves it to
-`games/<slug>/docs/brief.md` and adds the other three from the templates.
+Treat that file as the brief, and your first commit moves it — `git mv`, so the
+history follows — to `games/<slug>/docs/brief.md`, restructured into the
+template shape but with **no rule changed**, plus the other three templates.
+Restructuring is not rewriting: anything the old spec left undefined becomes an
+open question in §10, never a decision you made quietly.
+
+That move can break a path in a file you are not allowed to edit. Run
+`grep -rn "docs/game-<slug>.md" --include='*.md' --include='*.ts' .` afterwards
+and **report** the hits — do not fix them in `CLAUDE.md` or another game's
+files. The owner owns those.
 
 ### Step 3A — Gate 0: draft the documents with the owner
 
