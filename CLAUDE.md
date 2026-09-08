@@ -5,7 +5,9 @@ Context for Claude Code. Read this file plus `docs/platform-sdk.md` and
 
 **Writing a game? `docs/building-a-game.md` is the contract — read it first.**
 It says which files you own, which you must not touch, and what "done" means.
-Shipping the site is `docs/deploy.md`.
+`docs/game-process.md` is the process around it: which documents must exist
+before code, and what you update when you stop. Shipping the site is
+`docs/deploy.md`.
 
 ## What this project is
 
@@ -66,6 +68,7 @@ apps/
   shell/                 # hub: game list, profile, install prompts
 games/
   2048/                  # first game, builds to /g/2048/
+    docs/                # brief, plan, testplan, progress — one set per game
 packages/
   sdk/                   # @platform/sdk — client (in game) + host (in shell)
   ui/                    # shared primitives, only once 2+ consumers exist
@@ -73,6 +76,7 @@ workers/
   api/                   # the platform Worker: serves the static tree + /api/*
 catalog.json             # game registry
 docs/
+  templates/game-docs/   # the four per-game documents, copied into games/<slug>/docs/
 wrangler.jsonc           # Worker + static-assets config, one deploy
 ```
 
@@ -114,6 +118,34 @@ Still out of scope, unchanged from v0: accounts, real ads, payments, shop,
 gems, leaderboards, a design system, and any new SDK method. An agent that
 needs one reports it instead of adding it — growing the SDK surface is a
 platform decision and it is made here, not in a game.
+
+## How a game gets built
+
+Full detail in `docs/game-process.md`. The parts that are not negotiable:
+
+- Every game owns four documents in `games/<slug>/docs/`: `brief.md` (what and
+  why, owner-owned, frozen before code), `plan.md` (how, agent-written,
+  owner-approved), `testplan.md` (the cases, written before the code) and
+  `progress.md` (where the work actually is).
+- **No game code exists before `brief.md` is frozen and `plan.md` is approved.**
+  Asked to build a game whose documents are missing, an agent drafts them with
+  the owner first — `/new-game <slug>` runs that interview. That is the required
+  first step, not initiative.
+- **Every working session reads `progress.md` first and updates it last**, with
+  a dated, append-only session-log entry. A PR that changes `games/<slug>/src/`
+  without touching `games/<slug>/docs/progress.md` is incomplete.
+- Templates are in `docs/templates/game-docs/`. `/game-status` reports where
+  everything stands.
+
+**Starting a game session, in any assistant:**
+
+> Read `docs/building-a-game.md` and build game `<slug>`.
+
+That one line is the whole entry point. `docs/building-a-game.md` §0 is written
+to be self-sufficient — no slash commands, no plugins, no memory of a previous
+session — so it works the same in Claude Code, in another editor's assistant, or
+pasted into a chat window. `/new-game` and `/game-status` are shortcuts to the
+same procedure, never a second copy of it.
 
 ## Working style
 

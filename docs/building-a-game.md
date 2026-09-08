@@ -5,9 +5,139 @@ everything else in the repo. If you follow it, your game drops in with no shell
 changes, no SDK changes, and no merge conflicts with the other games being
 written in parallel.
 
-Order to read: this file, then `CLAUDE.md`, then `docs/platform-sdk.md` and
-`docs/sdk-decisions.md`, then the spec for your game (`docs/game-<slug>.md`).
-`games/2048/` is the reference implementation — copy its shape, not its rules.
+This file is the **entry point**. It assumes no tooling, no slash commands and
+no memory of a previous session: everything an agent needs to start, continue or
+finish a game is either here or linked from §0. Start every session by reading
+it, whichever assistant you are.
+
+---
+
+## 0. Start here — the session bootstrap
+
+You have been handed one instruction, roughly:
+
+> **Read `docs/building-a-game.md` and build game `<slug>`.**
+
+That instruction alone is enough. This section is the entire procedure. Do not
+skip to §1 and start coding — where you begin depends on what already exists,
+and Step 2 is what tells you.
+
+### Step 1 — read, in this order
+
+| # | File | What you get from it | Skip if |
+| --- | --- | --- | --- |
+| 1 | this file, all of it | the rules that fail a review | never |
+| 2 | `CLAUDE.md` | the current milestone, and what is out of scope | never |
+| 3 | `docs/platform-sdk.md` | the complete SDK surface — nothing outside it exists | never |
+| 4 | `docs/sdk-decisions.md` | why the SDK is shaped the way it is | you have read it this session |
+| 5 | `games/<slug>/docs/` — `progress.md`, then `brief.md`, `plan.md`, `testplan.md` | where this game actually is | the directory does not exist — that is Case A below |
+| 6 | `games/2048/src/` | the reference implementation: copy its shape, not its rules | you have read it this session |
+| 7 | `docs/game-process.md` | the reasoning behind the four documents and the gates | you accept §0 as given |
+
+State out loud which files you read and which case in Step 2 you landed in,
+before you do anything else. It takes one line and it is how the owner catches a
+session that started from the wrong place.
+
+### Step 2 — find out where the game is
+
+Look at `games/<slug>/docs/`. Exactly one of these is true:
+
+| | You see | You are at | Go to |
+| --- | --- | --- | --- |
+| **A** | no `games/<slug>/docs/` directory | Gate 0 | Step 3A — draft the documents. **No code.** |
+| **B** | `brief.md` with `Status: Draft`, or any `TODO` or unanswered §10 question left in it | Gate 0 | Step 3A, resuming the interview from what is missing |
+| **C** | `brief.md` `Frozen`, `plan.md` `Draft` | Gate 1 | Step 3B — write the plan and the test plan. **No code.** |
+| **D** | `plan.md` `Approved` | Gate 2 | Step 3C — implement |
+| **E** | `progress.md` says `Shipped` | done | ask the owner what they actually want; do not reopen a shipped game on your own |
+
+If the game has source files under `games/<slug>/src/` but no `docs/`, say so
+plainly — it was built outside the process. Reconstruct `brief.md` from the code
+and have the owner correct it before you change anything.
+
+Older games are a special case: `2048`, `snake` and `sudoku` were specified
+before this process existed and their briefs are still at `docs/game-<slug>.md`.
+Treat that file as the brief, and your first commit moves it to
+`games/<slug>/docs/brief.md` and adds the other three from the templates.
+
+### Step 3A — Gate 0: draft the documents with the owner
+
+Copy the four templates from `docs/templates/game-docs/` into
+`games/<slug>/docs/`, then fill `brief.md` **by interviewing the owner**. How to
+run that interview, because it is the part that decides whether the game goes
+well:
+
+- **Propose, do not interrogate.** For every section, draft an answer from the
+  genre, the existing specs and what the SDK supports, then ask the owner to
+  correct it. A concrete wrong proposal gets a far better answer than an open
+  question.
+- **Batch the questions.** Not one message per section.
+- **Push hardest on the four sections agents habitually leave vague**, because a
+  vague answer here becomes a bug three days later:
+  - §2 Rules — every scoring rule written as a formula, not a description.
+  - §5 Persistence — what is deliberately *not* saved, and why.
+  - §6 Monetisation — the exact moment of each ad, and explicit confirmation
+    that declining a rewarded ad changes nothing.
+  - §9 Acceptance criteria — the edge cases, named. If the owner cannot name
+    them, propose the ones the genre always has.
+- **Force §8 Out of scope to have at least three entries.** That section is what
+  stops scope creep during implementation.
+- If the owner asks for something the SDK cannot do, say so immediately, quote
+  the surface from `docs/platform-sdk.md`, and offer the nearest thing that
+  exists. Never design around a method that does not exist, and never propose
+  adding one.
+- If the game does not fit the milestone in `CLAUDE.md`, say so before the
+  interview, not after.
+
+Only the owner freezes the brief. You may not delete a `TODO(owner)` on their
+behalf; you may replace it with a proposal clearly marked as one.
+
+When the brief is frozen, continue into Step 3B in the same session if the owner
+wants — but stop before any code either way.
+
+### Step 3B — Gate 1: plan and test plan
+
+Fill `plan.md` yourself: module map, the pure-core interface, the save shape and
+its validation, the loop and pause model, the **SDK call inventory** (§6 — one
+table listing every platform call the game will make), risks, and a task
+breakdown of tasks small enough to finish in a few hours each.
+
+Fill `testplan.md` at the same time: one case ID for every acceptance criterion
+in the brief, plus the standard rows the template already carries. Everything
+`todo`. Writing the cases before the code is the point — a test written
+afterwards describes what the code does, not what was asked for.
+
+Then create `progress.md` with every task listed as `todo`, and ask the owner to
+approve the plan. Two things they are really checking: that the SDK inventory
+contains no method that does not exist, and that no task is big enough to hide a
+week inside it.
+
+### Step 3C — Gate 2: implementing
+
+Work one task at a time, in the order of `plan.md` §9. At the start of the
+session, say which task ID you are picking up and confirm nothing in
+`progress.md` §5 blocks it. Then §1–§9 of this file are the rules you build
+under, and §10 is what "finished" means.
+
+### Step 4 — before you stop. Not optional.
+
+Every session ends by updating `games/<slug>/docs/progress.md`, **while you
+still have the context**, not "next time":
+
+1. Task table: status and evidence. A task is `done` only with a test name, a
+   commit or a manual case ID next to it. "Works" is not evidence.
+2. Append one dated entry to §3 — Did / Verified / Next / Blocked by. Newest at
+   the top, **append-only**: never edit or delete an old entry.
+3. Record any deviation from the brief or plan in §4, any new question for the
+   owner in §5, any SDK gap you had to work around in §6.
+4. Tick anything in §2 you actually observed this session.
+5. Update the header: task count, `Last updated`.
+
+A session that produced no code still gets an entry. "Spent the session finding
+out the pause bug is in the host, not the game" is exactly what the next session
+needs to know.
+
+A diff that touches `games/<slug>/src/` and not `games/<slug>/docs/progress.md`
+is incomplete, and is the single most common way this process fails.
 
 ---
 
@@ -32,8 +162,8 @@ one entry in `catalog.json`, and the removal of your slug's placeholder from
 If you believe you need something the SDK does not offer — a new method, a new
 host event, a change to `game.css` — **stop and report it**. Do not work around
 it locally, and do not add the method yourself. A missing SDK method is a
-platform decision, not a game decision. Note it in your handover and ship the
-game without it.
+platform decision, not a game decision. Record it in §6 of your
+`docs/progress.md`, note it in your handover, and ship the game without it.
 
 Never add a dependency to the root `package.json`. Your game's dependencies live
 in `games/<slug>/package.json` and should be close to zero — see §8.
@@ -176,6 +306,10 @@ game-over screen itself, never mid-run, never mid-input.
 
 ```
 games/<slug>/
+  docs/brief.md                 what and why — owner-owned, frozen before code
+  docs/plan.md                  how — module map, SDK inventory, task breakdown
+  docs/testplan.md              the cases, unit + manual + static
+  docs/progress.md              where the work is — read first, updated last
   package.json                  name: @game/<slug>
   vite.config.ts                base: /g/<slug>/, VitePWA injectManifest
   tsconfig.json                 extends ../../tsconfig.base.json, excludes src/sw.ts
@@ -356,6 +490,12 @@ least once.
 - [ ] No `localStorage`, no `fetch`, no direct IndexedDB anywhere in `src/`.
 - [ ] No files changed outside `games/<slug>/`, `catalog.json` and the one
       `demoData.ts` deletion.
+- [ ] `docs/testplan.md` §1 and §3 all `pass`; §2 run on a real phone, with the
+      date and device recorded in its header.
+- [ ] `docs/progress.md` is current: every task `done` with evidence, §2 fully
+      ticked, and a final session-log entry.
+- [ ] Anything built differently from the brief is in `docs/progress.md` §4,
+      and every SDK gap you hit is in §6.
 
 ## 11. Handover note
 
@@ -363,6 +503,10 @@ Finish with a short `## Handover` section in your PR description covering:
 what you built, anything in the spec you deliberately did not do and why, any
 SDK gap you hit and worked around, and anything the next agent should know.
 Do not put it in a new file.
+
+It is a **summary of** `games/<slug>/docs/progress.md` §4 and §6, not a
+replacement for them. If writing it turns up something those sections do not
+already say, the progress doc was not kept current — fix it there first.
 
 ---
 
@@ -387,3 +531,6 @@ Each of these looks fine locally and breaks the platform:
 - Leaving the placeholder entry in `demoData.ts`, shipping two cards.
 - Reusing another game's `devPort`.
 - Adding a method to the SDK to make one game easier.
+- Writing code before the brief is frozen, then treating the code as the spec.
+- Finishing a session without a `progress.md` entry. The next session — or the
+  next agent — starts by guessing, and guesses wrong.
