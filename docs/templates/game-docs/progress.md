@@ -13,7 +13,6 @@
 | Status | **Not started** \| In progress \| In review \| Shipped \| Paused |
 | Tasks done | 0 / 10 |
 | Last updated | YYYY-MM-DD |
-| Branch | `game/<slug>` |
 
 ## 1. Tasks
 

@@ -5,7 +5,6 @@
 | Status | **Not started** — blocked at Gate 0 |
 | Tasks done | 0 / 0 (task breakdown is written at Gate 1) |
 | Last updated | 2026-09-08 |
-| Branch | `game/snake` |
 
 ## 1. Tasks
 

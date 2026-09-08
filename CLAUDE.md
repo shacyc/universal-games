@@ -109,11 +109,16 @@ Runs in parallel with the v0 deploy. The point is to prove the platform holds
 when several games are written independently, by different people, at the same
 time: one folder plus one catalog entry, no shell change, no SDK change.
 
-In scope: **Neon Snake** and **Sudoku Daily**. Each is written by one agent, in
-its own branch, touching only `games/<slug>/`, `catalog.json` and one deletion
-in `apps/shell/src/demo/demoData.ts`. `docs/building-a-game.md` is the entry
-point; each game's own brief is in `games/<slug>/docs/` once it has been set up
+In scope: **Neon Snake** and **Sudoku Daily**. Each is written by one agent,
+touching only `games/<slug>/`, `catalog.json` and one deletion in
+`apps/shell/src/demo/demoData.ts`. `docs/building-a-game.md` is the entry point;
+each game's own brief is in `games/<slug>/docs/` once it has been set up
 (`docs/game-process.md`).
+
+This is a solo project and work lands **directly on `main`** — no feature
+branch, no PR, unless two agents are genuinely running at the same time, which
+is the one case a branch per game is worth the ceremony. The blast-radius rule
+is what keeps parallel work safe, not the branch.
 
 Still out of scope, unchanged from v0: accounts, real ads, payments, shop,
 gems, leaderboards, a design system, and any new SDK method. An agent that
@@ -133,8 +138,9 @@ Full detail in `docs/game-process.md`. The parts that are not negotiable:
   the owner first — `/new-game <slug>` runs that interview. That is the required
   first step, not initiative.
 - **Every working session reads `progress.md` first and updates it last**, with
-  a dated, append-only session-log entry. A PR that changes `games/<slug>/src/`
-  without touching `games/<slug>/docs/progress.md` is incomplete.
+  a dated, append-only session-log entry. A commit that changes
+  `games/<slug>/src/` without touching `games/<slug>/docs/progress.md` is
+  incomplete.
 - Templates are in `docs/templates/game-docs/`. `/game-status` reports where
   everything stands.
 

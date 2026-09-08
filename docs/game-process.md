@@ -57,9 +57,10 @@ to `done` only with evidence in the table.
 **Gate 3 — Verified.** `testplan.md` §1 and §3 are all `pass`, §2 has been run
 on a real phone, and the date and device are recorded in its header.
 
-**Gate 4 — Shipped.** `progress.md` §2 fully ticked, status `Shipped`, and the
-PR description carries the `## Handover` section from `docs/building-a-game.md`
-§11 — which is a summary *of* these documents, not a replacement for them.
+**Gate 4 — Shipped.** `progress.md` §2 fully ticked, status `Shipped`, and its
+session log closes with the handover entry described in
+`docs/building-a-game.md` §11 — a summary *of* these documents, not a
+replacement for them.
 
 ## What an agent does, every session
 
@@ -86,8 +87,8 @@ below.
 - **An SDK gap is reported, never fixed.** `progress.md` §6 is the input to the
   next platform milestone. Growing the SDK is decided in `CLAUDE.md`, not in a
   game.
-- **Documents are part of the diff.** A PR that changes `games/<slug>/src/` and
-  not `games/<slug>/docs/progress.md` is incomplete.
+- **Documents are part of the diff.** A commit that changes
+  `games/<slug>/src/` and not `games/<slug>/docs/progress.md` is incomplete.
 
 ## Starting a session
 

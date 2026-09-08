@@ -384,7 +384,8 @@ so any plain selector of yours overrides it.
 
 Two edits outside your folder. Both are small and both are conflict-prone
 because every agent touches the same two files — make them **last**, in their
-own commit, and rebase rather than merge if someone beat you to it.
+own commit. Work lands on `main` directly; if another agent is running at the
+same time, pull before you make these two edits rather than after.
 
 **a) `catalog.json`** — append one object to `games`. This is the source of
 truth; the home page, the dev proxy and `scripts/assemble.ts` all read it.
@@ -507,14 +508,15 @@ least once.
 
 ## 11. Handover note
 
-Finish with a short `## Handover` section in your PR description covering:
-what you built, anything in the spec you deliberately did not do and why, any
-SDK gap you hit and worked around, and anything the next agent should know.
-Do not put it in a new file.
+Finish with a closing session-log entry in `games/<slug>/docs/progress.md` §3,
+headlined `Shipped — handover`, covering: what you built, anything in the brief
+you deliberately did not do and why, any SDK gap you hit and worked around, and
+anything the next agent should know. Repeat it in the body of the shipping
+commit. Do not put it in a new file.
 
-It is a **summary of** `games/<slug>/docs/progress.md` §4 and §6, not a
-replacement for them. If writing it turns up something those sections do not
-already say, the progress doc was not kept current — fix it there first.
+It is a **summary of** §4 and §6 of that same file, not a replacement for them.
+If writing it turns up something those sections do not already say, the progress
+doc was not kept current — fix it there first.
 
 ---
 
