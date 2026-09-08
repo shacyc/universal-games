@@ -269,3 +269,142 @@ describe('mute', () => {
     expect(seen).toEqual([true]);
   });
 });
+
+describe('pause and resume', () => {
+  /** A client over a host with a bespoke ads adapter — `createMockHost` only takes scripted ads. */
+  function connectWithAds(ads: AdsAdapter) {
+    const host = createHost({
+      storage: createMemoryStorage(),
+      ads,
+      analytics: { track: () => {} },
+      context: { locale: 'en', isInstalled: false, isMuted: false },
+    });
+    return { host, sdk: createClient({ slug: SLUG, transport: createLocalTransport(host, SLUG) }) };
+  }
+
+  /**
+   * An ads adapter whose overlay stays open until the test closes it. Every
+   * open overlay is tracked, not just the last one, so the overlapping-calls
+   * test can close both.
+   */
+  function deferredAds() {
+    const open: ((watched: boolean) => void)[] = [];
+    const ads: AdsAdapter = {
+      showRewarded: () =>
+        new Promise<boolean>((resolve) => {
+          open.push(resolve);
+        }),
+      showInterstitial: () => Promise.resolve(),
+    };
+    return {
+      ads,
+      close: (watched: boolean) => {
+        for (const resolve of open.splice(0)) resolve(watched);
+      },
+    };
+  }
+
+  it('brackets a rewarded ad with pause then resume', async () => {
+    const { sdk } = connect();
+    await sdk.ready();
+    const seen: string[] = [];
+    sdk.onPause(() => seen.push('pause'));
+    sdk.onResume(() => seen.push('resume'));
+
+    await sdk.showRewarded('undo');
+
+    expect(seen).toEqual(['pause', 'resume']);
+  });
+
+  it('pauses the game while the ad is still open', async () => {
+    const { ads, close } = deferredAds();
+    const { sdk } = connectWithAds(ads);
+    await sdk.ready();
+    const seen: string[] = [];
+    sdk.onPause(() => seen.push('pause'));
+    sdk.onResume(() => seen.push('resume'));
+
+    const pending = sdk.showRewarded('revive');
+    // Let the request reach the host and the pause event come back.
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(seen).toEqual(['pause']);
+
+    close(true);
+    await expect(pending).resolves.toBe(true);
+    expect(seen).toEqual(['pause', 'resume']);
+  });
+
+  it('resumes even when the ad path throws', async () => {
+    const ads: AdsAdapter = {
+      showRewarded: () => Promise.reject(new Error('network down')),
+      showInterstitial: () => Promise.resolve(),
+    };
+    const { sdk } = connectWithAds(ads);
+    await sdk.ready();
+    const seen: string[] = [];
+    sdk.onPause(() => seen.push('pause'));
+    sdk.onResume(() => seen.push('resume'));
+
+    await expect(sdk.showRewarded('undo')).resolves.toBe(false);
+    expect(seen).toEqual(['pause', 'resume']);
+  });
+
+  it('brackets an interstitial too, so a suppressed one still balances', async () => {
+    const { sdk } = connect();
+    await sdk.ready();
+    const seen: string[] = [];
+    sdk.onPause(() => seen.push('pause'));
+    sdk.onResume(() => seen.push('resume'));
+
+    await sdk.showInterstitial('run_end');
+
+    expect(seen).toEqual(['pause', 'resume']);
+  });
+
+  it('emits one pause and one resume for two overlapping ad calls', async () => {
+    const { ads, close } = deferredAds();
+    const { sdk } = connectWithAds(ads);
+    await sdk.ready();
+    const seen: string[] = [];
+    sdk.onPause(() => seen.push('pause'));
+    sdk.onResume(() => seen.push('resume'));
+
+    const first = sdk.showRewarded('undo');
+    const second = sdk.showRewarded('undo');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    close(true);
+    await Promise.all([first, second]);
+    expect(seen).toEqual(['pause', 'resume']);
+  });
+
+  it('delivers pause only to the game the host covered', async () => {
+    const { host } = createMockHost();
+    const other: string[] = [];
+    host.subscribeEvents('other-game', (event) => other.push(event.type));
+    const mine: string[] = [];
+    host.subscribeEvents(SLUG, (event) => mine.push(event.type));
+
+    await host.handle(SLUG, {
+      v: PROTOCOL_VERSION,
+      id: 1,
+      method: 'showRewarded',
+      params: { placement: 'undo' },
+    });
+
+    expect(mine).toEqual(['pause', 'resume']);
+    expect(other).toEqual([]);
+  });
+
+  it('still broadcasts mute to every subscriber', () => {
+    const { host } = createMockHost();
+    const other: string[] = [];
+    host.subscribeEvents('other-game', (event) => other.push(event.type));
+
+    host.setMuted(true);
+
+    expect(other).toEqual(['mute']);
+  });
+});

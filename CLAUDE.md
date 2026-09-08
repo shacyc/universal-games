@@ -1,7 +1,10 @@
 # CLAUDE.md
 
 Context for Claude Code. Read this file plus `docs/platform-sdk.md` and
-`docs/game-2048.md` before writing code.
+`docs/sdk-decisions.md` before writing code.
+
+**Writing a game? `docs/building-a-game.md` is the contract — read it first.**
+It says which files you own, which you must not touch, and what "done" means.
 
 ## What this project is
 
@@ -89,6 +92,22 @@ In scope:
 Explicitly out of scope for v0: accounts, login, real ads, payments, shop, gems,
 leaderboards, a second game, a design system. Do not build these. Do not
 scaffold empty folders for them.
+
+## Next milestone: v0.1 — the catalogue is more than one game
+
+Runs in parallel with the v0 deploy. The point is to prove the platform holds
+when several games are written independently, by different people, at the same
+time: one folder plus one catalog entry, no shell change, no SDK change.
+
+In scope: **Neon Snake** (`docs/game-snake.md`) and **Sudoku Daily**
+(`docs/game-sudoku.md`). Each is written by one agent, in its own branch,
+touching only `games/<slug>/`, `catalog.json` and one deletion in
+`apps/shell/src/demo/demoData.ts`. `docs/building-a-game.md` is the brief.
+
+Still out of scope, unchanged from v0: accounts, real ads, payments, shop,
+gems, leaderboards, a design system, and any new SDK method. An agent that
+needs one reports it instead of adding it — growing the SDK surface is a
+platform decision and it is made here, not in a game.
 
 ## Working style
 

@@ -121,3 +121,37 @@ grid state, UI chrome. Those would be generalised *from* game code, and there
 is not yet a single finished game to generalise from. CLAUDE.md says abstract
 on the third occurrence; the helpers above are exempt because they come from
 the platform contract in `platform-sdk.md`, not from a game.
+
+## 12. The host brackets every ad with `pause` / `resume`
+
+Decision 6 added `HostEvent` so the platform could push mute changes, and
+declared `pause`/`resume` alongside it. Nothing emitted them: `createHost` only
+ever sent `mute`, and the stub ad overlay sent nothing at all.
+
+That was survivable while 2048 was the only game — it is turn-based, so an
+overlay costs it nothing. It stops being survivable the moment a game has a
+clock: a real-time game keeps ticking under the rewarded ad the player chose to
+watch, and kills them while they watch it. Making every game defend itself
+against that would push a platform rule into ten separate implementations, which
+is the thing this SDK exists to prevent.
+
+So `HostCore` now brackets both ad methods with `pause` before and `resume`
+after, in a `finally`. Three consequences worth stating:
+
+- **`resume` fires even when nothing was shown.** The frequency cap may
+  suppress an interstitial, and a real ad network will report no fill. The host
+  cannot know before it asks, so the contract is that a game's `resume` handler
+  is idempotent: it restarts only a loop that `pause` actually stopped. That is
+  a permanent property, not a v0 wart.
+- **Events are addressed to one game.** `subscribeEvents` now takes a slug.
+  `mute` still reaches every subscriber; `pause`/`resume` concern the game the
+  host just covered, and broadcasting them would pause games that are merely
+  mounted. The slug comes from the caller — the shell for a framed game, the
+  local transport for a standalone one — never from the game.
+- **Overlays are counted, not flagged.** A game with two ad calls in flight
+  still sees exactly one `pause` and one `resume`.
+
+The host still cannot see everything that obscures a game: a backgrounded tab,
+a locked phone and the browser's own UI never reach it. Games with a clock
+therefore still handle `visibilitychange` themselves. The rule is that the
+*platform's* own overlays are the platform's job.

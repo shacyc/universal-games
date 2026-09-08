@@ -18,7 +18,7 @@ export function createLocalTransport(host: HostCore, slug: string): ClientTransp
   return {
     async connect(incoming: TransportHandlers): Promise<GameContext> {
       handlers = incoming;
-      unsubscribe = host.subscribeEvents((event: HostEvent) => handlers?.onEvent(event));
+      unsubscribe = host.subscribeEvents(slug, (event: HostEvent) => handlers?.onEvent(event));
       return host.context(slug);
     },
 

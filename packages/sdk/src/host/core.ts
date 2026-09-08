@@ -27,20 +27,66 @@ export interface HostCore {
    */
   handle(slug: string, request: unknown): Promise<Response | null>;
   context(slug: string): GameContext;
-  subscribeEvents(listener: (event: HostEvent) => void): () => void;
+  /**
+   * Subscribes one mounted game to host events. The slug is what makes
+   * `pause`/`resume` deliverable: they concern the game the host just covered,
+   * not every game the host knows about. Broadcast events (`mute`) reach every
+   * subscriber regardless.
+   */
+  subscribeEvents(slug: string, listener: (event: HostEvent) => void): () => void;
   setMuted(isMuted: boolean): void;
   isMuted(): boolean;
 }
 
 export function createHost(deps: HostDeps): HostCore {
-  const listeners = new Set<(event: HostEvent) => void>();
+  const listeners = new Set<{ slug: string; listener: (event: HostEvent) => void }>();
   /** Tracks the current run per game so `gameOver` can be made idempotent. */
   const runs = new Map<string, { id: number; ended: boolean }>();
+  /**
+   * How many overlays are currently covering each game. A counter rather than
+   * a flag: a game that manages to have two ad calls in flight must still see
+   * exactly one `pause` and one `resume`.
+   */
+  const covered = new Map<string, number>();
   let nextRunId = 1;
   let muted = deps.context?.isMuted ?? false;
 
-  function emit(event: HostEvent): void {
-    for (const listener of listeners) listener(event);
+  /** `target` undefined = every game; a slug = only that game. */
+  function emit(event: HostEvent, target?: string): void {
+    for (const entry of listeners) {
+      if (target === undefined || entry.slug === target) entry.listener(event);
+    }
+  }
+
+  /**
+   * Brackets anything that covers the game with `pause`/`resume`.
+   *
+   * Games must not have to guess when they are obscured: an ad overlay stops
+   * the player interacting, and a real-time game that keeps ticking under one
+   * kills the player while they are watching an ad they chose to watch.
+   *
+   * `resume` fires even when nothing was actually shown — the frequency cap
+   * suppressed the interstitial, or a real network reports no fill. That is
+   * inherent rather than a v0 wart, so the contract is that a game's `resume`
+   * handler is idempotent and only restarts a loop that `pause` actually
+   * stopped.
+   */
+  async function underOverlay<T>(slug: string, run: () => Promise<T>): Promise<T> {
+    const depth = (covered.get(slug) ?? 0) + 1;
+    covered.set(slug, depth);
+    if (depth === 1) emit({ v: PROTOCOL_VERSION, type: 'pause' }, slug);
+
+    try {
+      return await run();
+    } finally {
+      const remaining = (covered.get(slug) ?? 1) - 1;
+      if (remaining > 0) {
+        covered.set(slug, remaining);
+      } else {
+        covered.delete(slug);
+        emit({ v: PROTOCOL_VERSION, type: 'resume' }, slug);
+      }
+    }
   }
 
   async function dispatch(slug: string, request: Request): Promise<Response> {
@@ -62,13 +108,14 @@ export function createHost(deps: HostDeps): HostCore {
       case 'showRewarded': {
         const placement = params.placement;
         if (typeof placement !== 'string') return err(request.id, 'BAD_PARAMS', 'showRewarded requires a placement');
-        return ok(request.id, await deps.ads.showRewarded(slug, placement));
+        const watched = await underOverlay(slug, () => deps.ads.showRewarded(slug, placement));
+        return ok(request.id, watched);
       }
 
       case 'showInterstitial': {
         const placement = params.placement;
         if (typeof placement !== 'string') return err(request.id, 'BAD_PARAMS', 'showInterstitial requires a placement');
-        await deps.ads.showInterstitial(slug, placement);
+        await underOverlay(slug, () => deps.ads.showInterstitial(slug, placement));
         return ok(request.id, null);
       }
 
@@ -128,9 +175,10 @@ export function createHost(deps: HostDeps): HostCore {
       };
     },
 
-    subscribeEvents(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
+    subscribeEvents(slug, listener) {
+      const entry = { slug, listener };
+      listeners.add(entry);
+      return () => listeners.delete(entry);
     },
 
     setMuted(isMuted) {

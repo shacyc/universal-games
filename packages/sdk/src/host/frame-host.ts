@@ -48,7 +48,7 @@ export function attachFrameHost(options: AttachFrameHostOptions): () => void {
     };
     port.start();
 
-    unsubscribe = options.host.subscribeEvents((hostEvent: HostEvent) => port?.postMessage(hostEvent));
+    unsubscribe = options.host.subscribeEvents(options.slug, (hostEvent: HostEvent) => port?.postMessage(hostEvent));
 
     const welcome: Welcome = {
       v: PROTOCOL_VERSION,
