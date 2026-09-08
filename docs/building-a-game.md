@@ -20,9 +20,24 @@ You have been handed one instruction, roughly:
 
 That instruction alone is enough. This section is the entire procedure. Do not
 skip to §1 and start coding — where you begin depends on what already exists,
-and Step 2 is what tells you.
+and Step 3 is what tells you.
 
-### Step 1 — read, in this order
+### Step 1 — ask the repo where things stand
+
+```bash
+pnpm game:status
+```
+
+It reads `docs/game-gates.json` and computes each game's gate from the
+artifacts on disk. Start here rather than with the documents: `progress.md` is
+a *claim*, and the two disagreeing is itself a finding — it means a session
+ended without updating the log.
+
+If you cannot run commands, read `games/<slug>/docs/progress.md` and work Step 3
+out by hand. The gates are the same either way; the script is a convenience,
+never the authority.
+
+### Step 2 — read, in this order
 
 | # | File | What you get from it | Skip if |
 | --- | --- | --- | --- |
@@ -34,20 +49,21 @@ and Step 2 is what tells you.
 | 6 | `games/2048/src/` | the reference implementation: copy its shape, not its rules | you have read it this session |
 | 7 | `docs/game-process.md` | the reasoning behind the four documents and the gates | you accept §0 as given |
 
-State out loud which files you read and which case in Step 2 you landed in,
+State out loud which files you read and which case in Step 3 you landed in,
 before you do anything else. It takes one line and it is how the owner catches a
 session that started from the wrong place.
 
-### Step 2 — find out where the game is
+### Step 3 — find out where the game is
 
-Look at `games/<slug>/docs/`. Exactly one of these is true:
+`pnpm game:status <slug>` names the gate directly. To reach the same answer by
+hand, look at `games/<slug>/docs/`; exactly one of these is true:
 
 | | You see | You are at | Go to |
 | --- | --- | --- | --- |
-| **A** | no `games/<slug>/docs/` directory | Gate 0 | Step 3A — draft the documents. **No code.** |
-| **B** | `brief.md` with `Status: Draft`, or any `TODO` or unanswered §10 question left in it | Gate 0 | Step 3A, resuming the interview from what is missing |
-| **C** | `brief.md` `Frozen`, `plan.md` `Draft` | Gate 1 | Step 3B — write the plan and the test plan. **No code.** |
-| **D** | `plan.md` `Approved` | Gate 2 | Step 3C — implement |
+| **A** | no `games/<slug>/docs/` directory | Gate 0 | Step 4A — draft the documents. **No code.** |
+| **B** | `brief.md` with `Status: Draft`, or any `TODO` or unanswered §10 question left in it | Gate 0 | Step 4A, resuming the interview from what is missing |
+| **C** | `brief.md` `Frozen`, `plan.md` `Draft` | Gate 1 | Step 4B — write the plan and the test plan. **No code.** |
+| **D** | `plan.md` `Approved` | Gate 2 | Step 4C — implement |
 | **E** | `progress.md` says `Shipped` | done | ask the owner what they actually want; do not reopen a shipped game on your own |
 
 If the game has source files under `games/<slug>/src/` but no `docs/`, say so
@@ -67,7 +83,7 @@ That move can break a path in a file you are not allowed to edit. Run
 and **report** the hits — do not fix them in `CLAUDE.md` or another game's
 files. The owner owns those.
 
-### Step 3A — Gate 0: draft the documents with the owner
+### Step 4A — Gate 0: draft the documents with the owner
 
 Copy the four templates from `docs/templates/game-docs/` into
 `games/<slug>/docs/`, then fill `brief.md` **by interviewing the owner**. How to
@@ -99,10 +115,10 @@ well:
 Only the owner freezes the brief. You may not delete a `TODO(owner)` on their
 behalf; you may replace it with a proposal clearly marked as one.
 
-When the brief is frozen, continue into Step 3B in the same session if the owner
+When the brief is frozen, continue into Step 4B in the same session if the owner
 wants — but stop before any code either way.
 
-### Step 3B — Gate 1: plan and test plan
+### Step 4B — Gate 1: plan and test plan
 
 Fill `plan.md` yourself: module map, the pure-core interface, the save shape and
 its validation, the loop and pause model, the **SDK call inventory** (§6 — one
@@ -119,14 +135,20 @@ approve the plan. Two things they are really checking: that the SDK inventory
 contains no method that does not exist, and that no task is big enough to hide a
 week inside it.
 
-### Step 3C — Gate 2: implementing
+### Step 4C — Gate 2: implementing
 
 Work one task at a time, in the order of `plan.md` §9. At the start of the
 session, say which task ID you are picking up and confirm nothing in
 `progress.md` §5 blocks it. Then §1–§9 of this file are the rules you build
 under, and §10 is what "finished" means.
 
-### Step 4 — before you stop. Not optional.
+Two mechanical checks run whether you remember them or not. `pnpm game:check
+<slug>` gives a verdict on the gate you are trying to leave, and a `pre-commit`
+hook refuses a commit that puts `localStorage`, `fetch` or an SDK-client import
+somewhere §3 forbids. Neither replaces reading §3 — they catch the cases that
+are cheap to catch, and that is all.
+
+### Step 5 — before you stop. Not optional.
 
 Every session ends by updating `games/<slug>/docs/progress.md`, **while you
 still have the context**, not "next time":
@@ -139,6 +161,8 @@ still have the context**, not "next time":
    owner in §5, any SDK gap you had to work around in §6.
 4. Tick anything in §2 you actually observed this session.
 5. Update the header: task count, `Last updated`.
+6. Run `pnpm game:status <slug>` once more. If it still disagrees with what you
+   just wrote, the doc is wrong — fix it now, not next session.
 
 A session that produced no code still gets an entry. "Spent the session finding
 out the pause bug is in the host, not the game" is exactly what the next session

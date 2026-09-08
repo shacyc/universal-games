@@ -64,19 +64,17 @@ Cheap, and they catch the mistakes in `docs/building-a-game.md` §12.
 
 | ID | Check | Command / how | Status |
 | --- | --- | --- | --- |
+| S0 | Gates and invariants | `pnpm game:check snake` | todo |
 | S1 | Types | `pnpm --filter @game/snake typecheck` | todo |
 | S2 | Unit tests | `pnpm --filter @game/snake test` | todo |
 | S3 | Build output | `pnpm build`, then `dist/g/snake/` exists | todo |
-| S4 | No forbidden platform access | script below: no hits | todo |
-| S5 | Only `session.ts` imports the SDK client | script below: exactly one file | todo |
+| S4 | No forbidden platform access | enforced by `.githooks/pre-commit`; `pnpm game:status` reports it too | auto |
+| S5 | Only `session.ts` imports the SDK client | enforced by `.githooks/pre-commit` | auto |
 | S6 | SW scope | `src/sw.ts` returns early outside `/g/snake/`; registration is scoped | todo |
 | S7 | Absolute paths | no relative `manifest.webmanifest` or icon links in `index.html` | todo |
-| S8 | Blast radius | `git diff --stat main` touches only `games/snake/`, `catalog.json`, one `demoData.ts` line | todo |
+| S8 | Blast radius | each commit touches only `games/snake/`, `catalog.json`, one `demoData.ts` line; the hook refuses a game commit that also edits `packages/sdk/` | todo |
 | S9 | Dev port | the port is not used by another entry in `catalog.json` | todo |
 
-```bash
-grep -rnE "localStorage|sessionStorage|indexedDB|fetch\(" games/snake/src/ ; grep -rln "@platform/sdk/client" games/snake/src/
-```
 
 ## 4. Bugs found
 

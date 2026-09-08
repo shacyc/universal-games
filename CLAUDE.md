@@ -141,8 +141,12 @@ Full detail in `docs/game-process.md`. The parts that are not negotiable:
   a dated, append-only session-log entry. A commit that changes
   `games/<slug>/src/` without touching `games/<slug>/docs/progress.md` is
   incomplete.
-- Templates are in `docs/templates/game-docs/`. `/game-status` reports where
-  everything stands.
+- Templates are in `docs/templates/game-docs/`. `pnpm game:status` computes where
+  every game really is, from `docs/game-gates.json` rather than from what the
+  docs claim; `pnpm game:check <slug>` gives a verdict before advancing a gate.
+- A `pre-commit` hook (installed by `pnpm install`) refuses a commit that breaks
+  a §3 rule mechanically, and warns when `progress.md` was not updated. Blocking
+  is reserved for code that is objectively wrong — see `docs/game-process.md`.
 
 **Starting a game session, in any assistant:**
 

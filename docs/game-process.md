@@ -73,6 +73,28 @@ It is the source of truth; do not restate it here.
 This file stays the *why*: the gates above, the ownership table, and the rules
 below.
 
+## The two mechanical checks
+
+Documents that only a person checks rot. Two things check them without being
+asked, and both are deliberately outside any one assistant's tooling so they
+work whoever — or whatever — is doing the work:
+
+| | What it does |
+| --- | --- |
+| `pnpm game:status [slug]` | Computes each game's gate from `docs/game-gates.json` against the files on disk, and reports where that disagrees with `progress.md`. |
+| `pnpm game:check <slug>` | A verdict on the gate the game is trying to leave: what is met, what is not, and which platform rules are broken regardless. |
+| `.githooks/pre-commit` | Refuses a commit that breaks a §3 rule mechanically. Installed by `pnpm install` (the `prepare` script); bypass once with `SKIP=1 git commit`. |
+
+**Advisory by default, blocking only where the code is objectively wrong.**
+That split matters more than it looks. `localStorage` in a game, an SDK-client
+import outside `session.ts`, a game commit that also edits `packages/sdk/` —
+those are broken code and the hook refuses them. A `progress.md` that was not
+updated only warns. Blocking everything reads as rigour and ends as
+`SKIP=1` in muscle memory, at which point nothing is enforced at all.
+
+`docs/game-gates.json` is the machine-readable twin of
+`docs/building-a-game.md` §0 Step 3. Change one, change the other.
+
 ## Rules that keep the documents honest
 
 - **The session log is append-only.** Never edit or delete an old entry. A

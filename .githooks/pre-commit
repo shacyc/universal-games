@@ -1,0 +1,83 @@
+#!/bin/sh
+# Enforces the parts of docs/building-a-game.md that can be checked mechanically.
+#
+# It lives in git, not in an assistant's tooling, on purpose: it runs whichever
+# AI wrote the code, and when you commit by hand. That portability is the whole
+# reason it exists.
+#
+# What blocks and what only warns is a deliberate split:
+#   BLOCK  a platform rule in §3 is broken — the code is wrong, not unfinished.
+#   WARN   the process slipped — annoying, but blocking it here just teaches
+#          you to set SKIP=1 forever, and then nothing is enforced at all.
+#
+# Bypass once with:  SKIP=1 git commit ...
+
+[ -n "$SKIP" ] && exit 0
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$STAGED" ] && exit 0
+
+SLUGS=$(printf '%s\n' "$STAGED" | sed -n 's|^games/\([^/]*\)/src/.*|\1|p' | sort -u)
+[ -z "$SLUGS" ] && exit 0
+
+BLOCKED=0
+WARNED=0
+
+# Staged content, not the working tree — what is being committed is what counts.
+staged_body() { git show ":$1" 2>/dev/null; }
+
+for slug in $SLUGS; do
+  FILES=$(printf '%s\n' "$STAGED" | grep "^games/$slug/src/")
+
+  for f in $FILES; do
+    case "$f" in
+      # A service worker intercepting fetch events is what it is for.
+      */src/sw.ts) continue ;;
+    esac
+
+    if staged_body "$f" | grep -nE '\b(localStorage|sessionStorage|indexedDB)\b|\bfetch[[:space:]]*\(' >/dev/null 2>&1; then
+      echo "BLOCKED  $f uses storage or fetch directly." >&2
+      echo "         Everything platform-shaped goes through the SDK — building-a-game.md §3.1." >&2
+      echo "         iOS Safari evicts script-writable storage after ~7 days." >&2
+      BLOCKED=1
+    fi
+
+    case "$f" in
+      */src/session.ts) ;;
+      *)
+        if staged_body "$f" | grep -n '@platform/sdk/client' >/dev/null 2>&1; then
+          echo "BLOCKED  $f imports @platform/sdk/client." >&2
+          echo "         Every sdk.* call belongs in session.ts — building-a-game.md §5." >&2
+          BLOCKED=1
+        fi
+        ;;
+    esac
+  done
+
+  # A game changing the SDK breaks every other game's cached wire protocol.
+  if printf '%s\n' "$STAGED" | grep -qE '^packages/sdk/'; then
+    echo "BLOCKED  this commit changes games/$slug/src/ and packages/sdk/ together." >&2
+    echo "         A missing SDK method is a platform decision — building-a-game.md §1." >&2
+    echo "         Split it into two commits if the SDK change is genuinely the owner's." >&2
+    BLOCKED=1
+  fi
+
+  if ! printf '%s\n' "$STAGED" | grep -q "^games/$slug/docs/progress.md$"; then
+    echo "WARNING  games/$slug/src/ changed but games/$slug/docs/progress.md did not." >&2
+    echo "         Task status, evidence, and one session-log entry — §0 Step 4." >&2
+    WARNED=1
+  fi
+done
+
+if [ "$BLOCKED" = 1 ]; then
+  echo "" >&2
+  echo "Commit refused. Fix the above, or bypass once with: SKIP=1 git commit ..." >&2
+  exit 1
+fi
+
+if [ "$WARNED" = 1 ]; then
+  echo "" >&2
+  echo "Committing anyway. Run 'pnpm game:status' to see what is out of date." >&2
+fi
+
+exit 0

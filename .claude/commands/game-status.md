@@ -6,7 +6,17 @@ argument-hint: [slug]
 Report the real state of game development. With `$1`, report only that game;
 with no argument, report every game. Read-only: no builds, no tests, no deploy.
 
-## Gather
+## Start with the script
+
+```bash
+pnpm game:status
+```
+
+It already computes each game's gate from `docs/game-gates.json`, flags broken
+platform rules, and reports where `progress.md` disagrees with the repo. Your
+job is to read what it prints and turn it into advice — not to redo it by hand.
+
+## Then add what the script cannot see
 
 - `catalog.json` — what is published.
 - `games/*/docs/progress.md` — the header, task table, §2 checklist, the newest
@@ -19,16 +29,12 @@ with no argument, report every game. Read-only: no builds, no tests, no deploy.
 
 ## Verify rather than repeat
 
-`progress.md` is a claim, not a fact. Spot-check it and report the difference:
+The script checks artifacts; it cannot read prose. These are yours:
 
 - A task marked `done` with no evidence column filled.
-- `Last updated` older than the newest commit under `games/<slug>/` — the log
-  was not updated after work landed.
-- A game with source files but no `docs/` directory — it is being built outside
-  the process.
-- A ticked box in §2 that the repo contradicts (`grep` for `localStorage` or
-  `fetch(` under `games/<slug>/src/`; check `catalog.json` and the `demoData.ts`
-  deletion for the registration box).
+- A session-log entry that says "verified" without naming what was run.
+- An open question in §5 that has quietly been answered in the code instead.
+- A deviation visible in the diff but missing from §4.
 
 ## Report
 
