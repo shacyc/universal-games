@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { catalog, findGame, type CatalogGame } from './catalog.js';
+import { findGame } from './catalog.js';
 import { GameFrame } from './GameFrame.js';
+import { HomePage } from './home/HomePage.js';
+import type { HomeGame } from './demo/demoData.js';
 
 /**
  * Deliberately no router: two screens, and every kilobyte of the shell is
@@ -20,7 +22,10 @@ export function App(): JSX.Element {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  const open = (game: CatalogGame): void => {
+  const open = (game: HomeGame): void => {
+    // Placeholder entries have no build behind them; the UI disables them, and
+    // this is the backstop so a stray call can never mount a 404 iframe.
+    if (!game.playable || !findGame(game.slug)) return;
     window.history.pushState(null, '', `/play/${game.slug}`);
     setSlug(game.slug);
   };
@@ -33,24 +38,5 @@ export function App(): JSX.Element {
   const game = slug ? findGame(slug) : undefined;
   if (game) return <GameFrame game={game} onExit={exit} />;
 
-  return (
-    <main className="hub">
-      <h1 className="hub__title">Arcade</h1>
-      <ul className="hub__grid">
-        {catalog.games.map((entry) => (
-          <li key={entry.slug}>
-            <button
-              type="button"
-              className="hub__card"
-              style={{ background: entry.backgroundColor }}
-              onClick={() => open(entry)}
-            >
-              <span className="hub__card-title">{entry.title}</span>
-              <span className="hub__card-tagline">{entry.tagline}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </main>
-  );
+  return <HomePage onPlay={open} />;
 }

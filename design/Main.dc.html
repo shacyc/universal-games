@@ -32,7 +32,7 @@
       --font-body:'IBM Plex Sans',system-ui,sans-serif;
       --font-mono:'IBM Plex Mono','Courier New',monospace;
       --chrome:repeating-linear-gradient(to bottom,var(--ink) 0 1px,transparent 1px 3px);
-      --stripes:block; --track:0.04em; --scan:0.16;
+      --track:0.04em; --scan:0.16;
     }
     .t-modern {
       --paper:#0B0C0F; --paper-2:#121419; --surface:#131620; --sunk:#0E1015;
@@ -49,23 +49,12 @@
       --font-body:'Space Grotesk',system-ui,sans-serif;
       --font-mono:'IBM Plex Mono',monospace;
       --chrome:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0));
-      --stripes:none; --track:0; --scan:0;
+      --track:0; --scan:0;
     }
   </style>
 </helmet>
 
 <div class="app {{themeClass}}" style="position:relative;min-height:100%;background:var(--paper);color:var(--ink);font-family:var(--font-body);overflow:hidden;padding-bottom:0">
-
-  <div style="position:absolute;top:0;bottom:0;left:14px;width:98px;display:var(--stripes);pointer-events:none;opacity:.85">
-    <sc-for list="{{stripes}}" as="s" hint-placeholder-count="24">
-      <div style="height:22px;border-radius:11px;background:var(--tan);margin-bottom:19px"></div>
-    </sc-for>
-  </div>
-  <div style="position:absolute;top:0;bottom:0;right:14px;width:98px;display:var(--stripes);pointer-events:none;opacity:.85">
-    <sc-for list="{{stripes}}" as="s" hint-placeholder-count="24">
-      <div style="height:22px;border-radius:11px;background:var(--tan);margin-bottom:19px"></div>
-    </sc-for>
-  </div>
 
   <div style="position:relative;max-width:1200px;margin:0 auto;padding:0 24px">
 
@@ -82,13 +71,13 @@
         <span style="font-family:var(--font-display);font-size:21px;letter-spacing:var(--track)">ARCADE</span>
       </div>
       <nav style="display:flex;align-items:center;gap:28px;font-size:15px;color:var(--ink-2)">
-        <a href="#games" style="color:var(--ink-2)">Games</a>
-        <a href="#continue" style="color:var(--ink-2)">Continue</a>
-        <a href="#install" style="color:var(--ink-2)">Install</a>
+        <a href="#games" style="color:var(--ink-2);display:inline-flex;align-items:center;min-height:44px">Games</a>
+        <a href="#continue" style="color:var(--ink-2);display:inline-flex;align-items:center;min-height:44px">Continue</a>
+        <a href="#install" style="color:var(--ink-2);display:inline-flex;align-items:center;min-height:44px">Install</a>
       </nav>
       <div style="display:flex;align-items:center;border:var(--line-w) solid var(--line);border-radius:var(--pill);padding:3px;background:var(--surface);gap:3px">
-        <button onClick="{{setVintage}}" style="min-height:38px;padding:0 16px;border:0;border-radius:calc(var(--pill) - 2px);font-family:var(--font-display);font-size:11px;letter-spacing:var(--track);background:{{vBg}};color:{{vFg}}">VINTAGE</button>
-        <button onClick="{{setModern}}" style="min-height:38px;padding:0 16px;border:0;border-radius:calc(var(--pill) - 2px);font-family:var(--font-display);font-size:11px;letter-spacing:var(--track);background:{{mBg}};color:{{mFg}}">MODERN</button>
+        <button onClick="{{setVintage}}" style="min-height:44px;padding:0 16px;border:0;border-radius:calc(var(--pill) - 2px);font-family:var(--font-display);font-size:11px;letter-spacing:var(--track);background:{{vBg}};color:{{vFg}}">VINTAGE</button>
+        <button onClick="{{setModern}}" style="min-height:44px;padding:0 16px;border:0;border-radius:calc(var(--pill) - 2px);font-family:var(--font-display);font-size:11px;letter-spacing:var(--track);background:{{mBg}};color:{{mFg}}">MODERN</button>
       </div>
     </header>
 
@@ -126,28 +115,30 @@
 
               <div style="text-align:center;font-family:var(--font-display);font-size:10px;letter-spacing:0.22em;color:var(--ink-2);margin:11px 0 15px">POCKET ARCADE</div>
 
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
-                <div style="display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px)">
-                  <div></div>
-                  <div style="background:var(--case-2);border:var(--line-w) solid var(--line);border-bottom:0;border-radius:6px 6px 0 0"></div>
-                  <div></div>
-                  <button onClick="{{prev}}" aria-label="Previous game" style="border:var(--line-w) solid var(--line);border-right:0;border-radius:6px 0 0 6px;background:var(--case-2);display:flex;align-items:center;justify-content:center;padding:0">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink)"><path d="M15 5 8 12l7 7"/></svg>
-                  </button>
-                  <div style="background:var(--case-2);border-top:var(--line-w) solid var(--line);border-bottom:var(--line-w) solid var(--line)"></div>
-                  <button onClick="{{next}}" aria-label="Next game" style="border:var(--line-w) solid var(--line);border-left:0;border-radius:0 6px 6px 0;background:var(--case-2);display:flex;align-items:center;justify-content:center;padding:0">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink)"><path d="m9 5 7 7-7 7"/></svg>
-                  </button>
-                  <div></div>
-                  <div style="background:var(--case-2);border:var(--line-w) solid var(--line);border-top:0;border-radius:0 0 6px 6px"></div>
-                  <div></div>
-                </div>
-
-                <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;padding-bottom:6px">
-                  <div style="width:50px;height:50px;border-radius:50%;border:var(--line-w) solid var(--line);background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:15px;margin-right:-4px">A</div>
-                  <div style="width:50px;height:50px;border-radius:50%;border:var(--line-w) solid var(--line);background:var(--case-2);color:var(--ink-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:15px;margin-right:34px;margin-top:-30px">B</div>
-                </div>
-              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
+      <div style="position:relative;width:132px;height:132px;flex-shrink:0">
+        <svg viewBox="0 0 132 132" width="132" height="132" style="position:absolute;inset:0;display:block">
+          <path d="M44 1 H88 V44 H131 V88 H88 V131 H44 V88 H1 V44 H44 Z" fill="var(--case-2)" stroke="var(--line)" stroke-linejoin="round" style="stroke-width:var(--line-w)"/>
+          <circle cx="66" cy="66" r="12" fill="none" stroke="var(--line)" opacity="0.3" style="stroke-width:var(--line-w)"/>
+        </svg>
+      <button onClick="{{prev}}" aria-label="Previous game" style="position:absolute;left:44px;top:0px;width:44px;height:44px;padding:0;border:0;background:transparent;display:flex;align-items:center;justify-content:center">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink)"><path d="m5 15 7-7 7 7"/></svg>
+      </button>
+      <button onClick="{{prev}}" aria-label="Previous game" style="position:absolute;left:0px;top:44px;width:44px;height:44px;padding:0;border:0;background:transparent;display:flex;align-items:center;justify-content:center">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink)"><path d="M15 5 8 12l7 7"/></svg>
+      </button>
+      <button onClick="{{next}}" aria-label="Next game" style="position:absolute;left:88px;top:44px;width:44px;height:44px;padding:0;border:0;background:transparent;display:flex;align-items:center;justify-content:center">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink)"><path d="m9 5 7 7-7 7"/></svg>
+      </button>
+      <button onClick="{{next}}" aria-label="Next game" style="position:absolute;left:44px;top:88px;width:44px;height:44px;padding:0;border:0;background:transparent;display:flex;align-items:center;justify-content:center">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink)"><path d="m5 9 7 7 7-7"/></svg>
+      </button>
+      </div>
+      <div style="position:relative;width:112px;height:132px;flex-shrink:0">
+        <div style="position:absolute;right:4px;top:30px;width:52px;height:52px;border-radius:50%;border:var(--line-w) solid var(--line);background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:15px">A</div>
+        <div style="position:absolute;left:0px;top:68px;width:52px;height:52px;border-radius:50%;border:var(--line-w) solid var(--line);background:var(--case-2);color:var(--ink-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:15px">B</div>
+      </div>
+    </div>
 
               <div style="display:flex;justify-content:center;gap:16px;margin-top:14px">
                 <div style="width:42px;height:11px;border-radius:6px;border:var(--line-w) solid var(--line);background:var(--case-2)"></div>
@@ -468,7 +459,6 @@ class Component extends DCLogic {
 
     return {
       themeClass: theme === 'modern' ? 't-modern' : 't-vintage',
-      stripes: Array.from({ length: 26 }, (_, i) => ({ i })),
       setVintage: () => this.setState({ theme: 'vintage' }),
       setModern: () => this.setState({ theme: 'modern' }),
       vBg: theme === 'vintage' ? 'var(--ink)' : 'transparent',
