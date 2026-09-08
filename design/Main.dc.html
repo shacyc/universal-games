@@ -1,0 +1,509 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    * { box-sizing: border-box; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-2); text-decoration: underline; }
+    button { font: inherit; cursor: pointer; }
+    input { font: inherit; }
+    input::placeholder { color: var(--ink-3); }
+    input:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .t-vintage {
+      --paper:#EDE3D2; --paper-2:#E3D7C0; --surface:#F5EFE2; --sunk:#E7DCC8;
+      --tan:#BCAB90; --tan-2:#A08D6F;
+      --ink:#2B2318; --ink-2:#6E5F48; --ink-3:#9C8B70;
+      --line:#2B2318; --line-w:2px; --hair:#C9B99E;
+      --accent:#F5821F; --accent-2:#E03A3E; --on-accent:#2B2318;
+      --r1:#61BB46; --r2:#FDB827; --r3:#F5821F; --r4:#E03A3E; --r5:#963D97; --r6:#009DDC;
+      --radius:5px; --radius-lg:8px; --pill:5px;
+      --shadow:5px 5px 0 var(--ink); --shadow-sm:3px 3px 0 var(--ink);
+      --case:#E7DCC5; --case-2:#CFC0A2; --bezel:#4A4034; --led:#61BB46;
+      --font-display:'Silkscreen','Courier New',monospace;
+      --font-body:'IBM Plex Sans',system-ui,sans-serif;
+      --font-mono:'IBM Plex Mono','Courier New',monospace;
+      --chrome:repeating-linear-gradient(to bottom,var(--ink) 0 1px,transparent 1px 3px);
+      --stripes:block; --track:0.04em; --scan:0.16;
+    }
+    .t-modern {
+      --paper:#0B0C0F; --paper-2:#121419; --surface:#131620; --sunk:#0E1015;
+      --tan:#242833; --tan-2:#333949;
+      --ink:#F3F5F8; --ink-2:#A2ABBB; --ink-3:#69737F;
+      --line:#252A35; --line-w:1px; --hair:#20242E;
+      --accent:oklch(0.74 0.17 268); --accent-2:oklch(0.78 0.17 168); --on-accent:#0B0C0F;
+      --r1:oklch(0.78 0.17 150); --r2:oklch(0.82 0.15 85); --r3:oklch(0.75 0.17 55);
+      --r4:oklch(0.68 0.20 20); --r5:oklch(0.66 0.19 305); --r6:oklch(0.74 0.15 240);
+      --radius:14px; --radius-lg:20px; --pill:999px;
+      --shadow:0 24px 50px -24px rgba(0,0,0,.95); --shadow-sm:0 12px 26px -16px rgba(0,0,0,.9);
+      --case:#1B1F29; --case-2:#12151C; --bezel:#05060A; --led:oklch(0.78 0.17 168);
+      --font-display:'Space Grotesk',system-ui,sans-serif;
+      --font-body:'Space Grotesk',system-ui,sans-serif;
+      --font-mono:'IBM Plex Mono',monospace;
+      --chrome:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0));
+      --stripes:none; --track:0; --scan:0;
+    }
+  </style>
+</helmet>
+
+<div class="app {{themeClass}}" style="position:relative;min-height:100%;background:var(--paper);color:var(--ink);font-family:var(--font-body);overflow:hidden;padding-bottom:0">
+
+  <div style="position:absolute;top:0;bottom:0;left:14px;width:98px;display:var(--stripes);pointer-events:none;opacity:.85">
+    <sc-for list="{{stripes}}" as="s" hint-placeholder-count="24">
+      <div style="height:22px;border-radius:11px;background:var(--tan);margin-bottom:19px"></div>
+    </sc-for>
+  </div>
+  <div style="position:absolute;top:0;bottom:0;right:14px;width:98px;display:var(--stripes);pointer-events:none;opacity:.85">
+    <sc-for list="{{stripes}}" as="s" hint-placeholder-count="24">
+      <div style="height:22px;border-radius:11px;background:var(--tan);margin-bottom:19px"></div>
+    </sc-for>
+  </div>
+
+  <div style="position:relative;max-width:1200px;margin:0 auto;padding:0 24px">
+
+    <header style="display:flex;align-items:center;justify-content:space-between;gap:32px;padding:26px 0 30px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:38px;height:38px;border:var(--line-w) solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;background:var(--surface)">
+          <div style="flex-grow:1;background:var(--r1)"></div>
+          <div style="flex-grow:1;background:var(--r2)"></div>
+          <div style="flex-grow:1;background:var(--r3)"></div>
+          <div style="flex-grow:1;background:var(--r4)"></div>
+          <div style="flex-grow:1;background:var(--r5)"></div>
+          <div style="flex-grow:1;background:var(--r6)"></div>
+        </div>
+        <span style="font-family:var(--font-display);font-size:21px;letter-spacing:var(--track)">ARCADE</span>
+      </div>
+      <nav style="display:flex;align-items:center;gap:28px;font-size:15px;color:var(--ink-2)">
+        <a href="#games" style="color:var(--ink-2)">Games</a>
+        <a href="#continue" style="color:var(--ink-2)">Continue</a>
+        <a href="#install" style="color:var(--ink-2)">Install</a>
+      </nav>
+      <div style="display:flex;align-items:center;border:var(--line-w) solid var(--line);border-radius:var(--pill);padding:3px;background:var(--surface);gap:3px">
+        <button onClick="{{setVintage}}" style="min-height:38px;padding:0 16px;border:0;border-radius:calc(var(--pill) - 2px);font-family:var(--font-display);font-size:11px;letter-spacing:var(--track);background:{{vBg}};color:{{vFg}}">VINTAGE</button>
+        <button onClick="{{setModern}}" style="min-height:38px;padding:0 16px;border:0;border-radius:calc(var(--pill) - 2px);font-family:var(--font-display);font-size:11px;letter-spacing:var(--track);background:{{mBg}};color:{{mFg}}">MODERN</button>
+      </div>
+    </header>
+
+    <section style="border:var(--line-w) solid var(--line);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow);overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:var(--line-w) solid var(--line);background:var(--paper-2)">
+        <div style="width:13px;height:13px;border:var(--line-w) solid var(--line);border-radius:3px;background:var(--surface);flex-shrink:0"></div>
+        <div style="flex-grow:1;height:11px;background:var(--chrome)"></div>
+        <span style="font-family:var(--font-display);font-size:11px;letter-spacing:var(--track);white-space:nowrap">SPOTLIGHT</span>
+        <div style="flex-grow:1;height:11px;background:var(--chrome)"></div>
+        <div style="width:13px;height:13px;border:var(--line-w) solid var(--line);border-radius:3px;background:var(--surface);flex-shrink:0"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0;align-items:stretch">
+
+        <div style="padding:36px 34px;background:var(--paper-2);border-right:var(--line-w) solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px">
+          <div style="position:relative;width:100%;max-width:396px">
+            <div style="position:absolute;top:-9px;left:16px;width:104px;height:22px;border:var(--line-w) solid var(--line);border-radius:10px 10px 0 0;background:var(--case-2)"></div>
+            <div style="position:absolute;top:-9px;right:16px;width:104px;height:22px;border:var(--line-w) solid var(--line);border-radius:10px 10px 0 0;background:var(--case-2)"></div>
+
+            <div style="position:relative;padding:20px 20px 26px;border:var(--line-w) solid var(--line);border-radius:16px 16px 48px 48px;background:linear-gradient(158deg,var(--case),var(--case-2));box-shadow:var(--shadow)">
+
+              <div style="padding:13px;border:var(--line-w) solid var(--line);border-radius:10px;background:var(--bezel);position:relative">
+                <div style="position:relative;width:100%;aspect-ratio:3/2;border-radius:3px;overflow:hidden;background:{{hero.art.bg}}">
+                  <sc-for list="{{hero.art.shapes}}" as="s" hint-placeholder-count="6">
+                    <div style="position:absolute;left:{{s.x}};top:{{s.y}};width:{{s.w}};height:{{s.h}};border-radius:{{s.r}};background:{{s.c}}"></div>
+                  </sc-for>
+                  <div style="position:absolute;inset:0;background:repeating-linear-gradient(to bottom,rgba(0,0,0,.28) 0 1px,transparent 1px 3px);opacity:var(--scan);pointer-events:none"></div>
+                  <div style="position:absolute;left:0;right:0;bottom:0;padding:7px 9px;background:rgba(11,12,15,.72);display:flex;align-items:center;justify-content:space-between;gap:8px">
+                    <span style="font-family:var(--font-display);font-size:12px;color:#F7F2E6;letter-spacing:var(--track)">{{hero.title}}</span>
+                    <span style="font-family:var(--font-mono);font-size:10px;color:#C9BFA8">{{counter}}</span>
+                  </div>
+                </div>
+                <div style="position:absolute;top:6px;right:9px;width:6px;height:6px;border-radius:50%;background:var(--led)"></div>
+              </div>
+
+              <div style="text-align:center;font-family:var(--font-display);font-size:10px;letter-spacing:0.22em;color:var(--ink-2);margin:11px 0 15px">POCKET ARCADE</div>
+
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+                <div style="display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px)">
+                  <div></div>
+                  <div style="background:var(--case-2);border:var(--line-w) solid var(--line);border-bottom:0;border-radius:6px 6px 0 0"></div>
+                  <div></div>
+                  <button onClick="{{prev}}" aria-label="Previous game" style="border:var(--line-w) solid var(--line);border-right:0;border-radius:6px 0 0 6px;background:var(--case-2);display:flex;align-items:center;justify-content:center;padding:0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink)"><path d="M15 5 8 12l7 7"/></svg>
+                  </button>
+                  <div style="background:var(--case-2);border-top:var(--line-w) solid var(--line);border-bottom:var(--line-w) solid var(--line)"></div>
+                  <button onClick="{{next}}" aria-label="Next game" style="border:var(--line-w) solid var(--line);border-left:0;border-radius:0 6px 6px 0;background:var(--case-2);display:flex;align-items:center;justify-content:center;padding:0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink)"><path d="m9 5 7 7-7 7"/></svg>
+                  </button>
+                  <div></div>
+                  <div style="background:var(--case-2);border:var(--line-w) solid var(--line);border-top:0;border-radius:0 0 6px 6px"></div>
+                  <div></div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;padding-bottom:6px">
+                  <div style="width:50px;height:50px;border-radius:50%;border:var(--line-w) solid var(--line);background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:15px;margin-right:-4px">A</div>
+                  <div style="width:50px;height:50px;border-radius:50%;border:var(--line-w) solid var(--line);background:var(--case-2);color:var(--ink-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:15px;margin-right:34px;margin-top:-30px">B</div>
+                </div>
+              </div>
+
+              <div style="display:flex;justify-content:center;gap:16px;margin-top:14px">
+                <div style="width:42px;height:11px;border-radius:6px;border:var(--line-w) solid var(--line);background:var(--case-2)"></div>
+                <div style="width:42px;height:11px;border-radius:6px;border:var(--line-w) solid var(--line);background:var(--case-2)"></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:9px;align-items:center">
+            <sc-for list="{{dots}}" as="d" hint-placeholder-count="5">
+              <button onClick="{{d.go}}" aria-label="Go to slide" style="width:44px;height:44px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;padding:0">
+                <span style="display:block;width:{{d.w}};height:11px;border-radius:6px;border:var(--line-w) solid var(--line);background:{{d.bg}}"></span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="padding:36px 38px;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px">
+            <span style="font-family:var(--font-display);font-size:10px;letter-spacing:0.14em;padding:7px 11px;border:var(--line-w) solid var(--line);border-radius:var(--pill);background:var(--paper-2);color:var(--ink-2)">{{hero.genre}}</span>
+            <span style="font-family:var(--font-mono);font-size:12px;color:var(--ink-3)">{{hero.live}} playing now</span>
+          </div>
+
+          <h2 style="margin:0 0 8px;font-family:var(--font-display);font-size:40px;line-height:1.06;letter-spacing:var(--track)">{{hero.title}}</h2>
+          <p style="margin:0 0 14px;font-size:17px;color:var(--accent-2);font-weight:600">{{hero.pitch}}</p>
+          <p style="margin:0 0 22px;font-size:15px;line-height:1.62;color:var(--ink-2);text-wrap:pretty">{{hero.desc}}</p>
+
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--hair);border:var(--line-w) solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:24px">
+            <div style="background:var(--surface);padding:12px 14px">
+              <div style="font-family:var(--font-mono);font-size:18px;font-weight:600">{{hero.plays}}</div>
+              <div style="font-size:11px;color:var(--ink-3);letter-spacing:0.06em;text-transform:uppercase;margin-top:3px">Plays</div>
+            </div>
+            <div style="background:var(--surface);padding:12px 14px">
+              <div style="font-family:var(--font-mono);font-size:18px;font-weight:600">{{hero.sessions}}</div>
+              <div style="font-size:11px;color:var(--ink-3);letter-spacing:0.06em;text-transform:uppercase;margin-top:3px">Avg run</div>
+            </div>
+            <div style="background:var(--surface);padding:12px 14px">
+              <div style="font-family:var(--font-mono);font-size:18px;font-weight:600">{{hero.best}}</div>
+              <div style="font-size:11px;color:var(--ink-3);letter-spacing:0.06em;text-transform:uppercase;margin-top:3px">World best</div>
+            </div>
+          </div>
+
+          <button style="align-self:flex-start;min-height:52px;padding:0 30px;border:var(--line-w) solid var(--line);border-radius:var(--radius);background:var(--accent);color:var(--on-accent);font-family:var(--font-display);font-size:15px;letter-spacing:var(--track);box-shadow:var(--shadow-sm);margin-bottom:26px">PLAY NOW</button>
+
+          <div style="border-top:var(--line-w) solid var(--line);padding-top:18px;margin-top:auto">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px">
+              <h3 style="margin:0;font-family:var(--font-display);font-size:13px;letter-spacing:var(--track)">TOP PLAYERS</h3>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3)">SEASON 3 · ENDS IN 4D 12H</span>
+            </div>
+
+            <div style="border:var(--line-w) solid var(--line);border-radius:var(--radius);overflow:hidden">
+              <sc-for list="{{board}}" as="r" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;background:{{r.bg}};border-bottom:1px solid var(--hair)">
+                  <span style="width:26px;height:26px;flex-shrink:0;border-radius:var(--radius);background:{{r.chip}};color:{{r.chipFg}};font-family:var(--font-display);font-size:11px;display:flex;align-items:center;justify-content:center">{{r.rank}}</span>
+                  <span style="flex-grow:1;font-size:14px;font-weight:500">{{r.name}}</span>
+                  <span style="font-family:var(--font-mono);font-size:14px;font-weight:600">{{r.score}}</span>
+                </div>
+              </sc-for>
+              <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;background:var(--paper-2);border-top:var(--line-w) solid var(--line)">
+                <span style="width:26px;height:26px;flex-shrink:0;border-radius:var(--radius);border:var(--line-w) solid var(--line);color:var(--ink-2);font-family:var(--font-mono);font-size:10px;display:flex;align-items:center;justify-content:center">{{youRank}}</span>
+                <span style="flex-grow:1;font-size:14px;font-weight:600">You <span style="color:var(--ink-3);font-weight:400;font-family:var(--font-mono);font-size:12px">· anon-4f2a</span></span>
+                <span style="font-family:var(--font-mono);font-size:14px;font-weight:600">{{youScore}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="games" style="padding:66px 0 0">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:20px">
+        <div>
+          <h2 style="margin:0 0 6px;font-family:var(--font-display);font-size:26px;letter-spacing:var(--track)">ALL GAMES</h2>
+          <p style="margin:0;font-size:14px;color:var(--ink-2)">{{countLabel}}</p>
+        </div>
+        <div style="position:relative;width:320px;max-width:100%">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+          <input type="text" value="{{query}}" onChange="{{onQuery}}" placeholder="Search games" style="width:100%;min-height:48px;padding:0 14px 0 40px;border:var(--line-w) solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--ink)" />
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:9px;margin-bottom:24px">
+        <sc-for list="{{cats}}" as="c" hint-placeholder-count="5">
+          <button onClick="{{c.pick}}" style="min-height:44px;padding:0 18px;border:var(--line-w) solid var(--line);border-radius:var(--pill);font-family:var(--font-display);font-size:11px;letter-spacing:var(--track);background:{{c.bg}};color:{{c.fg}}">{{c.label}}</button>
+        </sc-for>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px">
+        <sc-for list="{{list}}" as="g" hint-placeholder-count="8">
+          <div style="border:var(--line-w) solid var(--line);border-radius:var(--radius-lg);background:var(--surface);overflow:hidden;box-shadow:var(--shadow-sm);display:flex;flex-direction:column">
+            <div style="position:relative;width:100%;height:148px;background:{{g.art.bg}};border-bottom:var(--line-w) solid var(--line);overflow:hidden">
+              <sc-for list="{{g.art.shapes}}" as="s" hint-placeholder-count="6">
+                <div style="position:absolute;left:{{s.x}};top:{{s.y}};width:{{s.w}};height:{{s.h}};border-radius:{{s.r}};background:{{s.c}}"></div>
+              </sc-for>
+            </div>
+            <div style="padding:13px 14px 15px;display:flex;flex-direction:column;gap:4px;flex-grow:1">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+                <span style="font-family:var(--font-display);font-size:14px;letter-spacing:var(--track)">{{g.title}}</span>
+              </div>
+              <span style="font-size:12px;color:var(--ink-3);letter-spacing:0.06em;text-transform:uppercase">{{g.genre}}</span>
+              <span style="font-size:13px;color:var(--ink-2);margin-top:2px;text-wrap:pretty">{{g.pitch}}</span>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);margin-top:auto;padding-top:8px">{{g.plays}} plays</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+        <div style="border:var(--line-w) dashed var(--line);border-radius:var(--radius-lg);padding:48px 24px;text-align:center;background:var(--sunk)">
+          <p style="margin:0 0 6px;font-family:var(--font-display);font-size:15px">NO GAMES MATCH</p>
+          <p style="margin:0;font-size:14px;color:var(--ink-2)">Try a different word, or clear the filter.</p>
+        </div>
+      </sc-if>
+    </section>
+
+    <section id="continue" style="padding:66px 0 0">
+      <div style="margin-bottom:20px">
+        <h2 style="margin:0 0 6px;font-family:var(--font-display);font-size:26px;letter-spacing:var(--track)">PICK UP WHERE YOU LEFT OFF</h2>
+        <p style="margin:0;font-size:14px;color:var(--ink-2)">Saved on this device — no account needed.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px">
+        <sc-for list="{{saved}}" as="v" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:15px;padding:15px;border:var(--line-w) solid var(--line);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow-sm)">
+            <div style="position:relative;width:66px;height:66px;flex-shrink:0;border:var(--line-w) solid var(--line);border-radius:var(--radius);overflow:hidden;background:{{v.art.bg}}">
+              <sc-for list="{{v.art.shapes}}" as="s" hint-placeholder-count="6">
+                <div style="position:absolute;left:{{s.x}};top:{{s.y}};width:{{s.w}};height:{{s.h}};border-radius:{{s.r}};background:{{s.c}}"></div>
+              </sc-for>
+            </div>
+            <div style="flex-grow:1;min-width:0">
+              <div style="font-family:var(--font-display);font-size:14px;letter-spacing:var(--track);margin-bottom:5px">{{v.title}}</div>
+              <div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-2);margin-bottom:9px">{{v.line}}</div>
+              <div style="height:8px;border:var(--line-w) solid var(--line);border-radius:6px;background:var(--sunk);overflow:hidden">
+                <div style="height:100%;width:{{v.pct}};background:var(--accent)"></div>
+              </div>
+            </div>
+            <button style="min-height:44px;padding:0 14px;flex-shrink:0;border:var(--line-w) solid var(--line);border-radius:var(--radius);background:var(--paper-2);color:var(--ink);font-family:var(--font-display);font-size:10px;letter-spacing:var(--track)">RESUME</button>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section id="install" style="padding:66px 0 0">
+      <div style="border:var(--line-w) solid var(--line);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow);overflow:hidden;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:center">
+        <div style="padding:44px 42px">
+          <h2 style="margin:0 0 14px;font-family:var(--font-display);font-size:26px;line-height:1.2;letter-spacing:var(--track)">EVERY GAME GETS<br>ITS OWN ICON</h2>
+          <p style="margin:0 0 18px;font-size:15px;line-height:1.62;color:var(--ink-2);max-width:44ch;text-wrap:pretty">Add a game to your home screen and it installs on its own — its own icon, its own full-screen window, and it keeps working with no signal. Nothing to download from a store.</p>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink-2)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--r1);flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg>
+              <span>Android — one tap from the game screen</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink-2)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--r1);flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg>
+              <span>iPhone — Share, then Add to Home Screen</span>
+            </div>
+          </div>
+        </div>
+        <div style="padding:36px 42px 36px 0;display:flex;justify-content:center">
+          <div style="width:206px;padding:12px;border:var(--line-w) solid var(--line);border-radius:26px;background:var(--case);box-shadow:var(--shadow-sm)">
+            <div style="border:var(--line-w) solid var(--line);border-radius:16px;background:var(--paper-2);padding:16px 12px 12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 10px">
+              <sc-for list="{{icons}}" as="g" hint-placeholder-count="6">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+                  <div style="position:relative;width:46px;height:46px;border:var(--line-w) solid var(--line);border-radius:11px;overflow:hidden;background:{{g.art.bg}}">
+                    <sc-for list="{{g.art.shapes}}" as="s" hint-placeholder-count="6">
+                      <div style="position:absolute;left:{{s.x}};top:{{s.y}};width:{{s.w}};height:{{s.h}};border-radius:{{s.r}};background:{{s.c}}"></div>
+                    </sc-for>
+                  </div>
+                  <span style="font-size:8px;color:var(--ink-2);text-align:center;line-height:1.2;max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-inline-size:52px">{{g.title}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer style="padding:56px 0 44px;margin-top:56px">
+      <div style="display:flex;height:9px;border:var(--line-w) solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:22px">
+        <div style="flex-grow:1;background:var(--r1)"></div>
+        <div style="flex-grow:1;background:var(--r2)"></div>
+        <div style="flex-grow:1;background:var(--r3)"></div>
+        <div style="flex-grow:1;background:var(--r4)"></div>
+        <div style="flex-grow:1;background:var(--r5)"></div>
+        <div style="flex-grow:1;background:var(--r6)"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
+        <span style="font-family:var(--font-display);font-size:11px;letter-spacing:var(--track);color:var(--ink-2)">ARCADE — SMALL GAMES, NO INSTALL</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3)">Made for the browser · 2026</span>
+      </div>
+    </footer>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"theme":{"editor":"enum","options":["vintage","modern"],"default":"vintage","section":"Style"},"$preview":{"width":1440,"height":3000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const A = (bg, shapes) => ({ bg, shapes });
+    const S = (x, y, w, h, r, c) => ({ x, y, w, h, r, c });
+
+    const GAMES = [
+      { id: '2048', title: '2048', genre: 'Puzzle', pitch: 'Slide, merge, repeat.',
+        desc: 'The one everybody already knows how to play. Four-by-four grid, two starting tiles, and one more shot at finally seeing 4096.',
+        plays: '128,940', sessions: '4m 12s', best: '186,432', live: '1,204',
+        art: A('#F3E9DA', [ S('6%','8%','41%','40%','7px','#E9DDC7'), S('53%','8%','41%','40%','7px','#F0D6A8'),
+          S('6%','54%','41%','40%','7px','#F5821F'), S('53%','54%','41%','40%','7px','#E03A3E'),
+          S('60%','16%','12%','12%','3px','#FFFFFF'), S('14%','62%','12%','12%','3px','#FFF3E2') ]) },
+      { id: 'blokku', title: 'Blokku', genre: 'Arcade', pitch: 'Stack it. Clear it. Sweat it.',
+        desc: 'Seven falling shapes, one narrow well, and a drop speed that stops being polite somewhere around level nine.',
+        plays: '96,310', sessions: '6m 48s', best: '412,880', live: '873',
+        art: A('#1E1810', [ S('40%','10%','22%','11%','2px','#963D97'), S('62%','10%','22%','11%','2px','#963D97'),
+          S('14%','56%','23%','11%','2px','#61BB46'), S('37%','45%','23%','11%','2px','#61BB46'),
+          S('37%','56%','23%','11%','2px','#61BB46'), S('60%','67%','26%','11%','2px','#009DDC'),
+          S('14%','67%','46%','11%','2px','#FDB827'), S('14%','78%','72%','11%','2px','#E03A3E') ]) },
+      { id: 'snake', title: 'Neon Snake', genre: 'Arcade', pitch: 'Do not bite yourself.',
+        desc: 'A grid, a growing tail, and exactly one bad decision between you and a personal best.',
+        plays: '74,655', sessions: '3m 05s', best: '9,840', live: '512',
+        art: A('#0F2113', [ S('16%','62%','12%','12%','3px','#61BB46'), S('28%','62%','12%','12%','3px','#61BB46'),
+          S('40%','62%','12%','12%','3px','#61BB46'), S('40%','48%','12%','12%','3px','#7CD45E'),
+          S('40%','34%','12%','12%','3px','#7CD45E'), S('52%','34%','12%','12%','3px','#9BE87F'),
+          S('72%','20%','11%','11%','6px','#E03A3E') ]) },
+      { id: 'brick', title: 'Brick Bash', genre: 'Arcade', pitch: 'One ball. Forty bricks.',
+        desc: 'Angle the paddle, break the wall, and try to stop the last brick from ruining a perfect run.',
+        plays: '61,022', sessions: '5m 21s', best: '77,150', live: '349',
+        art: A('#161A29', [ S('10%','14%','18%','8%','2px','#E03A3E'), S('30%','14%','18%','8%','2px','#F5821F'),
+          S('50%','14%','18%','8%','2px','#FDB827'), S('70%','14%','20%','8%','2px','#61BB46'),
+          S('10%','24%','18%','8%','2px','#009DDC'), S('30%','24%','18%','8%','2px','#963D97'),
+          S('50%','24%','18%','8%','2px','#E03A3E'), S('70%','24%','20%','8%','2px','#F5821F'),
+          S('56%','58%','7%','10%','50%','#FFFFFF'), S('36%','82%','28%','7%','4px','#EDE3D2') ]) },
+      { id: 'klondike', title: 'Klondike', genre: 'Cards', pitch: 'The patient one.',
+        desc: 'Solitaire as it was on every office machine in 1994, minus the office and the machine.',
+        plays: '58,470', sessions: '9m 33s', best: '14,220', live: '688',
+        art: A('#2C6B4E', [ S('8%','16%','20%','30%','3px','#F7F2E6'), S('32%','16%','20%','30%','3px','#F7F2E6'),
+          S('56%','16%','20%','30%','3px','#E03A3E'), S('8%','54%','20%','30%','3px','#F7F2E6'),
+          S('20%','62%','20%','30%','3px','#F7F2E6'), S('32%','70%','20%','30%','3px','#1E1810') ]) },
+      { id: 'mines', title: 'Mine Hunt', genre: 'Puzzle', pitch: 'Count, flag, breathe.',
+        desc: 'Numbers, neighbours and nerve.', plays: '43,880', sessions: '7m 02s', best: '6,410', live: '241',
+        art: A('#D6C9AE', [ S('10%','12%','20%','22%','3px','#EDE3D2'), S('34%','12%','20%','22%','3px','#EDE3D2'),
+          S('58%','12%','20%','22%','3px','#EDE3D2'), S('10%','38%','20%','22%','3px','#EDE3D2'),
+          S('34%','38%','20%','22%','3px','#E03A3E'), S('58%','38%','20%','22%','3px','#EDE3D2'),
+          S('10%','64%','20%','22%','3px','#EDE3D2'), S('34%','64%','20%','22%','3px','#EDE3D2'),
+          S('58%','64%','20%','22%','3px','#EDE3D2') ]) },
+      { id: 'sudoku', title: 'Sudoku Daily', genre: 'Puzzle', pitch: 'A new grid every morning.',
+        desc: 'One puzzle a day.', plays: '39,140', sessions: '11m 40s', best: '3,980', live: '905',
+        art: A('#F3E9DA', [ S('10%','10%','80%','2%','1px','#BCAB90'), S('10%','40%','80%','2%','1px','#2B2318'),
+          S('10%','70%','80%','2%','1px','#BCAB90'), S('10%','10%','2%','82%','1px','#BCAB90'),
+          S('39%','10%','2%','82%','1px','#2B2318'), S('68%','10%','2%','82%','1px','#BCAB90'),
+          S('16%','18%','9%','12%','2px','#F5821F'), S('45%','48%','9%','12%','2px','#009DDC'),
+          S('74%','76%','9%','12%','2px','#E03A3E') ]) },
+      { id: 'word', title: 'Word Ladder', genre: 'Word', pitch: 'Five letters, six tries.',
+        desc: 'Change one letter at a time.', plays: '35,700', sessions: '4m 55s', best: '2,140', live: '1,510',
+        art: A('#EFE2CB', [ S('8%','62%','16%','20%','3px','#BCAB90'), S('26%','52%','16%','20%','3px','#FDB827'),
+          S('44%','42%','16%','20%','3px','#61BB46'), S('62%','32%','16%','20%','3px','#61BB46'),
+          S('80%','22%','14%','20%','3px','#F5821F') ]) },
+      { id: 'rhythm', title: 'Tap Rhythm', genre: 'Arcade', pitch: 'Four lanes, no mercy.',
+        desc: 'Hit the beat.', plays: '28,905', sessions: '3m 48s', best: '998,120', live: '430',
+        art: A('#191227', [ S('12%','0%','16%','100%','0px','#241A38'), S('32%','0%','16%','100%','0px','#2E2145'),
+          S('52%','0%','16%','100%','0px','#241A38'), S('72%','0%','16%','100%','0px','#2E2145'),
+          S('12%','30%','16%','7%','2px','#009DDC'), S('32%','52%','16%','7%','2px','#963D97'),
+          S('52%','18%','16%','7%','2px','#E03A3E'), S('72%','66%','16%','7%','2px','#FDB827'),
+          S('8%','84%','84%','4%','2px','#F7F2E6') ]) },
+      { id: 'bubble', title: 'Bubble Pop', genre: 'Casual', pitch: 'Match three, clear the board.',
+        desc: 'Aim and shoot.', plays: '22,410', sessions: '6m 12s', best: '54,300', live: '167',
+        art: A('#E4EFF3', [ S('12%','14%','20%','20%','50%','#E03A3E'), S('36%','14%','20%','20%','50%','#FDB827'),
+          S('60%','14%','20%','20%','50%','#009DDC'), S('24%','38%','20%','20%','50%','#61BB46'),
+          S('48%','38%','20%','20%','50%','#963D97'), S('36%','62%','20%','20%','50%','#F5821F'),
+          S('40%','86%','12%','12%','50%','#2B2318') ]) }
+    ];
+
+    const BOARDS = {
+      '2048':     [['mira_88','186,432'],['tokyodrift','171,908'],['n0va','164,220'],['pixelpham','152,776'],['bluebird','148,004']],
+      'blokku':   [['r3tr0','412,880'],['kaz.','388,140'],['sunny.lee','361,520'],['quocanh','344,908'],['mochi','330,116']],
+      'snake':    [['n0va','9,840'],['mira_88','9,112'],['grid_lock','8,760'],['tokyodrift','8,204'],['pixelpham','7,988']],
+      'brick':    [['kaz.','77,150'],['bluebird','74,330'],['mochi','71,002'],['r3tr0','68,415'],['sunny.lee','65,780']],
+      'klondike': [['sunny.lee','14,220'],['quocanh','13,905'],['mira_88','13,440'],['mochi','12,870'],['grid_lock','12,330']]
+    };
+    const YOU = { '2048': ['#142','96,120'], 'blokku': ['#318','188,400'], 'snake': ['#77','6,410'],
+                  'brick': ['#204','41,880'], 'klondike': ['#59','10,240'] };
+    const SAVED = [
+      { id: '2048', line: 'Score 96,120 - best tile 512', pct: '64%' },
+      { id: 'blokku', line: 'Level 12 - 188,400 pts', pct: '41%' },
+      { id: 'klondike', line: '38 of 52 cards home', pct: '73%' }
+    ];
+
+    const FEATURED = ['2048', 'blokku', 'snake', 'brick', 'klondike'];
+    const byId = (id) => GAMES.find((g) => g.id === id);
+
+    const theme = this.state.theme || this.props.theme || 'vintage';
+    const idx = this.state.idx || 0;
+    const query = this.state.query || '';
+    const cat = this.state.cat || 'All';
+
+    const hero = byId(FEATURED[idx]);
+    const rows = BOARDS[hero.id];
+    const pad = (n) => (n < 10 ? '0' + n : '' + n);
+
+    const chipBg = ['var(--r2)', 'var(--tan)', 'var(--r3)'];
+    const board = rows.map((r, i) => ({
+      rank: i + 1, name: r[0], score: r[1],
+      bg: i % 2 === 0 ? 'var(--surface)' : 'var(--sunk)',
+      chip: i < 3 ? chipBg[i] : 'var(--paper-2)',
+      chipFg: i < 3 ? 'var(--on-accent)' : 'var(--ink-2)'
+    }));
+
+    const q = query.trim().toLowerCase();
+    const list = GAMES.filter((g) =>
+      (cat === 'All' || g.genre === cat) &&
+      (q === '' || g.title.toLowerCase().includes(q) || g.genre.toLowerCase().includes(q))
+    );
+
+    const cats = ['All', 'Puzzle', 'Arcade', 'Cards', 'Word', 'Casual'].map((label) => ({
+      label,
+      bg: label === cat ? 'var(--accent)' : 'var(--surface)',
+      fg: label === cat ? 'var(--on-accent)' : 'var(--ink-2)',
+      pick: () => this.setState({ cat: label })
+    }));
+
+    return {
+      themeClass: theme === 'modern' ? 't-modern' : 't-vintage',
+      stripes: Array.from({ length: 26 }, (_, i) => ({ i })),
+      setVintage: () => this.setState({ theme: 'vintage' }),
+      setModern: () => this.setState({ theme: 'modern' }),
+      vBg: theme === 'vintage' ? 'var(--ink)' : 'transparent',
+      vFg: theme === 'vintage' ? 'var(--paper)' : 'var(--ink-2)',
+      mBg: theme === 'modern' ? 'var(--ink)' : 'transparent',
+      mFg: theme === 'modern' ? 'var(--paper)' : 'var(--ink-2)',
+
+      hero,
+      counter: pad(idx + 1) + ' / ' + pad(FEATURED.length),
+      prev: () => this.setState({ idx: (idx - 1 + FEATURED.length) % FEATURED.length }),
+      next: () => this.setState({ idx: (idx + 1) % FEATURED.length }),
+      dots: FEATURED.map((id, i) => ({
+        w: i === idx ? '30px' : '11px',
+        bg: i === idx ? 'var(--accent)' : 'var(--surface)',
+        go: () => this.setState({ idx: i })
+      })),
+
+      board,
+      youRank: YOU[hero.id][0],
+      youScore: YOU[hero.id][1],
+
+      query,
+      onQuery: (e) => this.setState({ query: e.target.value }),
+      cats,
+      list,
+      isEmpty: list.length === 0,
+      countLabel: list.length === GAMES.length
+        ? GAMES.length + ' titles, more every month'
+        : list.length + ' of ' + GAMES.length + ' titles',
+
+      saved: SAVED.map((s) => ({ ...s, title: byId(s.id).title, art: byId(s.id).art })),
+      icons: GAMES.slice(0, 6)
+    };
+  }
+}
+</script>
+</body>
+</html>

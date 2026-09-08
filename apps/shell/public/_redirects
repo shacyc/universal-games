@@ -1,0 +1,4 @@
+# Cloudflare Pages serves existing static assets first, so /g/<slug>/ resolves
+# to that game's own index.html before this rule applies. This fallback exists
+# only for the hub's client-side routes (e.g. /play/2048 opened directly).
+/*  /index.html  200

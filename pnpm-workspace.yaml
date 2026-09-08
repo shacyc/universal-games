@@ -1,0 +1,9 @@
+packages:
+  - 'apps/*'
+  - 'games/*'
+  - 'packages/*'
+
+# esbuild ships its binary as an optional platform package; its postinstall
+# only validates that binary. Approved so `pnpm install` stays non-interactive.
+allowBuilds:
+  esbuild: true

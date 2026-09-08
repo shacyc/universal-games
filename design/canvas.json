@@ -1,0 +1,13 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1440, "h": 3000, "title": "Home — desktop", "is_interactive": true },
+    { "file": "Mobile.dc.html", "x": 1560, "y": 0, "w": 390, "h": 3750, "title": "Home — mobile", "is_interactive": true }
+  ],
+  "annotations": [
+    { "id": "live-controls", "x": 0, "y": -250, "w": 640,
+      "text": "Everything here is clickable.\n\n- The D-pad's left/right arms drive the carousel (dots below work too)\n- VINTAGE / MODERN in the header swaps the whole theme live\n- Search and the category chips filter the grid for real" },
+    { "id": "faked-data", "x": 690, "y": -250, "w": 750,
+      "text": "2048 is the only real entry — title and tagline come from catalog.json. The other nine games, all scores, player handles and play counts are invented to make the layout look true to life.\n\nHeads up: leaderboards and a second game are v0 out-of-scope in CLAUDE.md. This designs where the hub is going, not what ships next." }
+  ],
+  "launch": { "view": "canvas" }
+}

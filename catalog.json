@@ -1,0 +1,13 @@
+{
+  "v": 1,
+  "games": [
+    {
+      "slug": "2048",
+      "title": "2048",
+      "tagline": "Slide, merge, repeat.",
+      "themeColor": "#faf8ef",
+      "backgroundColor": "#faf8ef",
+      "devPort": 5174
+    }
+  ]
+}

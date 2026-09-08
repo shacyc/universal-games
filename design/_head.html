@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    * { box-sizing: border-box; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-2); text-decoration: underline; }
+    button { font: inherit; cursor: pointer; }
+    input { font: inherit; }
+    input::placeholder { color: var(--ink-3); }
+    input:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .t-vintage {
+      --paper:#EDE3D2; --paper-2:#E3D7C0; --surface:#F5EFE2; --sunk:#E7DCC8;
+      --tan:#BCAB90; --tan-2:#A08D6F;
+      --ink:#2B2318; --ink-2:#6E5F48; --ink-3:#9C8B70;
+      --line:#2B2318; --line-w:2px; --hair:#C9B99E;
+      --accent:#F5821F; --accent-2:#E03A3E; --on-accent:#2B2318;
+      --r1:#61BB46; --r2:#FDB827; --r3:#F5821F; --r4:#E03A3E; --r5:#963D97; --r6:#009DDC;
+      --radius:5px; --radius-lg:8px; --pill:5px;
+      --shadow:5px 5px 0 var(--ink); --shadow-sm:3px 3px 0 var(--ink);
+      --case:#E7DCC5; --case-2:#CFC0A2; --bezel:#4A4034; --led:#61BB46;
+      --font-display:'Silkscreen','Courier New',monospace;
+      --font-body:'IBM Plex Sans',system-ui,sans-serif;
+      --font-mono:'IBM Plex Mono','Courier New',monospace;
+      --chrome:repeating-linear-gradient(to bottom,var(--ink) 0 1px,transparent 1px 3px);
+      --stripes:block; --track:0.04em; --scan:0.16;
+    }
+    .t-modern {
+      --paper:#0B0C0F; --paper-2:#121419; --surface:#131620; --sunk:#0E1015;
+      --tan:#242833; --tan-2:#333949;
+      --ink:#F3F5F8; --ink-2:#A2ABBB; --ink-3:#69737F;
+      --line:#252A35; --line-w:1px; --hair:#20242E;
+      --accent:oklch(0.74 0.17 268); --accent-2:oklch(0.78 0.17 168); --on-accent:#0B0C0F;
+      --r1:oklch(0.78 0.17 150); --r2:oklch(0.82 0.15 85); --r3:oklch(0.75 0.17 55);
+      --r4:oklch(0.68 0.20 20); --r5:oklch(0.66 0.19 305); --r6:oklch(0.74 0.15 240);
+      --radius:14px; --radius-lg:20px; --pill:999px;
+      --shadow:0 24px 50px -24px rgba(0,0,0,.95); --shadow-sm:0 12px 26px -16px rgba(0,0,0,.9);
+      --case:#1B1F29; --case-2:#12151C; --bezel:#05060A; --led:oklch(0.78 0.17 168);
+      --font-display:'Space Grotesk',system-ui,sans-serif;
+      --font-body:'Space Grotesk',system-ui,sans-serif;
+      --font-mono:'IBM Plex Mono',monospace;
+      --chrome:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0));
+      --stripes:none; --track:0; --scan:0;
+    }
+  </style>
+</helmet>
