@@ -36,7 +36,7 @@ agent working on another game in parallel.
 
 Each gate is a state the work cannot leave until the condition holds.
 
-**Gate 0 — Brief frozen.** `brief.md` has no `TODO` left, §10 has no open
+**Gate 0 — Brief frozen.** `brief.md` has no `TODO` left, its §11 has no open
 question, and the header says `Status: Frozen` with a date. The owner is the
 only one who can freeze it.
 *Nothing before this gate is code.* If the owner asks for a game and there is no

@@ -36,6 +36,9 @@ export interface HostCore {
   subscribeEvents(slug: string, listener: (event: HostEvent) => void): () => void;
   setMuted(isMuted: boolean): void;
   isMuted(): boolean;
+  /** The shell owns the language picker, exactly as it owns mute. */
+  setLocale(locale: string): void;
+  locale(): string;
 }
 
 export function createHost(deps: HostDeps): HostCore {
@@ -50,6 +53,9 @@ export function createHost(deps: HostDeps): HostCore {
   const covered = new Map<string, number>();
   let nextRunId = 1;
   let muted = deps.context?.isMuted ?? false;
+  // Read once: navigator.language cannot change mid-session, and re-reading it
+  // per context() would quietly undo a locale the player picked in the shell.
+  let locale = deps.context?.locale ?? navigator.language;
 
   /** `target` undefined = every game; a slug = only that game. */
   function emit(event: HostEvent, target?: string): void {
@@ -169,7 +175,7 @@ export function createHost(deps: HostDeps): HostCore {
     context(slug) {
       return {
         slug,
-        locale: deps.context?.locale ?? navigator.language,
+        locale,
         isInstalled: deps.context?.isInstalled ?? detectInstalled(),
         isMuted: muted,
       };
@@ -188,6 +194,14 @@ export function createHost(deps: HostDeps): HostCore {
     },
 
     isMuted: () => muted,
+
+    setLocale(next) {
+      if (next === locale) return;
+      locale = next;
+      emit({ v: PROTOCOL_VERSION, type: 'locale', data: { locale: next } });
+    },
+
+    locale: () => locale,
   };
 }
 

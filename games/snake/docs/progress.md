@@ -35,6 +35,9 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
       backgrounded tab, and `resume` on a stopped game is a no-op.
 - [ ] `gameStart` once per run, `gameOver` once per run, verified in the console.
 - [ ] `prefers-reduced-motion` shortens animations to near-zero.
+- [ ] Every locale in `SUPPORTED` renders with no missing key and no clipped
+      control at 320px, and switching language in the shell re-renders the game
+      without a reload.
 - [ ] No `localStorage`, no `fetch`, no direct IndexedDB anywhere in `src/`.
 - [ ] No files changed outside `games/snake/`, `catalog.json` and the one
       `demoData.ts` deletion.
@@ -44,6 +47,19 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-08 — Multi-language became a platform rule; brief gains §7
+
+- **Did:** No game code. The owner added i18n as a v0.1 requirement, so it
+  landed as a platform decision (`docs/sdk-decisions.md` §15) rather than in
+  this game: the shell owns the language, the game owns its words. Filled the
+  new `brief.md` §7 with the string keys this game needs. Brief sections after
+  §6 renumbered, so §10 open questions is now §11.
+- **Verified:** `pnpm --filter @platform/sdk test` — 58 pass, including the new
+  `watchLocale` and `resolveLocale` cases. `pnpm typecheck` clean.
+- **Next:** Unchanged — the owner answers Q1–Q7 and freezes the brief. §7 needs
+  no answer from them; it follows from the platform rule.
+- **Blocked by:** Q1–Q7, same as before.
 
 ### 2026-09-08 — Docs set up; brief blocked on seven undefined cases
 
@@ -59,7 +75,7 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
   not exist. Confirmed `snake` is in `apps/shell/src/demo/demoData.ts:45` and in
   `SPOTLIGHT`, so the placeholder deletion is required at registration. Port
   5175 is free in `catalog.json`.
-- **Next:** Owner answers Q1–Q7 in `brief.md` §10, then the brief is frozen and
+- **Next:** Owner answers Q1–Q7 in `brief.md` §11, then the brief is frozen and
   Gate 1 starts. No code before that.
 - **Blocked by:** Q1–Q7. Q1 (the `level` term in the score formula) is the hard
   blocker — it is in the pure core and every scoring test depends on it.
@@ -72,7 +88,7 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 
 ## 5. Open questions for the owner
 
-Full text and proposed answers are in `brief.md` §10. Summarised:
+Full text and proposed answers are in `brief.md` §11. Summarised:
 
 | # | Question | Assumed for now | Answer | Status |
 | --- | --- | --- | --- | --- |

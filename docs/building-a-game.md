@@ -61,7 +61,7 @@ hand, look at `games/<slug>/docs/`; exactly one of these is true:
 | | You see | You are at | Go to |
 | --- | --- | --- | --- |
 | **A** | no `games/<slug>/docs/` directory | Gate 0 | Step 4A — draft the documents. **No code.** |
-| **B** | `brief.md` with `Status: Draft`, or any `TODO` or unanswered §10 question left in it | Gate 0 | Step 4A, resuming the interview from what is missing |
+| **B** | `brief.md` with `Status: Draft`, or any `TODO` or unanswered §11 question left in it | Gate 0 | Step 4A, resuming the interview from what is missing |
 | **C** | `brief.md` `Frozen`, `plan.md` `Draft` | Gate 1 | Step 4B — write the plan and the test plan. **No code.** |
 | **D** | `plan.md` `Approved` | Gate 2 | Step 4C — implement |
 | **E** | `progress.md` says `Shipped` | done | ask the owner what they actually want; do not reopen a shipped game on your own |
@@ -76,7 +76,7 @@ Treat that file as the brief, and your first commit moves it — `git mv`, so th
 history follows — to `games/<slug>/docs/brief.md`, restructured into the
 template shape but with **no rule changed**, plus the other three templates.
 Restructuring is not rewriting: anything the old spec left undefined becomes an
-open question in §10, never a decision you made quietly.
+open question in its §11, never a decision you made quietly.
 
 That move can break a path in a file you are not allowed to edit. Run
 `grep -rn "docs/game-<slug>.md" --include='*.md' --include='*.ts' .` afterwards
@@ -97,13 +97,13 @@ well:
 - **Batch the questions.** Not one message per section.
 - **Push hardest on the four sections agents habitually leave vague**, because a
   vague answer here becomes a bug three days later:
-  - §2 Rules — every scoring rule written as a formula, not a description.
-  - §5 Persistence — what is deliberately *not* saved, and why.
-  - §6 Monetisation — the exact moment of each ad, and explicit confirmation
+  - brief §2 Rules — every scoring rule written as a formula, not a description.
+  - brief §5 Persistence — what is deliberately *not* saved, and why.
+  - brief §6 Monetisation — the exact moment of each ad, and explicit confirmation
     that declining a rewarded ad changes nothing.
-  - §9 Acceptance criteria — the edge cases, named. If the owner cannot name
+  - brief §10 Acceptance criteria — the edge cases, named. If the owner cannot name
     them, propose the ones the genre always has.
-- **Force §8 Out of scope to have at least three entries.** That section is what
+- **Force brief §9 Out of scope to have at least three entries.** That section is what
   stops scope creep during implementation.
 - If the owner asks for something the SDK cannot do, say so immediately, quote
   the surface from `docs/platform-sdk.md`, and offer the nearest thing that
@@ -266,6 +266,11 @@ These are non-negotiable. A review that finds any of them fails the game.
 10. **`load()` returns `unknown`.** Validate at the boundary through
     `createSaveSlot`. A save written by an older build of your game is a case to
     handle, not a crash.
+11. **No user-facing string is written in a `.ts` or `.html` file.** Every word
+    the player reads comes from `src/i18n/`, keyed. The platform owns the
+    language and the game owns its words — read it with `watchLocale`, never
+    `navigator.language`. A hardcoded `'Game over'` is the one that survives to
+    launch, because it looks finished.
 
 ---
 
@@ -276,7 +281,7 @@ anything else.
 
 ```ts
 import { createClient } from '@platform/sdk/client';
-import { createSaveSlot, watchMute } from '@platform/sdk/game';
+import { createSaveSlot, watchMute, watchLocale } from '@platform/sdk/game';
 
 const sdk = createClient({ slug: '<slug>' });
 
@@ -293,7 +298,8 @@ sdk.gameStart();                    // opens a run
 sdk.gameOver({ score });            // closes it, once
 sdk.track('event', { ... });        // strings, numbers, booleans only
 
-sdk.onMuteChange(fn); sdk.onPause(fn); sdk.onResume(fn);   // each returns an unsubscribe
+sdk.onMuteChange(fn); sdk.onLocaleChange(fn);              // each returns an unsubscribe
+sdk.onPause(fn); sdk.onResume(fn);
 ```
 
 Reserved for later milestones and **not implemented** — do not call, do not
@@ -352,6 +358,9 @@ games/<slug>/
   src/main.ts                   boot, loop, SW registration
   src/session.ts                every SDK call in this file — nothing else touches sdk
   src/sw.ts                     scoped to /g/<slug>/
+  src/i18n/en.ts                the fallback strings — the language you author in
+  src/i18n/<locale>.ts          one per additional locale, typed against en.ts
+  src/i18n/index.ts             SUPPORTED + the lookup
   src/styles.css                your look; imports nothing from the shell
   src/<core>.ts                 pure game rules, no DOM — this is what you unit-test
   test/<core>.test.ts           vitest
@@ -365,6 +374,53 @@ dev port. Three details that break silently if you get them wrong:
 - `index.html` links must be absolute (`/g/<slug>/manifest.webmanifest`), not
   relative — the game is also served under the shell's iframe.
 - `src/sw.ts` must return early for anything outside `/g/<slug>/`.
+
+### Strings
+
+Every word the player reads lives in `src/i18n/`, one module per locale, keyed:
+
+```ts
+// src/i18n/en.ts — the fallback, and the language you author in.
+export const en = {
+  game_over: 'Game over',
+  new_game: 'New game',
+  watch_ad: 'Watch ad',
+  score: 'Score',
+} as const;
+
+export type Strings = typeof en;
+```
+
+```ts
+// src/i18n/index.ts
+import { en } from './en.js';
+import { vi } from './vi.js';
+
+export const SUPPORTED = ['en', 'vi'] as const;   // first entry is the fallback
+export const STRINGS: Record<string, Strings> = { en, vi };
+```
+
+`vi.ts` is typed as `Strings`, so a key you forget to translate is a type error
+rather than a blank on screen. Wire it up once, in `session.ts`, with
+`watchLocale(sdk, SUPPORTED, ...)` — it delivers the current locale first and
+then every change, already resolved from `en-US` or `vi-VN` down to what you
+ship. Re-render on change; do not require a reload.
+
+Three rules that are easy to get wrong:
+
+- **No concatenation.** `'Score: ' + n` cannot be translated into a language
+  that orders it differently. Make the whole sentence one entry, as a function:
+
+  ```ts
+  score: (n: number) => `Score: ${n}`,   // vi.ts: (n) => `Điểm: ${n}`
+  ```
+
+- **Format numbers with `Intl.NumberFormat(locale)`**, not `toLocaleString()`
+  with no argument — the latter follows the device, not the platform's locale,
+  so a score reads one way and the UI around it another.
+- **Layout must survive a longer word.** German and Vietnamese run
+  noticeably longer than English; a button sized to fit `New game` exactly will
+  clip. Test at 320px in every locale you ship.
 
 ### `session.ts` is mandatory
 
@@ -520,6 +576,9 @@ least once.
       backgrounded tab, and `resume` on a stopped game is a no-op.
 - [ ] `gameStart` once per run, `gameOver` once per run, verified in the console.
 - [ ] `prefers-reduced-motion` shortens animations to near-zero.
+- [ ] Every locale in `SUPPORTED` renders with no missing key and no clipped
+      control at 320px, and switching language in the shell re-renders the game
+      without a reload.
 - [ ] No `localStorage`, no `fetch`, no direct IndexedDB anywhere in `src/`.
 - [ ] No files changed outside `games/<slug>/`, `catalog.json` and the one
       `demoData.ts` deletion.
@@ -565,6 +624,11 @@ Each of these looks fine locally and breaks the platform:
 - Leaving the placeholder entry in `demoData.ts`, shipping two cards.
 - Reusing another game's `devPort`.
 - Adding a method to the SDK to make one game easier.
+- One `'Game over'` left in a `.ts` file. It looks finished, so it ships, and it
+  is the string a player in another language sees at the most memorable moment
+  of the run.
+- Building a sentence by concatenation, which cannot be reordered by a
+  translator.
 - Writing code before the brief is frozen, then treating the code as the spec.
 - Finishing a session without a `progress.md` entry. The next session — or the
   next agent — starts by guessing, and guesses wrong.

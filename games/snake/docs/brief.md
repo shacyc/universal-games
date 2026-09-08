@@ -1,6 +1,6 @@
 # Neon Snake — Brief
 
-Restructured from `docs/game-snake.md` (moved here unchanged in rules; see §10
+Restructured from `docs/game-snake.md` (moved here unchanged in rules; see §11
 for what that spec left undefined). Nothing in §2–§9 is new — it is the same
 spec in the shape `docs/templates/game-docs/brief.md` asks for.
 
@@ -11,7 +11,7 @@ spec in the shape `docs/templates/game-docs/brief.md` asks for.
 | Dev port | `5175` |
 | Genre | Arcade |
 | Milestone | v0.1 |
-| Status | **Draft** — blocked by §10 |
+| Status | **Draft** — blocked by §11 |
 | Owner | shacyc |
 | Frozen on | — |
 
@@ -112,7 +112,24 @@ once, after the revive has been used or declined.
 Analytics via `sdk.track`: `run_start`, `run_end` (score, length, duration_ms),
 `revive_offered`, `revive_taken`, `best_beaten`, `paused` (reason).
 
-## 7. Screens
+## 7. Copy and locales
+
+Every word the player reads is a translated key — none of it is written into a
+`.ts` file. List what this game ships:
+
+| | |
+| --- | --- |
+| Locales | `en`, `vi` (`en` is the fallback and the authoring language) |
+| Longest-string risk | the game-over overlay's two buttons, side by side |
+
+Strings this game needs: `swipe_to_start`, `tap_to_resume`, `game_over`,
+`new_game`, `continue_with_ad`, and the two interpolated ones — `score(n)` and
+`best(n)` — as functions, never concatenation.
+
+The 3-2-1 countdown is digits and needs no translation. Scores render through
+`Intl.NumberFormat(locale)`, not `toLocaleString()` with no argument.
+
+## 8. Screens
 
 - Header: score, best.
 - Board.
@@ -124,7 +141,7 @@ Analytics via `sdk.track`: `run_start`, `run_end` (score, length, duration_ms),
 Pausing freezes the tick clock and shows the paused overlay; resuming runs a
 3-2-1 countdown. Never resume straight into motion.
 
-## 8. Explicitly out of scope
+## 9. Explicitly out of scope
 
 - No settings screen, no tutorial, no difficulty picker.
 - No sound in v0 — but the mute state is read and reflected, ready for when
@@ -132,7 +149,7 @@ Pausing freezes the tick clock and shows the paused overlay; resuming runs a
 - No on-screen d-pad, no tap-to-turn.
 - No leaderboard, no accounts, no shop (milestone rule, `CLAUDE.md`).
 
-## 9. Acceptance criteria
+## 10. Acceptance criteria
 
 - Unit tests on a pure `step(state, rng)` with no DOM: growth on food,
   self-collision at the neck vs the tail (moving into the cell the tail is about
@@ -145,7 +162,7 @@ Pausing freezes the tick clock and shows the paused overlay; resuming runs a
 - Runs both standalone at `/g/snake/` and embedded in the hub.
 - Installs to the Android home screen with its own icon; plays offline.
 
-## 10. Open questions
+## 11. Open questions
 
 These block freezing the brief. Each one is a case the pure core has to decide
 and a unit test has to pin, so guessing is not free.

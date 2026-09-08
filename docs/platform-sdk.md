@@ -51,6 +51,10 @@ interface PlatformSDK {
 
   // analytics
   track(event: string, props?: Record<string, string | number | boolean>): void;
+
+  // platform state the game subscribes to — never owns
+  onMuteChange(listener: (isMuted: boolean) => void): () => void;
+  onLocaleChange(listener: (locale: string) => void): () => void;
 }
 
 interface GameContext {
@@ -92,6 +96,17 @@ must call it exactly once per finished run.
 
 **Sound.** Games read `isMuted` from context and subscribe to changes; the
 platform owns the mute toggle so it is consistent across every game.
+
+**Language.** The same shape, for the same reason: the shell owns the picker,
+games read `locale` and subscribe to changes. `locale` is a BCP 47 tag
+(`en`, `en-US`, `vi`), so a game resolves it against the locales it ships —
+use `watchLocale` from `@platform/sdk/game`, which delivers the current value
+first and then every change, already resolved. A game never reads
+`navigator.language`.
+
+Translation itself does **not** cross the wire: each game ships its own strings
+under `src/i18n/`. See decision 15 in `docs/sdk-decisions.md` for why the SDK
+has no `t()`.
 
 ## Install prompt ownership
 

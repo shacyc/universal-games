@@ -24,7 +24,7 @@ export interface CreateClientOptions {
 type Listeners = { [K in HostEventType]: Set<(payload: never) => void> };
 
 export function createClient(options: CreateClientOptions): PlatformSDK {
-  const listeners: Listeners = { mute: new Set(), pause: new Set(), resume: new Set() };
+  const listeners: Listeners = { mute: new Set(), locale: new Set(), pause: new Set(), resume: new Set() };
 
   const transport: ClientTransport = options.transport ?? selectTransport(options.slug);
   const rpc = new Rpc((request) => transport.send(request));
@@ -83,6 +83,7 @@ export function createClient(options: CreateClientOptions): PlatformSDK {
       notify('track', props === undefined ? { event } : { event, props }),
 
     onMuteChange: (listener) => subscribe(listeners, 'mute', listener),
+    onLocaleChange: (listener) => subscribe(listeners, 'locale', listener),
     onPause: (listener) => subscribe(listeners, 'pause', listener),
     onResume: (listener) => subscribe(listeners, 'resume', listener),
   };
@@ -143,7 +144,10 @@ function subscribe<T extends HostEventType>(
 function dispatch(listeners: Listeners, event: HostEvent): void {
   for (const listener of listeners[event.type]) {
     const fn = listener as unknown as (payload?: unknown) => void;
-    fn(event.type === 'mute' ? event.data.isMuted : undefined);
+    // Only the data-carrying events have a payload; pause/resume are bare.
+    if (event.type === 'mute') fn(event.data.isMuted);
+    else if (event.type === 'locale') fn(event.data.locale);
+    else fn(undefined);
   }
 }
 

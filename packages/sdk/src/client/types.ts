@@ -27,6 +27,8 @@ export interface PlatformSDK {
 
   /** Platform mute changes. Returns an unsubscribe function. */
   onMuteChange(listener: (isMuted: boolean) => void): () => void;
+  /** Platform language changes. Prefer `watchLocale` — it resolves the tag. */
+  onLocaleChange(listener: (locale: string) => void): () => void;
   /** The shell has covered the game (its own modal, background tab, ad). */
   onPause(listener: () => void): () => void;
   onResume(listener: () => void): () => void;

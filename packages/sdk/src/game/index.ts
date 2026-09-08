@@ -11,3 +11,4 @@
  */
 export { createSaveSlot, type SaveSlot } from './save-slot.js';
 export { watchMute } from './mute.js';
+export { watchLocale, resolveLocale } from './locale.js';

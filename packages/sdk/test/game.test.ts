@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createClient, type PlatformSDK } from '../src/client/index.js';
 import { createLocalTransport } from '../src/client/local-transport.js';
-import { createSaveSlot, watchMute } from '../src/game/index.js';
+import { createSaveSlot, resolveLocale, watchLocale, watchMute } from '../src/game/index.js';
 import { createMemoryStorage, createMockHost } from '../src/testing/mock-adapters.js';
 import type { ClientTransport } from '../src/client/types.js';
 import type { StorageAdapter } from '../src/host/adapters/types.js';
@@ -171,5 +171,75 @@ describe('watchMute', () => {
     const seen: boolean[] = [];
     watchMute(sdk, (m) => seen.push(m));
     await vi.waitFor(() => expect(seen).toEqual([true]));
+  });
+});
+
+describe('resolveLocale', () => {
+  const supported = ['en', 'vi'];
+
+  it('matches an exact tag', () => {
+    expect(resolveLocale('vi', supported, 'en')).toBe('vi');
+  });
+
+  it('falls back to the primary subtag', () => {
+    expect(resolveLocale('vi-VN', supported, 'en')).toBe('vi');
+    expect(resolveLocale('en-GB', supported, 'en')).toBe('en');
+  });
+
+  it('ignores case, because navigator.language is not consistent about it', () => {
+    expect(resolveLocale('VI-vn', supported, 'en')).toBe('vi');
+  });
+
+  it('falls back when the language is not shipped', () => {
+    expect(resolveLocale('de-DE', supported, 'en')).toBe('en');
+  });
+});
+
+describe('watchLocale', () => {
+  it('delivers the current platform value, resolved, before any change', async () => {
+    const { sdk } = connect({ context: { locale: 'vi-VN', isInstalled: false, isMuted: false } });
+    const seen: string[] = [];
+    watchLocale(sdk, ['en', 'vi'], (l) => seen.push(l));
+    await vi.waitFor(() => expect(seen).toEqual(['vi']));
+  });
+
+  it('delivers changes after the initial value', async () => {
+    const { sdk, host } = connect({ context: { locale: 'en', isInstalled: false, isMuted: false } });
+    const seen: string[] = [];
+    watchLocale(sdk, ['en', 'vi'], (l) => seen.push(l));
+    await sdk.ready();
+    await vi.waitFor(() => expect(seen).toEqual(['en']));
+
+    host.setLocale('vi');
+    expect(seen).toEqual(['en', 'vi']);
+  });
+
+  it('does not repeat a change that resolves to the same locale', async () => {
+    const { sdk, host } = connect({ context: { locale: 'en', isInstalled: false, isMuted: false } });
+    const seen: string[] = [];
+    watchLocale(sdk, ['en', 'vi'], (l) => seen.push(l));
+    await sdk.ready();
+    await vi.waitFor(() => expect(seen).toEqual(['en']));
+
+    // A different tag, the same shipped locale: the game must not re-render.
+    host.setLocale('en-GB');
+    expect(seen).toEqual(['en']);
+  });
+
+  it('unsubscribes', async () => {
+    const { sdk, host } = connect({ context: { locale: 'en', isInstalled: false, isMuted: false } });
+    const seen: string[] = [];
+    const stop = watchLocale(sdk, ['en', 'vi'], (l) => seen.push(l));
+    await sdk.ready();
+    await vi.waitFor(() => expect(seen).toEqual(['en']));
+
+    stop();
+    host.setLocale('vi');
+    expect(seen).toEqual(['en']);
+  });
+
+  it('refuses an empty supported list rather than rendering keys', () => {
+    const { sdk } = connect();
+    expect(() => watchLocale(sdk, [], () => undefined)).toThrow(/at least one locale/);
   });
 });

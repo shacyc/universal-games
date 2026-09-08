@@ -246,3 +246,62 @@ Two consequences worth stating:
   menu. Fixing that means moving the install flow into the SDK host so the
   standalone path gets it too, which grows the platform surface, so it waits
   for a milestone that asks for it.
+
+## 15. Locale is mute, again: the shell owns it, games ship their own strings
+
+`GameContext.locale` has existed since v0, filled from `navigator.language`, and
+nothing ever read it. Adding real multi-language support forced the question of
+what it is actually for, and there were two credible answers.
+
+The rejected one is a translation service in the SDK — `sdk.t('game_over')`,
+strings held by the platform. It is tempting because it centralises the thing a
+solo developer will otherwise repeat, and it is wrong for this platform. It puts
+every game's copy in a file the game does not own, so shipping a typo fix in
+Snake means touching platform code; it makes the wire protocol carry strings,
+which the per-game service workers then cache with the *shell's* release cycle
+rather than the game's; and it grows the SDK surface by a method that every
+future game must be supported on forever. The rule that the SDK stays small is
+worth more than the duplication it costs.
+
+So: **the platform owns the language, each game owns its words.** A game ships
+`src/i18n/<locale>.ts` and picks from it. Nothing about translation crosses the
+wire.
+
+That leaves only the question of how a game learns the language, and mute had
+already answered it. The shell owns the picker, so a game that read the
+handshake once would render the old language until it was reloaded — exactly the
+bug `onMuteChange` exists to prevent. Locale gets the same shape, deliberately
+identical so neither can drift:
+
+| | mute | locale |
+| --- | --- | --- |
+| in `GameContext` | `isMuted` | `locale` |
+| host event | `mute` | `locale` |
+| client method | `onMuteChange` | `onLocaleChange` |
+| host setter | `setMuted` | `setLocale` |
+| game helper | `watchMute` | `watchLocale` |
+
+`watchLocale` does one thing `watchMute` does not: it resolves. `navigator.language`
+is `en-US` or `vi-VN`, a game ships `en` and `vi`, and the match is exact tag →
+primary subtag → fallback, case-insensitively. That is four lines of code and
+every game would eventually get one of them wrong in a way that fails
+silently — the game just renders English at a Vietnamese player and nobody
+files a bug. So it lives in `@platform/sdk/game`, which decision 11 already
+established as the place for a rule the docs state once.
+
+The fallback is `supported[0]`, and it must be the language the game is
+authored in. A missing translation then degrades to real text rather than to a
+key on screen.
+
+Three consequences worth stating:
+
+- **`locale` is read once at host construction**, not per `context()` call.
+  Re-reading `navigator.language` would quietly undo a language the player
+  picked in the shell.
+- **The PWA manifest stays single-language.** `name` and `description` are
+  fetched once at install and frozen into the home-screen icon; the shell would
+  have to serve a per-locale manifest *and* the player would have to reinstall
+  to see it. English there, until a milestone asks otherwise.
+- **No RTL.** Nothing in the initial locale set needs it, and honouring it means
+  layout work in the shell and in every game. Adding an RTL language is a new
+  decision, not a translation.

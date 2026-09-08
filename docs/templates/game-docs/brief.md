@@ -84,14 +84,27 @@ TODO.
 
 Analytics via `sdk.track`: TODO — event names and their props.
 
-## 7. Screens
+## 7. Copy and locales
+
+Every word the player reads is a translated key — none of it is written into a
+`.ts` file. List what this game ships:
+
+| | |
+| --- | --- |
+| Locales | `en`, `vi` (`en` is the fallback and the authoring language) |
+| Longest-string risk | which control is tightest at 320px |
+
+Sentences that interpolate a value are **one entry each**, as a function — never
+built by concatenation. Name them here if the game has any beyond a score.
+
+## 8. Screens
 
 One line per screen or overlay, and what is on it. Include the idle state, the
 paused state (if any), and game over.
 
 TODO(owner)
 
-## 8. Explicitly out of scope
+## 9. Explicitly out of scope
 
 List what this game will **not** have, so it does not creep in during
 implementation: tutorial, settings screen, difficulty picker, sound, a second
@@ -99,7 +112,7 @@ mode, etc.
 
 TODO(owner)
 
-## 9. Acceptance criteria
+## 10. Acceptance criteria
 
 The behaviours that decide whether the game is finished. Each one must be
 testable — `testplan.md` turns every line here into at least one test case ID,
@@ -110,7 +123,7 @@ is vague.
 
 - TODO(owner)
 
-## 10. Open questions
+## 11. Open questions
 
 Anything unresolved when the brief was drafted. A question here blocks freezing
 the brief; move it to a decision in `plan.md` once it is answered.

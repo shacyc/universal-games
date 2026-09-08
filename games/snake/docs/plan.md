@@ -5,7 +5,7 @@
 
 | | |
 | --- | --- |
-| Brief | [`brief.md`](./brief.md) — **not frozen**, blocked by its §10 |
+| Brief | [`brief.md`](./brief.md) — **not frozen**, blocked by its §11 |
 | Status | **Not started** — Gate 0 not passed |
 | Approved on | — |
 

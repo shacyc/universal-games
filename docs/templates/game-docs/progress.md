@@ -46,6 +46,9 @@ actually observed — "should work" is not a tick.
       backgrounded tab, and `resume` on a stopped game is a no-op.
 - [ ] `gameStart` once per run, `gameOver` once per run, verified in the console.
 - [ ] `prefers-reduced-motion` shortens animations to near-zero.
+- [ ] Every locale in `SUPPORTED` renders with no missing key and no clipped
+      control at 320px, and switching language in the shell re-renders the game
+      without a reload.
 - [ ] No `localStorage`, no `fetch`, no direct IndexedDB anywhere in `src/`.
 - [ ] No files changed outside `games/<slug>/`, `catalog.json` and the one
       `demoData.ts` deletion.

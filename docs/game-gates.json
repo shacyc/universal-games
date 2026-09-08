@@ -42,10 +42,10 @@
         },
         {
           "id": "brief-questions-answered",
-          "label": "\u00a710 open questions answered",
+          "label": "\u00a711 open questions answered",
           "path": "games/<slug>/docs/brief.md",
           "mustNot": "^\\|\\s*Q\\d+\\s*\\|[^|]*\\|[^|]*\\|\\s*\\|",
-          "note": "brief.md \u00a710 still has rows with an empty Answer column."
+          "note": "brief.md \u00a711 still has rows with an empty Answer column."
         }
       ]
     },
@@ -124,6 +124,12 @@
           "id": "sw",
           "label": "service worker exists",
           "path": "games/<slug>/src/sw.ts"
+        },
+        {
+          "id": "i18n",
+          "label": "i18n strings module exists",
+          "path": "games/<slug>/src/i18n/index.ts",
+          "note": "Every user-facing string lives in src/i18n/ \u2014 building-a-game.md \u00a73.11."
         }
       ]
     },
@@ -207,6 +213,14 @@
       "in": "games/<slug>/src",
       "expect": "none",
       "why": "A root-scoped SW breaks per-game installability for every game (\u00a73.8)."
+    },
+    {
+      "id": "no-navigator-language",
+      "label": "locale comes from the platform, not the device",
+      "grep": "navigator\\.language",
+      "in": "games/<slug>/src",
+      "expect": "none",
+      "why": "The shell owns the language picker; a game reads it with watchLocale (\u00a73.11). Reading navigator.language ignores the player's choice."
     }
   ]
 }

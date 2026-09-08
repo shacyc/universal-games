@@ -41,7 +41,14 @@ Business goals: ad revenue (rewarded + interstitial) and in-game purchases
 5. **No game state in `localStorage` as the source of truth.** iOS Safari
    evicts script-writable storage after ~7 days without use for uninstalled
    sites. `sdk.save()` writes local-first then syncs to the server.
-6. **Portrait-first, thumb-first.** Every game must be fully playable one-handed
+6. **Multi-language from the start.** The platform owns the language, each game
+   owns its words. `GameContext.locale` plus `onLocaleChange` carry the choice;
+   a game ships `src/i18n/<locale>.ts` and reads it through `watchLocale`. No
+   user-facing string is written into a `.ts` or `.html` file, in the shell or
+   in a game. Translation never crosses the SDK wire — see decision 15 in
+   `docs/sdk-decisions.md`. Shipping `en` + `vi`; adding a locale is one file.
+   LTR only for now, and the PWA manifest stays English.
+7. **Portrait-first, thumb-first.** Every game must be fully playable one-handed
    in portrait on a mid-range Android phone. Hit targets >= 44px. No hover-only
    interactions. Respect `env(safe-area-inset-*)`.
 
@@ -109,7 +116,13 @@ Runs in parallel with the v0 deploy. The point is to prove the platform holds
 when several games are written independently, by different people, at the same
 time: one folder plus one catalog entry, no shell change, no SDK change.
 
-In scope: **Neon Snake** and **Sudoku Daily**. Each is written by one agent,
+In scope: **Neon Snake**, **Sudoku Daily**, and **multi-language** across the
+shell and every game (`en` + `vi`; rule 6 above, decision 15 in
+`docs/sdk-decisions.md`). i18n is in this milestone because it is cheapest
+before the two games are written — retrofitting strings into a shipped game is
+the expensive order.
+
+Each game is written by one agent,
 touching only `games/<slug>/`, `catalog.json` and one deletion in
 `apps/shell/src/demo/demoData.ts`. `docs/building-a-game.md` is the entry point;
 each game's own brief is in `games/<slug>/docs/` once it has been set up

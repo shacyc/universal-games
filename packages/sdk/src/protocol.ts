@@ -29,6 +29,11 @@ export interface RpcError {
 /** Everything the game is allowed to know about where it is running. */
 export interface GameContext {
   slug: string;
+  /**
+   * BCP 47 tag the player is running under, e.g. `en`, `en-US`, `vi`. The
+   * platform owns it; a game resolves it against the locales it ships with
+   * `watchLocale`, and never reads `navigator.language` itself.
+   */
   locale: string;
   /** Running as an installed PWA rather than a browser tab. */
   isInstalled: boolean;
@@ -66,10 +71,14 @@ export type Response =
  *
  * `mute` exists because the SDK docs require games to subscribe to the
  * platform mute state, and a request/response pair cannot express that.
+ * `locale` is the same shape for the same reason: the shell owns the language
+ * picker, so a game that only read the handshake would keep rendering the old
+ * language until it was reloaded.
  * `pause`/`resume` cover the shell covering the game with its own UI.
  */
 export type HostEvent =
   | { v: typeof PROTOCOL_VERSION; type: 'mute'; data: { isMuted: boolean } }
+  | { v: typeof PROTOCOL_VERSION; type: 'locale'; data: { locale: string } }
   | { v: typeof PROTOCOL_VERSION; type: 'pause' }
   | { v: typeof PROTOCOL_VERSION; type: 'resume' };
 
@@ -110,7 +119,7 @@ export function isResponse(value: unknown): value is Response {
 export function isHostEvent(value: unknown): value is HostEvent {
   if (!isEnvelope(value)) return false;
   const t = (value as { type?: unknown }).type;
-  return t === 'mute' || t === 'pause' || t === 'resume';
+  return t === 'mute' || t === 'locale' || t === 'pause' || t === 'resume';
 }
 
 export function isHello(value: unknown): value is Hello {
