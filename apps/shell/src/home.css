@@ -641,3 +641,5 @@
   .home *, .home *::before, .home *::after { transition: none !important; }
   .card:not(:disabled):hover { transform: none; }
 }
+
+.install__btn { margin-top: 22px; background: var(--accent); color: var(--on-accent); font-size: 12px; }

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { attachFrameHost } from '@platform/sdk/host';
 import type { CatalogGame } from './catalog.js';
 import { host } from './host.js';
+import { InstallButton } from './InstallPrompt.js';
 
 /**
  * Mounts one game and wires it to the host.
@@ -24,6 +25,9 @@ export function GameFrame({ game, onExit }: { game: CatalogGame; onExit: () => v
       <button type="button" className="game-frame__back" onClick={onExit} aria-label="Back to games">
         ‹
       </button>
+      {/* Shell chrome, so every game in the catalog gets it without shipping
+          any install code of its own. */}
+      <InstallButton variant="icon" />
       <iframe
         ref={frameRef}
         className="game-frame__frame"

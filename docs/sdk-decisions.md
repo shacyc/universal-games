@@ -204,3 +204,45 @@ browsers are WKWebView shells with no service worker at all, so a game opened in
 Chrome or Firefox on iOS is a plain web page and a reload with no network fails.
 That is also why `install.ts` shows the Add to Home Screen overlay for iOS
 Safari and stays silent in those browsers.
+
+## 14. Install has a button, and an installed target is never offered again
+
+The automatic offer from decision 13's implementation was the whole install
+flow, and that was wrong in two directions at once. It kept offering an install
+the player had already accepted — inside a browser tab `display-mode:
+standalone` is false, so nothing in the page knew the app was on the home
+screen — and a player who said "not now" once, or who never finished a run at a
+moment the platform picked, had no way to ask for it.
+
+So installation now has memory, and a door.
+
+**Memory, keyed by manifest href.** That href is what identifies the target, so
+answers do not leak between games: installing 2048 must not silence the hub's
+offer, and the third game must not inherit what was said about the second.
+`localStorage` holds `installed[]` and `snoozed{}` — per-device UI state, like
+the theme, and losing it only means the offer returns.
+
+**What counts as evidence of an install.** Chrome's `appinstalled` event, and
+finding ourselves running standalone, which records the current target. On
+Android an installed PWA shares the origin's storage with the browser, so the
+note written by the installed app is what stops the browser tab offering again.
+On iOS an installed app gets its own storage bucket and Safari never learns
+anything; there the fortnight snooze set by "Got it" is the only defence. That
+asymmetry is the reason the button is not optional.
+
+**The button is shell chrome, not game code.** It sits in the game frame beside
+the back button and in the hub's install section, reads the same state as the
+offer, and renders nothing when the target cannot be installed — a button that
+does nothing when tapped is worse than no button. A game ships no install code
+and gains none: a game added to the catalog tomorrow gets the offer, the
+button, the manifest swap and the per-target memory by existing.
+
+Two consequences worth stating:
+
+- **A sheet the player opened themselves ignores the snooze and does not extend
+  it.** They asked; answering "close" is not the same as "not now".
+- **Opening `/g/<slug>/` directly in a browser has no platform install
+  affordance**, because the shell is not running there — only the browser's own
+  menu. Fixing that means moving the install flow into the SDK host so the
+  standalone path gets it too, which grows the platform surface, so it waits
+  for a milestone that asks for it.

@@ -3,6 +3,7 @@ import { Console } from './Console.js';
 import { CoverArt } from './CoverArt.js';
 import { GameGrid } from './GameGrid.js';
 import { useTheme, type Theme } from './theme.js';
+import { InstallButton } from '../InstallPrompt.js';
 import {
   BOARDS, SAVED, SPOTLIGHT, STATS, YOU, gameBySlug, homeGames, type HomeGame
 } from '../demo/demoData.js';
@@ -218,6 +219,7 @@ export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.
                   iPhone — Share, then Add to Home Screen
                 </li>
               </ul>
+              <InstallButton variant="text" />
             </div>
             <div className="phone">
               <div className="phone__screen">

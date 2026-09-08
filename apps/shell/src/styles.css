@@ -31,20 +31,30 @@ body {
   border: 0;
 }
 
-.game-frame__back {
+.game-frame__back,
+.game-frame__install {
   position: absolute;
   top: max(8px, env(safe-area-inset-top));
-  left: max(8px, env(safe-area-inset-left));
   z-index: 1;
+  display: grid;
+  place-items: center;
   width: 44px;
   height: 44px;
   border: 0;
   border-radius: 22px;
   background: rgba(0, 0, 0, 0.45);
   color: #fff;
-  font-size: 24px;
   line-height: 1;
   cursor: pointer;
+}
+
+.game-frame__back {
+  left: max(8px, env(safe-area-inset-left));
+  font-size: 24px;
+}
+
+.game-frame__install {
+  right: max(8px, env(safe-area-inset-right));
 }
 
 /* ---- install CTA ----
@@ -158,3 +168,4 @@ body {
   outline: 2px solid #f5821f;
   outline-offset: 2px;
 }
+
