@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+
+  // The Worker name is the first label of the free URL:
+  // `home.<account-subdomain>.workers.dev` → `home.ummigames.workers.dev`.
+  // The `.ummigames.` part is the account subdomain, set once at the account
+  // level, not here. A custom domain (see docs/deploy.md) replaces the whole
+  // host later.
+  "name": "home",
+  "main": "workers/api/src/index.ts",
+  "compatibility_date": "2026-09-08",
+
+  // The whole site is one deploy. `directory` is the tree `pnpm build`
+  // assembles: the hub at `/`, each game at `/g/<slug>/`. That single origin
+  // is what keeps the shell, the games and the API same-origin, which is what
+  // makes the iframe + MessagePort transport work.
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+
+    // Non-asset paths fall back to the hub's `/index.html` (200), so the
+    // shell's client-side routes such as `/play/2048` resolve. Real files win
+    // first, so `/g/2048/` still serves that game's own `index.html`. This
+    // replaces the old Pages `_redirects` rule.
+    "not_found_handling": "single-page-application",
+
+    // Only `/api/*` costs a Worker invocation; every static request goes
+    // straight to the asset server (and navigations skip the Worker entirely
+    // under the 2025-04-01+ compat date).
+    "run_worker_first": ["/api/*"]
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

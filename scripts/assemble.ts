@@ -4,8 +4,9 @@ import path from 'node:path';
 import catalog from '../catalog.json' with { type: 'json' };
 
 /**
- * Merges the separate builds into the one static tree Cloudflare Pages serves:
- * the shell at `/`, each game at `/g/<slug>/`.
+ * Merges the separate builds into the one static tree the platform Worker
+ * serves through its `ASSETS` binding: the shell at `/`, each game at
+ * `/g/<slug>/`.
  *
  * Each package builds into its own `dist/` first and is copied here. Pointing
  * every Vite build straight at a shared output directory would work until the

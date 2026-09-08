@@ -51,9 +51,12 @@ Business goals: ad revenue (rewarded + interstitial) and in-game purchases
   engine. Do not add Phaser/Pixi until a game actually needs physics or sprites.
 - **Styling:** CSS Modules or vanilla CSS with custom properties. No Tailwind,
   no UI kit — bundle size matters more than developer convenience here.
-- **Hosting:** Cloudflare Pages (static) + Cloudflare Workers (API).
+- **Hosting:** one Cloudflare Worker. It serves the assembled static tree
+  (hub + games) through its `ASSETS` binding and handles `/api/*` in the same
+  script — one deploy, one origin. Config is `wrangler.jsonc`; see `docs/deploy.md`.
 - **Data:** Cloudflare D1 for saves/scores, KV for the catalog cache.
-  Not needed for v0.
+  Not needed for v0. Add the bindings to `wrangler.jsonc` when a feature uses
+  them, not before.
 - **Package manager:** pnpm workspaces.
 
 ## Repo layout
@@ -67,13 +70,15 @@ packages/
   sdk/                   # @platform/sdk — client (in game) + host (in shell)
   ui/                    # shared primitives, only once 2+ consumers exist
 workers/
-  api/                   # Cloudflare Worker: saves, scores, currency
+  api/                   # the platform Worker: serves the static tree + /api/*
 catalog.json             # game registry
 docs/
+wrangler.jsonc           # Worker + static-assets config, one deploy
 ```
 
-Build output: shell to `/`, each game to `/g/<slug>/`. Deployed as one static
-site so games are same-origin with the shell.
+Build output: shell to `/`, each game to `/g/<slug>/`, assembled into `dist/`
+and served by the Worker. One origin, so games are same-origin with the shell
+and the API.
 
 ## Current milestone: v0
 
@@ -88,7 +93,7 @@ In scope:
   modal. The call sites must be real; only the ad network is fake.
 - Per-game PWA install working on Android (custom prompt) and iOS (instructions
   overlay).
-- Deployed to Cloudflare Pages.
+- Deployed as one Cloudflare Worker (`docs/deploy.md`).
 
 Explicitly out of scope for v0: accounts, login, real ads, payments, shop, gems,
 leaderboards, a second game, a design system. Do not build these. Do not

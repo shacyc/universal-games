@@ -8,16 +8,14 @@
         "run",
         "dev"
       ],
-      "port": 3000
+      "port": 5173
     },
     {
-      "name": "pages-preview",
+      "name": "preview",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
         "wrangler",
-        "pages",
         "dev",
-        "dist",
         "--port",
         "8788"
       ],

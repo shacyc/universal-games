@@ -1,14 +1,24 @@
 # Deploying
 
-The whole site is one static tree on Cloudflare Pages: the hub at `/`, each game
-at `/g/<slug>/`. That single origin is what makes the shell and the games
-same-origin, which is what makes the iframe + `MessagePort` transport work.
+The whole site is **one Cloudflare Worker**. It serves the assembled static
+tree — the hub at `/`, each game at `/g/<slug>/` — through its `ASSETS` binding,
+and it handles everything under `/api/`. One origin, one deploy. That single
+origin is what makes the shell, the games and the API same-origin, which is what
+makes the iframe + `MessagePort` transport work and lets the SDK host call the
+API with a plain `fetch` and no CORS.
 
-Project: **`ummigames`** → https://ummigames.pages.dev
+Worker: **`home`** → `https://home.ummigames.workers.dev`. The free URL is
+`<worker-name>.<account-subdomain>.workers.dev`: `home` is the Worker name in
+`wrangler.jsonc`, `ummigames` is this account's subdomain (set once at the
+account level). A custom domain replaces the whole host — see the end of this
+doc.
+
+Config lives in `wrangler.jsonc` at the repo root. The Worker's code is
+`workers/api/src/index.ts`.
 
 ## How the tree is built
 
-`pnpm build` does two things:
+`pnpm build` does two things, unchanged from before:
 
 1. `pnpm -r build` — every package builds into its own `dist/`. Each game's Vite
    build already emits with base `/g/<slug>/`.
@@ -19,27 +29,56 @@ The assemble step reads `catalog.json` and **fails if a listed game has no
 build output**. That is deliberate: a catalog entry is a promise that the game
 exists.
 
-`dist/_redirects` ships with the shell. Pages serves real files first, so
-`/g/2048/` resolves to the game's own `index.html`; the `/*  /index.html  200`
-rule only catches the hub's client-side routes such as `/play/2048`.
+`wrangler deploy` then uploads `dist/` as the Worker's static assets and the
+Worker script alongside it.
+
+### Routing
+
+There is no `_redirects` file. `wrangler.jsonc` sets:
+
+- `not_found_handling: "single-page-application"` — a path that matches no file
+  falls back to the hub's `/index.html` with a 200, so the shell's client-side
+  routes such as `/play/2048` resolve. Real files still win first, so `/g/2048/`
+  serves that game's own `index.html`, not the hub's.
+- `run_worker_first: ["/api/*"]` — only API requests cost a Worker invocation.
+  Every static request goes straight to the asset server, and navigations skip
+  the Worker entirely (compat date is past 2025-04-01).
+
+The hub service worker must still not answer for `/g/` — that rule lives in
+`apps/shell/src/sw.ts`, see decision 10 in `docs/sdk-decisions.md`. It is a
+service-worker rule, unrelated to the routing above.
 
 ## First time only
 
-You need a Cloudflare account. These two steps are yours to run — the login is
-an interactive browser flow.
+You need a Cloudflare account. This step is yours to run — the login is an
+interactive browser flow.
 
 ```bash
 npx wrangler login
 ```
 
+Then deploy once:
+
 ```bash
-npx wrangler pages project create ummigames --production-branch main
+pnpm run deploy
 ```
 
-Direct Upload was chosen over the Git integration. **That choice is permanent
-for this project**: Cloudflare does not allow converting a Direct Upload project
-to a Git-connected one. Moving to Git later means creating a second project and
-retiring this one.
+The first `wrangler deploy` creates the `home` Worker and, if the account has no
+`workers.dev` subdomain yet, prompts to register one. There is no separate
+"create project" step.
+
+### Retiring the old deployments
+
+Two earlier deployments still serve their last build until deleted in the
+dashboard (Workers & Pages → pick it → Manage/Settings → Delete). Do both once
+the `home` Worker is verified on a real phone:
+
+- the **Pages** project `ummigames` at `ummigames.pages.dev` (the pre-Worker
+  host);
+- the **Worker** `ummigames` at `ummigames.ummigames.workers.dev` — the first
+  deploy of this config used that name. Renaming the Worker in `wrangler.jsonc`
+  does not move it; a fresh `home` Worker is created and the old one is left
+  behind. `npx wrangler delete --name ummigames` removes it from the CLI.
 
 ## Authenticating without the browser flow
 
@@ -55,15 +94,20 @@ CLOUDFLARE_API_TOKEN=<token>
 CLOUDFLARE_ACCOUNT_ID=<account id>
 ```
 
-The token needs the **Cloudflare Pages: Edit** permission on the account that
-owns `ummigames`, and nothing more. Create it at
-https://dash.cloudflare.com/profile/api-tokens.
+The token needs **Workers Scripts: Edit** and **Account Settings: Read** on the
+account you deploy to. Add **D1: Edit** and **Workers KV Storage: Edit** if and
+when those bindings are added to `wrangler.jsonc` — not before. Create the token
+at https://dash.cloudflare.com/profile/api-tokens.
 
 Three rules, and they are not negotiable:
 
 - **The token never lands in a tracked file.** Not `wrangler.jsonc`, not a
   script, not a comment, not `catalog.json`. `.gitignore` covers `.env`,
-  `.env.*` and `.dev.vars`; nothing else is safe.
+  `.env.*` and `.dev.vars`; nothing else is safe. Keep `.env` to the two
+  Cloudflare variables above — `wrangler dev` now surfaces `.env` values to the
+  running Worker as local vars. They are never uploaded by `wrangler deploy`
+  (only `wrangler secret put` and `.dev.vars` reach a deployed Worker), but
+  there is no reason for anything else to be in that file.
 - **The token never goes to a game agent.** Agents read repo files and run shell
   commands. Deploying is not part of writing a game — see the file-ownership
   table in `docs/building-a-game.md`. Deploys are run from here.
@@ -83,22 +127,23 @@ session's.
 ## Check before you deploy
 
 Never deploy a tree you have not served. The dev server does not exercise the
-built base paths, the `_redirects` file, or the service workers — `vite dev`
-does not even emit `sw.js`.
+built base paths, the SPA fallback, or the service workers — `vite dev` does not
+even emit `sw.js`.
 
 ```bash
-pnpm build && npx wrangler pages dev dist --port 8788
+pnpm build && npx wrangler dev --port 8788
 ```
 
 Then, at `http://localhost:8788`:
 
 - `/` — the hub loads, its service worker registers at scope `/`.
-- `/g/2048/` — the **game** loads, not the hub. If you get the hub here,
-  `_redirects` is wrong or a file is missing.
+- `/g/2048/` — the **game** loads, not the hub. If you get the hub here, a file
+  is missing or `not_found_handling` is wrong.
 - The game's service worker registers at scope `/g/2048/`, and
   `/g/2048/manifest.webmanifest` has `scope` and `start_url` of `/g/2048/`.
   This is what makes each game install as its own PWA.
 - `/play/2048` — the hub loads and mounts the game in its iframe.
+- `/api/health` — returns `{"ok":true}`.
 - No console errors.
 
 ## Deploy
@@ -110,16 +155,21 @@ pnpm run deploy
 Note the `run`: `pnpm deploy` without it hits pnpm's own built-in `deploy`
 command, not this script.
 
-That builds and uploads to production. To put a branch up at its own preview URL
-without touching production — useful for reviewing a game an agent has written,
-on a real phone:
+That builds and uploads to production. To put the current tree up at its own
+URL without touching production — useful for reviewing a game an agent has
+written, on a real phone:
 
 ```bash
-pnpm run deploy:preview -- --branch game/snake
+pnpm run deploy:preview
 ```
 
-Preview deployments here are manual, because Direct Upload has no CI watching
-the repo. Every branch you name gets its own `<branch>.ummigames.pages.dev`.
+That runs `wrangler versions upload`, which prints a preview URL of the form
+`https://<version-prefix>-home.ummigames.workers.dev`. It is a new **version**,
+not a release: production keeps serving whatever `pnpm run deploy` last shipped.
+Promote a version to production with `npx wrangler versions deploy`.
+
+Preview URLs are per-version, not per-branch. There is no CI watching the repo;
+every preview is a command you run.
 
 ## After deploying
 

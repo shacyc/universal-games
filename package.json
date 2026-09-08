@@ -11,8 +11,8 @@
     "build": "pnpm -r build && tsx scripts/assemble.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json && pnpm -r typecheck",
     "test": "pnpm -r test",
-    "deploy": "pnpm build && wrangler pages deploy dist --project-name ummigames --branch main",
-    "deploy:preview": "pnpm build && wrangler pages deploy dist --project-name ummigames"
+    "deploy": "pnpm build && wrangler deploy",
+    "deploy:preview": "pnpm build && wrangler versions upload"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

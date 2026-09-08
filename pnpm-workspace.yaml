@@ -2,14 +2,15 @@ packages:
   - 'apps/*'
   - 'games/*'
   - 'packages/*'
+  - 'workers/*'
 
 # esbuild ships its binary as an optional platform package; its postinstall
 # only validates that binary. Approved so `pnpm install` stays non-interactive.
 allowBuilds:
   esbuild: true
   # workerd is the Workers runtime wrangler runs locally; its postinstall only
-  # unpacks the platform binary. Needed for `wrangler pages dev`, which is how
-  # the production build is checked before a deploy.
+  # unpacks the platform binary. Needed for `wrangler dev`, which is how the
+  # production build (Worker + assembled static tree) is checked before a deploy.
   workerd: true
 
 minimumReleaseAgeExclude:
