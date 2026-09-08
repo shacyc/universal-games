@@ -1,77 +1,265 @@
-import { createClient } from '@platform/sdk/client';
+import '@platform/sdk/game.css';
+import './styles.css';
+
+import {
+  WIN_TILE, clearLowest, highestTile, isGameOver, move, newGrid, spawn,
+  type Cell, type Direction, type Grid,
+} from './board.js';
+import { watchDurations, type Durations } from './anim.js';
+import { createSurface } from './canvas.js';
+import { createInput } from './input.js';
+import { draw, phaseDone, type Phase } from './render.js';
+import { createSession, type SaveState } from './session.js';
+import { createUi } from './ui.js';
+
+/** Deep enough that fast swiping never loses a move, bounded so it cannot run away. */
+const MAX_QUEUED_MOVES = 12;
+
+const root = document.getElementById('app');
+if (!root) throw new Error('#app is missing from index.html');
+
+const session = createSession();
+
+/** Persisted state — exactly the shape in docs/game-2048.md. */
+let grid: Grid = [];
+let score = 0;
+let best = 0;
+let undo: { board: Cell[]; score: number } | null = null;
+let wonShown = false;
 
 /**
- * Pipeline harness — NOT the game.
- *
- * Everything below exists to prove the platform works end to end before any
- * 2048 code is written: the handshake resolves in both embedded and installed
- * modes, saves round-trip, ad call sites are real, lifecycle events reach the
- * host. `docs/game-2048.md` replaces this file.
+ * Run-local state. Deliberately not persisted: the saved shape is fixed by the
+ * docs and does not carry these, so a reload grants a fresh free undo and a
+ * fresh continue. See the note in the handover.
  */
-const sdk = createClient({ slug: '2048' });
+let freeUndoUsed = false;
+let continueUsed = false;
+let moves = 0;
+let over = false;
 
-const app = document.getElementById('app');
-if (!app) throw new Error('#app is missing from index.html');
+let phase: Phase | null = null;
+let durations: Durations = { move: 100, pop: 120, spawn: 120 };
+const queued: Direction[] = [];
 
-function line(text: string): void {
-  const p = document.createElement('p');
-  p.textContent = text;
-  app?.append(p);
+const snapshot = (): SaveState => ({
+  v: 1,
+  board: [...grid],
+  score,
+  best,
+  undo: undo ? { board: [...undo.board], score: undo.score } : null,
+  wonShown,
+});
+
+const save = (): void => session.save(snapshot());
+
+const ui = createUi(root, {
+  onNewGame: () => void newGame(),
+  onUndo: () => void requestUndo(),
+  onKeepGoing: () => ui.hideOverlay(),
+  onContinueWithAd: () => void takeContinue(),
+  onDeclineContinue: () => endRun(),
+});
+
+const surface = createSurface(ui.canvas, ui.stage, () => render(performance.now()));
+
+function refreshChrome(): void {
+  ui.setScore(score, best);
+  ui.setUndo(undo !== null && !over, freeUndoUsed);
 }
 
-function action(label: string, run: () => void | Promise<void>): void {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.textContent = label;
-  button.addEventListener('click', () => void run());
-  app?.append(button);
+function applyMove(direction: Direction): void {
+  const result = move(grid, direction);
+  // A move that changes nothing is not a move: no spawn, no score, no undo.
+  if (!result.moved) return;
+
+  undo = { board: [...grid], score };
+  grid = result.grid;
+  score += result.gained;
+  best = Math.max(best, score);
+  moves += 1;
+
+  const seeded = spawn(grid, Math.random);
+  if (seeded) grid[seeded.index] = seeded.value;
+
+  phase = {
+    movements: result.movements,
+    gridAfter: [...grid],
+    merged: [...new Set(result.movements.filter((m) => m.merged).map((m) => m.to))],
+    spawn: seeded,
+    startedAt: performance.now(),
+  };
+
+  save();
+  refreshChrome();
+
+  if (!wonShown && highestTile(grid) >= WIN_TILE) {
+    wonShown = true;
+    save();
+    session.track('tile_2048_reached', { moves });
+    ui.showWin();
+  }
+
+  if (isGameOver(grid)) lock();
 }
+
+/** The board is stuck. Offer the continue once, then end the run. */
+function lock(): void {
+  if (over) return;
+  if (!continueUsed) {
+    session.track('continue_offered', { score });
+    ui.showContinueOffer();
+    return;
+  }
+  endRun();
+}
+
+function endRun(): void {
+  if (over) return;
+  over = true;
+  session.endRun({ score, highest: highestTile(grid), moves });
+  refreshChrome();
+  ui.showGameOver(score, best);
+}
+
+async function takeContinue(): Promise<void> {
+  ui.setBusy(true);
+  const watched = await session.rewardedContinue();
+  ui.setBusy(false);
+
+  // No reward: fall through to the normal game over screen, no penalty.
+  if (!watched) {
+    endRun();
+    return;
+  }
+
+  continueUsed = true;
+  session.track('continue_taken', { score });
+  grid = clearLowest(grid, 4);
+  // The snapshot points at the locked board; undoing into it would lock again.
+  undo = null;
+  phase = null;
+  save();
+  refreshChrome();
+  ui.hideOverlay();
+}
+
+async function requestUndo(): Promise<void> {
+  if (!undo || over) return;
+
+  if (!freeUndoUsed) {
+    freeUndoUsed = true;
+    applyUndo();
+    session.track('undo_used', { rewarded: false });
+    return;
+  }
+
+  ui.setBusy(true);
+  const watched = await session.rewardedUndo();
+  ui.setBusy(false);
+  // Closed early or no fill: change nothing, say nothing.
+  if (!watched) return;
+
+  applyUndo();
+  session.track('undo_used', { rewarded: true });
+}
+
+function applyUndo(): void {
+  if (!undo) return;
+  grid = [...undo.board];
+  score = undo.score;
+  undo = null;
+  phase = null;
+  queued.length = 0;
+  save();
+  refreshChrome();
+}
+
+async function newGame(): Promise<void> {
+  // The one legal interstitial moment: the player chose a new game from the
+  // game over screen, after the score was shown.
+  if (over) {
+    ui.setBusy(true);
+    await session.interstitialBeforeNewGame();
+    ui.setBusy(false);
+  }
+
+  grid = newGrid(Math.random);
+  score = 0;
+  undo = null;
+  wonShown = false;
+  freeUndoUsed = false;
+  continueUsed = false;
+  moves = 0;
+  over = false;
+  phase = null;
+  queued.length = 0;
+
+  save();
+  refreshChrome();
+  ui.hideOverlay();
+  session.startRun();
+}
+
+function render(now: number): void {
+  draw(surface.ctx, surface.size, grid, phase, now, durations);
+}
+
+function frame(now: number): void {
+  if (phase && phaseDone(phase, now, durations)) phase = null;
+
+  // Input taken during an animation is queued, never dropped.
+  if (!phase && queued.length > 0) {
+    const next = queued.shift();
+    if (next) applyMove(next);
+  }
+
+  render(now);
+  window.requestAnimationFrame(frame);
+}
+
+createInput(ui.canvas, (direction) => {
+  if (over) return;
+  if (queued.length >= MAX_QUEUED_MOVES) return;
+  queued.push(direction);
+});
+
+watchDurations((next) => {
+  durations = next;
+});
+
+// No sounds ship in v0, but the platform owns mute, so the state is observed
+// and reflected here — the gate is in place for when sounds land.
+session.onMuteChange((muted) => {
+  root.dataset.muted = String(muted);
+});
 
 async function boot(): Promise<void> {
-  const context = await sdk.ready();
-  line(`slug: ${context.slug}`);
-  line(`locale: ${context.locale}`);
-  line(`installed: ${context.isInstalled}`);
-  line(`muted: ${context.isMuted}`);
-  line(`host: ${window.parent === window ? 'standalone (in-process)' : 'shell (MessagePort)'}`);
+  await session.ready();
 
-  const user = await sdk.getUser();
-  line(`user: ${user.id} (anonymous: ${user.isAnonymous})`);
+  const saved = await session.load();
+  if (saved) {
+    // Restored silently — no "continue?" prompt.
+    grid = saved.board;
+    score = saved.score;
+    best = saved.best;
+    undo = saved.undo;
+    wonShown = saved.wonShown;
+  } else {
+    grid = newGrid(Math.random);
+  }
 
-  sdk.onMuteChange((isMuted) => line(`mute changed: ${isMuted}`));
+  // A restored run still needs a run open on the host, or its gameOver is
+  // ignored and the run never reports.
+  session.startRun();
+  refreshChrome();
 
-  action('save { ticks: n }', async () => {
-    const previous = await sdk.load();
-    const ticks = isTicks(previous) ? previous.ticks + 1 : 1;
-    await sdk.save({ ticks });
-    line(`saved ticks: ${ticks}`);
-  });
+  if (isGameOver(grid)) lock();
 
-  action('load', async () => {
-    line(`loaded: ${JSON.stringify(await sdk.load())}`);
-  });
-
-  action('rewarded (undo)', async () => {
-    line(`rewarded resolved: ${await sdk.showRewarded('undo')}`);
-  });
-
-  action('interstitial (run_end)', async () => {
-    await sdk.showInterstitial('run_end');
-    line('interstitial resolved');
-  });
-
-  action('gameStart', () => sdk.gameStart());
-  action('gameOver { score: 1234 }', () => sdk.gameOver({ score: 1234 }));
-  action('track(demo_event)', () => sdk.track('demo_event', { source: 'harness' }));
-}
-
-/** The save came from storage, so its shape is checked rather than asserted. */
-function isTicks(value: unknown): value is { ticks: number } {
-  return typeof value === 'object' && value !== null && typeof (value as { ticks?: unknown }).ticks === 'number';
+  window.requestAnimationFrame(frame);
 }
 
 void boot().catch((error: unknown) => {
-  line(`boot failed: ${error instanceof Error ? error.message : String(error)}`);
+  root.textContent = `Could not start: ${error instanceof Error ? error.message : String(error)}`;
 });
 
 if ('serviceWorker' in navigator) {

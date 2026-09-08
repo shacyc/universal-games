@@ -11,7 +11,8 @@ const BASE = `/g/${SLUG}/`;
  */
 export default defineConfig({
   base: BASE,
-  server: { port: 5174 },
+  // `host: true` so the game can also be opened directly, standalone.
+  server: { port: 5174, host: true },
   plugins: [
     VitePWA({
       strategies: 'injectManifest',

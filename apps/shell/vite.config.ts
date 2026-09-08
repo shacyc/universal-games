@@ -25,6 +25,10 @@ export default defineConfig({
   base: '/',
   server: {
     port: 5173,
+    // Bound to every interface so the hub is reachable from a phone or
+    // another machine — this repo is usually developed on a headless box.
+    // Games are proxied from here, so only this port needs to be exposed.
+    host: true,
     proxy: gameProxy,
     // catalog.json lives at the repo root, outside the shell's own tree.
     fs: { allow: [repoRoot] },

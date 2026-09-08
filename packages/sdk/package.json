@@ -7,7 +7,9 @@
     ".": "./src/index.ts",
     "./client": "./src/client/index.ts",
     "./host": "./src/host/index.ts",
-    "./testing": "./src/testing/mock-adapters.ts"
+    "./testing": "./src/testing/mock-adapters.ts",
+    "./game": "./src/game/index.ts",
+    "./game.css": "./src/game/game.css"
   },
   "scripts": {
     "build": "tsc --noEmit",

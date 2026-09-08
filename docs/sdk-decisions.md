@@ -88,3 +88,36 @@ Root scope reaches `/g/*`. A game's own registration is narrower and wins once
 registered, but the hub's SPA navigation fallback would otherwise serve the
 hub's `index.html` for a game URL on first visit. `apps/shell/src/sw.ts`
 returns early for `/g/`, and `public/_redirects` mirrors the same rule.
+
+## 11. `@platform/sdk/game` — the only shared game code, for now
+
+Games are written independently. The exception is a small set of helpers under
+the `./game` entry point, admitted by one test: **would two games implementing
+this differently break the platform?** Not "does it repeat" — repetition alone
+is a reason to wait.
+
+Three things pass that test today:
+
+- **`createSaveSlot`** — `load()` returns `unknown` by design (decision 4), so
+  every game must validate at the boundary. The one that skips it trusts a
+  stale save and breaks mid-run. The slot also stops writing after a failed
+  read, because a game that boots fresh and saves over an unreadable slot
+  destroys a run the player still had.
+- **`watchMute`** — the platform owns the mute toggle "so it is consistent
+  across every game". Subscribing to changes but never reading
+  `context.isMuted` is the obvious way to break that promise; the helper
+  delivers the current value first, then changes.
+- **`game.css`** — safe-area insets, 44px hit targets, `touch-action: none` on
+  the play surface, reduced motion. These are CLAUDE.md rule 6, and left to
+  each game they will drift. Everything is wrapped in `:where()` so a game
+  overrides any of it with a plain selector. No colours, no fonts: games bring
+  their own look.
+
+None of these add a method to the wire protocol, so the SDK contract — the
+thing every future host must support — does not grow.
+
+Deliberately **not** here: canvas sizing, input and swipe handling, tweening,
+grid state, UI chrome. Those would be generalised *from* game code, and there
+is not yet a single finished game to generalise from. CLAUDE.md says abstract
+on the third occurrence; the helpers above are exempt because they come from
+the platform contract in `platform-sdk.md`, not from a game.

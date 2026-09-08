@@ -1,0 +1,63 @@
+/*
+ * Structural rules every game must follow, in one place.
+ *
+ * These are platform constraints from CLAUDE.md and docs/game-2048.md, not a
+ * design system: no colours, no fonts, no spacing scale. Games bring their own
+ * look. Everything is wrapped in :where() so specificity is zero and a game
+ * overrides any of it with a plain selector.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:where(html, body) {
+  margin: 0;
+  height: 100%;
+  /* No rubber-banding: a swipe belongs to the game, not the page. */
+  overscroll-behavior: none;
+}
+
+/* Portrait-first, one-handed. Put this on the outermost element so content
+   clears the notch, the home indicator and rounded corners. */
+:where(.game-safe) {
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+
+/* The play area. `touch-action: none` is what stops a swipe from scrolling the
+   page instead of moving the board. */
+:where(.game-surface) {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Hit targets >= 44px, thumb-first. Zero specificity, so a game that needs a
+   smaller control just says so. */
+:where(button, [role='button'], input, select) {
+  min-height: 44px;
+}
+
+/* No hover-only interactions: anything that only appears on hover is
+   unreachable on a phone. Games should not need this rule, but it makes the
+   mistake visible in review rather than on a device. */
+@media (hover: none) {
+  :where(.hover-only) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(*, *::before, *::after) {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,193 @@
+/* 2048. Restrained on purpose — this is a game people already know how to play. */
+
+:root {
+  --bg: #faf8ef;
+  --ink: #776e65;
+  --chrome: #bbada0;
+  --btn: #8f7a66;
+  --btn-ink: #f9f6f2;
+  color-scheme: light;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.game {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* dvh so the board is not cut off by mobile browser chrome */
+  min-height: 100dvh;
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 10px 12px 14px;
+}
+
+.game--busy {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* ---- header ---- */
+
+.hud {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hud__brand {
+  margin: 0;
+  flex-grow: 1;
+  font-size: clamp(30px, 9vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.hud__scores {
+  display: flex;
+  gap: 6px;
+}
+
+.score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 62px;
+  padding: 6px 9px;
+  border-radius: 6px;
+  background: var(--chrome);
+  color: var(--btn-ink);
+}
+
+.score__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.score__value {
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- board ---- */
+
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  display: grid;
+  place-items: center;
+  /* lets the square shrink instead of overflowing the column */
+  min-height: 0;
+}
+
+.board {
+  /* width/height are set by createSurface — see the note there. */
+  display: block;
+  border-radius: 8px;
+}
+
+/* ---- footer ---- */
+
+.foot {
+  display: flex;
+  justify-content: center;
+}
+
+.btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--btn);
+  color: var(--btn-ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn--undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.badge {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--btn-ink);
+  color: var(--btn);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.badge[hidden] {
+  display: none;
+}
+
+/* ---- overlays ---- */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(250, 248, 239, 0.88);
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.overlay__card {
+  max-width: 300px;
+  text-align: center;
+}
+
+.overlay__title {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.overlay__note {
+  margin: 0 0 18px;
+  font-size: 15px;
+  line-height: 1.5;
+  opacity: 0.85;
+  text-wrap: pretty;
+}
+
+.overlay__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn--primary {
+  background: #f2b179;
+  color: #6b5544;
+}
+
+@media (min-width: 380px) {
+  .overlay__actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
