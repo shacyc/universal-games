@@ -58,7 +58,8 @@ const save = (): void => session.save(snapshot());
  * platform's actual locale arrives from `onLocaleChange` a moment later, and
  * usually resolves to this same one.
  */
-let strings: Strings = stringsFor(SUPPORTED[0]);
+let locale: string = SUPPORTED[0];
+let strings: Strings = stringsFor(locale);
 
 const ui = createUi(root, {
   onNewGame: () => void newGame(),
@@ -66,7 +67,12 @@ const ui = createUi(root, {
   onKeepGoing: () => ui.hideOverlay(),
   onContinueWithAd: () => void takeContinue(),
   onDeclineContinue: () => endRun(),
-}, strings);
+  // Neither is decided here: the platform owns the language and owns where the
+  // hub is. The settings screen asks, and the answer comes back as a `locale`
+  // event or as a navigation.
+  onSetLocale: (next) => session.setLocale(next),
+  onExitToHub: () => session.exitToHub(),
+}, strings, locale);
 
 const surface = createSurface(ui.canvas, ui.stage, () => render(performance.now()));
 
@@ -241,11 +247,12 @@ session.onMuteChange((muted) => {
   root.dataset.muted = String(muted);
 });
 
-session.onLocaleChange((locale) => {
-  strings = stringsFor(locale);
+session.onLocaleChange((next) => {
+  locale = next;
+  strings = stringsFor(next);
   // Screen readers and the browser's own translation prompt read this.
-  document.documentElement.lang = locale;
-  ui.setStrings(strings);
+  document.documentElement.lang = next;
+  ui.setStrings(strings, next);
   // The HUD numbers are formatted per locale, so they are re-rendered too.
   refreshChrome();
 });

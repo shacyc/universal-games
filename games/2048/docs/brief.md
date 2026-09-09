@@ -129,10 +129,19 @@ know how to play.
 
 ## 9. Explicitly out of scope
 
-- No tutorial. No settings screen. No difficulty picker.
+> **Amended 2026-09-09 by the owner.** The two struck lines below were true when
+> this brief was frozen and are no longer: CLAUDE.md rule 7 now requires every
+> game to ship its own settings screen holding the language and the way back to
+> the hub. Recorded as a deviation in `progress.md` §4 rather than quietly
+> rewritten, because a frozen brief that disagrees with the shipped game is the
+> failure this process exists to prevent.
+
+- No tutorial. ~~No settings screen.~~ No difficulty picker.
 - No sound in v0; mute state is read and reflected, ready for when sounds land.
 - No leaderboard, no accounts, no shop.
-- No language picker inside the game — the shell owns it.
+- ~~No language picker inside the game — the shell owns it.~~ The game ships the
+  picker; the *language* is still the platform's, asked for with
+  `sdk.setLocale()`.
 
 ## 10. Acceptance criteria
 

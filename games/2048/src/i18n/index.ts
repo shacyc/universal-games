@@ -11,6 +11,17 @@ import { vi } from './vi.js';
  */
 export const SUPPORTED = ['en', 'vi'] as const;
 
+/**
+ * What the settings screen calls each language — in that language. A player
+ * looking for Vietnamese is looking for "Tiếng Việt", not for whatever the
+ * language they cannot read calls it, so these are never translated and never
+ * live in a locale file.
+ */
+export const LOCALE_NAMES: Record<string, string> = {
+  en: 'English',
+  vi: 'Tiếng Việt',
+};
+
 const FACTORIES: Record<string, (n: Intl.NumberFormat) => Strings> = { en, vi };
 
 export function stringsFor(locale: string): Strings {

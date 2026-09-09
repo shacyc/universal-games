@@ -26,6 +26,13 @@ export function vi(n: Intl.NumberFormat): Strings {
     watch_ad: 'Xem quảng cáo',
     no_thanks: 'Không, cảm ơn',
 
+    settings: 'Cài đặt',
+    settings_open: 'Cài đặt',
+    language: 'Ngôn ngữ',
+    back_to_home: 'Về trang chủ',
+    back: 'Quay lại',
+    close: 'Đóng',
+
     game_over: 'Kết thúc',
     new_game: 'Ván mới',
     final_score: (score, best) => `Điểm ${n.format(score)} · Cao nhất ${n.format(best)}`,

@@ -26,6 +26,13 @@ export function en(n: Intl.NumberFormat) {
     watch_ad: 'Watch ad',
     no_thanks: 'No thanks',
 
+    settings: 'Settings',
+    settings_open: 'Settings',
+    language: 'Language',
+    back_to_home: 'Back to home',
+    back: 'Back',
+    close: 'Close',
+
     game_over: 'Game over',
     new_game: 'New game',
     final_score: (score: number, best: number) => `Score ${n.format(score)} · Best ${n.format(best)}`,

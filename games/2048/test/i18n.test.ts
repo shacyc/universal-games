@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SUPPORTED, stringsFor } from '../src/i18n/index.js';
+import { LOCALE_NAMES, SUPPORTED, stringsFor } from '../src/i18n/index.js';
 
 /**
  * The type system already guarantees every locale has every key — `vi` is
@@ -45,6 +45,33 @@ describe('i18n', () => {
     const vi = stringsFor('vi');
     for (const key of ['game_over', 'new_game', 'undo', 'watch_ad'] as const) {
       expect(vi[key], key).not.toBe(en[key]);
+    }
+  });
+});
+
+describe('settings screen', () => {
+  it('every locale this game ships has a name to show in the picker', () => {
+    for (const tag of SUPPORTED) {
+      expect(LOCALE_NAMES[tag], tag).toBeTruthy();
+    }
+  });
+
+  it('names each language in itself, not in the language currently on screen', () => {
+    // A player who cannot read the current language has to be able to find
+    // their own; translating these would defeat the only screen that matters.
+    expect(LOCALE_NAMES.vi).toBe('Tiếng Việt');
+    expect(LOCALE_NAMES.en).toBe('English');
+  });
+
+  it('the platform-required rows are translated in every locale', () => {
+    for (const tag of SUPPORTED) {
+      const s = stringsFor(tag);
+      expect(s.settings, tag).toBeTruthy();
+      expect(s.language, tag).toBeTruthy();
+      expect(s.back_to_home, tag).toBeTruthy();
+      expect(s.back, tag).toBeTruthy();
+      expect(s.close, tag).toBeTruthy();
+      expect(s.settings_open, tag).toBeTruthy();
     }
   });
 });

@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Status | **Shipped** — with an unrecorded device pass, see §5 |
-| Tasks done | 9 / 9 |
+| Tasks done | 10 / 10 |
 | Last updated | 2026-09-09 |
 
 ## 1. Tasks
@@ -20,7 +20,8 @@ IDs from `plan.md` §9, reconstructed from the shipped code.
 | T6 | Ads: undo, continue, interstitial | done | three call sites in `session.ts` | M7, M12 never recorded |
 | T7 | PWA: manifest, icon, scoped SW | done | `public/manifest.webmanifest`, `src/sw.ts` | M15, M16 never recorded |
 | T8 | Register in `catalog.json` | done | one entry, no `demoData.ts` placeholder | |
-| T9 | i18n | done | `src/i18n/`, `test/i18n.test.ts` (8 cases), M8, M9, M10 | M11 partial |
+| T9 | i18n | done | `src/i18n/`, `test/i18n.test.ts` (11 cases), M8–M11 | |
+| T10 | Settings screen (platform rule 7) | done | `src/ui.ts` menu, `session.ts` `setLocale`/`exitToHub`, M17–M19 | added after the brief was frozen; see §4 |
 
 ## 2. Definition of done
 
@@ -55,6 +56,30 @@ shipped game is the honest state and the reason this file now exists.
       — M9, M10, M11, all measured 2026-09-09
 
 ## 3. Session log
+
+### 2026-09-09 (c) — Settings moved into the game, as the platform now requires
+
+- **Rule change, by the owner:** every game ships its own settings screen, in
+  its own style, holding at least the language and the way back to the hub
+  (CLAUDE.md rule 7, decision 18). This reverses the shell-side sheet from
+  earlier today. The SDK gained `setLocale` and `exitToHub` to make it possible
+  — the milestone's only new methods, and the reason the rule is followable at
+  all rather than aspirational.
+- **Built:** a gear button in this game's own footer beside Undo, and a sheet in
+  2048's palette with a root page (Language → , Back to home) and a language
+  page listing each locale in its own name with the current one ticked.
+  Navigation rather than a switch, so a third language costs nothing. It is its
+  own layer, not the board overlay — M19 is the case that pins that.
+- **Closed the gap decision 17 could not:** M18. Standalone — an installed game
+  with no shell above it — had no way to change language and no way out. It has
+  both now, verified at `/g/2048/` with `window.parent === window`: the language
+  switched, persisted to `arcade:locale`, and "Về trang chủ" landed on the hub,
+  which came up in Vietnamese.
+- **Deviation from the frozen brief:** §9 said "No settings screen" and "No
+  language picker inside the game". Both were true when it was frozen and are
+  now overruled by a platform rule. Recorded in §4 and struck through in the
+  brief with a dated note rather than silently rewritten.
+- **Still open:** the same six device checks. Q1 unchanged.
 
 ### 2026-09-09 (b) — Settings sheet replaces the floating chrome; M3 and M11 close
 
@@ -139,12 +164,13 @@ manifest — platform-wide, recorded in `docs/sdk-decisions.md` §15.
 | --- | --- | --- | --- | --- |
 | 1 | The original spec said "runs standalone against the mock SDK host" | There is no mock host; standalone runs the real `HostCore` in-process | `docs/sdk-decisions.md` §1 — one host, two transports, so the modes cannot drift | yes, `brief.md` §10 now says "runs standalone at `/g/2048/`" |
 | 2 | The original spec had no i18n | Every string moved to `src/i18n/` | Multi-language became a v0.1 platform requirement after this game shipped | yes, `brief.md` §7 is new |
+| 3 | `brief.md` §9: "No settings screen", "No language picker inside the game — the shell owns it" | A settings sheet in the footer, with a language page and "back to home" | CLAUDE.md rule 7 — every game ships one, and standalone it is the only way to change language or leave | yes, `brief.md` §9 struck through with a dated amendment |
 
 ## 5. Open questions for the owner
 
 | # | Question | Assumed for now | Answer | Status |
 | --- | --- | --- | --- | --- |
-| Q1 | Eight boxes in §2 are unticked because the checks were never recorded, not because they failed. Worth a device pass on 2048 to close them, or leave the game as-is and hold the standard for new games only? | Leave it; the game is live and behaving | | **open** |
+| Q1 | Seven boxes in §2 are unticked because the checks were never recorded, not because they failed. Worth a device pass on 2048 to close them, or leave the game as-is and hold the standard for new games only? | Leave it; the game is live and behaving | | **open** |
 
 ## 6. Platform gaps hit
 

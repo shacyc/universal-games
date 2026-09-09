@@ -46,14 +46,17 @@ in the test file rather than duplicated here.
 | --- | --- | --- | --- | --- |
 | M1 | Standalone | open `http://localhost:5174/g/2048/` | plays fully; no shell needed | pass |
 | M2 | Embedded | open `http://localhost:5173/play/2048` | identical behaviour to M1 | pass |
-| M3 | Narrow portrait | 320px wide viewport | playable one-handed; nothing clipped; controls >= 44px | pass — 2026-09-09, measured in a 320x640 viewport in both locales: no element's `scrollWidth` exceeds its box, no horizontal page overflow, every button >= 44x44. The shell's settings button overlaps `.foot` but no control inside it |
+| M3 | Narrow portrait | 320px wide viewport | playable one-handed; nothing clipped; controls >= 44px | pass — 2026-09-09, re-measured after settings moved into the game: 320x640, both locales, sheet closed / root page / language page. Nothing clips, no horizontal overflow, every button >= 44x44 |
 | M4 | Safe area | notched phone, portrait | no control under the notch or home indicator | **not recorded** |
 | M5 | Crash restore | kill the tab mid-run, reopen | exact board returns, no prompt | **not recorded** |
 | M6 | Fresh boot | no save present | two tiles, no error | pass |
 | M7 | Rewarded declined | dismiss the undo ad | nothing changes: no penalty, no toast | **not recorded** |
 | M8 | Locale at boot | load the game | `<html lang>` is the resolved locale; every label is translated | pass — `lang="en"` from a host reporting `en-US`, so resolution ran |
-| M9 | Locale switch mid-run | open settings, Language, pick the other one | every label re-renders, scores re-format, **no reload**, board untouched | pass — 2026-09-09. `ĐIỂM 1.024 / CAO NHẤT 2.048` → `SCORE 1,024 / BEST 2,048`. A property set on the iframe's `contentWindow` before the switch was still there after it, so the document was never replaced; the loaded board and both scores were unchanged |
-| M10 | Locale switch with an overlay open | change language from settings while the game-over card is up | the card re-renders in the new language | pass — 2026-09-09, on the *no moves left* card: title, note and both buttons switched in place, the card stayed open, and the undo badge went `AD` → `QC` (the B1 regression, still fixed) |
+| M9 | Locale switch mid-run | open the game's settings, Language, pick the other one | every label re-renders, scores re-format, **no reload**, board untouched | pass — 2026-09-09. `ĐIỂM 1.024 / CAO NHẤT 2.048` → `SCORE 1,024 / BEST 2,048`. A property set on the iframe's `contentWindow` before the switch was still there after it, so the document was never replaced; the loaded board and both scores were unchanged |
+| M10 | Locale switch with an overlay open | change language from the game's settings while the game-over card is up | the card re-renders in the new language | pass — 2026-09-09, on the *no moves left* card: title, note and both buttons switched in place, the card stayed open, and the undo badge went `AD` → `QC` (the B1 regression, still fixed) |
+| M17 | Settings, embedded | open settings under the shell, switch language, then "back to home" | the game re-labels with no reload; the hub opens in the new language | pass — 2026-09-09. `SCORE/BEST` ⇄ `ĐIỂM/CAO NHẤT`, a witness on `contentWindow` survived, and the hub's topbar came up with the chosen language pressed |
+| M18 | Settings, standalone | same, at `/g/2048/` with no shell | identical behaviour; "back to home" lands on `/` | pass — 2026-09-09. `window.parent === window`, language switched and persisted to `arcade:locale`, and the exit navigated to the hub, which rendered in Vietnamese |
+| M19 | Settings over a card | open settings while the *no moves left* card is up, then close it | the card is still there and still open | pass — 2026-09-09. The card stayed up under the sheet, Escape closed only the sheet, and *Hết nước đi* came back with both buttons. This is why the sheet is its own layer and not the board overlay |
 | M11 | Vietnamese layout | run in `vi` at 320px | `CAO NHẤT` and the two-button card do not clip | pass — 2026-09-09, with the *Hết nước đi* card open at 320px: `CAO NHẤT 2.048` intact, both card buttons on their own lines, nothing clipped, no horizontal overflow |
 | M12 | Interstitial timing | game over → "New game" | interstitial fires there, never on the game-over card itself | **not recorded** |
 | M13 | Run lifecycle | play a full run with the console open | exactly one `gameStart` and one `gameOver` | **not recorded** |
@@ -61,11 +64,12 @@ in the test file rather than duplicated here.
 | M15 | Install | Android, add to home screen | own icon, own window, opens at `/g/2048/` | **not recorded** |
 | M16 | Offline | installed, airplane mode | boots and plays | **not recorded** |
 
-M9 and M10 were blocked on the shell's language picker; it exists as of
-2026-09-09 and both now pass, through the settings sheet that replaced the
-floating toggle. M3 and M11 were measured the same day. Everything still marked
-*not recorded* was very likely done during the original build; it was never
-written down, which is exactly the gap this process exists to close.
+M9, M10, M17 and M18 all go through this game's own settings sheet, which
+replaced the shell's chrome on 2026-09-09 (decision 18). M18 is the one that
+could not be run at all before: standalone had no settings of any kind.
+Everything still marked *not recorded* was very likely done during the original
+build; it was never written down, which is exactly the gap this process exists
+to close.
 
 ## 3. Static checks
 

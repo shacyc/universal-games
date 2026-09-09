@@ -22,7 +22,7 @@ noted rather than smoothed over.
 | `src/anim.ts` | animation durations, and `prefers-reduced-motion` | no |
 | `src/canvas.ts` | DPR handling and square-fit sizing | no |
 | `src/input.ts` | swipe and keyboard to a `Direction` | no |
-| `src/ui.ts` | the DOM chrome and overlays; holds no text of its own | no |
+| `src/ui.ts` | the DOM chrome, the board overlays and the settings sheet; holds no text of its own | no |
 | `src/i18n/en.ts` | the fallback strings, and the `Strings` type | **yes** |
 | `src/i18n/vi.ts` | Vietnamese, typed against `en` | **yes** |
 | `src/i18n/index.ts` | `SUPPORTED` and `stringsFor(locale)` | **yes** |
@@ -89,7 +89,9 @@ Every platform call, all of them inside `session.ts`.
 | `showInterstitial('run_end')` | `interstitialBeforeNewGame` | "New game" tapped after game over | may be suppressed |
 | `track(...)` | `track` | the seven events in `brief.md` §6 | — |
 | `onMuteChange` | `onMuteChange` | boot | sets `data-muted`; no sounds ship yet |
-| `onLocaleChange` | `onLocaleChange` | boot, and every language change | re-labels the UI and re-formats scores |
+| `onLocaleChange` | `onLocaleChange` | boot, and every language change | re-labels the UI, re-formats scores, redraws the settings sheet |
+| `setLocale(tag)` | `setLocale` | a row in the settings sheet's language page | fire-and-forget; the answer arrives as `onLocaleChange` |
+| `exitToHub()` | `exitToHub` | "back to home" in the settings sheet | fire-and-forget; the document is leaving |
 
 ## 7. Risks and SDK gaps
 

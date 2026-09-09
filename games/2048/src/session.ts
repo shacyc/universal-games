@@ -64,10 +64,19 @@ export interface Session {
   onMuteChange(listener: (muted: boolean) => void): () => void;
   /**
    * The platform's language, resolved to one this game ships. Fires once with
-   * the current value, then on every change — the shell owns the picker, so a
-   * game that read the handshake once would keep rendering the old language.
+   * the current value, then on every change — including the changes this game's
+   * own settings screen asks for. Re-render from here and never from the click:
+   * the language can also change in the hub, and the platform's value is the
+   * only one that is right.
    */
   onLocaleChange(listener: (locale: string) => void): () => void;
+  /**
+   * Both driven by this game's own settings screen. The platform owns what they
+   * mean — which language exists, where the hub is — so neither is decided
+   * here; the screen just asks.
+   */
+  setLocale(locale: string): void;
+  exitToHub(): void;
 }
 
 export function createSession(): Session {
@@ -98,5 +107,7 @@ export function createSession(): Session {
     track: (event, props) => sdk.track(event, props),
     onMuteChange: (listener) => watchMute(sdk, listener),
     onLocaleChange: (listener) => watchLocale(sdk, SUPPORTED, listener),
+    setLocale: (locale) => sdk.setLocale(locale),
+    exitToHub: () => sdk.exitToHub(),
   };
 }
