@@ -432,12 +432,24 @@ delivers the current locale first and then every change, already resolved from
 a reload**, and do not rebuild the DOM either if a canvas lives inside it —
 2048's `ui.ts` relabels in place for exactly that reason.
 
-**You ship the language picker.** It lives in your own settings screen (§5.4),
-in your own style. You do not own the *language* — you call `sdk.setLocale(tag)`
-and the answer comes back through `onLocaleChange` like any other change, which
-is what you re-render from. Never keep your own copy of "the current language"
-as the source of truth: the platform's is, and a player can change it from the
-hub too.
+**You ship the language picker.** It lives in your own settings screen (§5,
+*Settings*), in your own style. You do not own the *language* — you call
+`sdk.setLocale(tag)` and the answer comes back through `onLocaleChange` like any
+other change, which is what you re-render from.
+
+**One choice, every surface** (CLAUDE.md rule 6). The player sets the language
+once and it follows them: your settings screen, the hub, every other game, every
+other tab. Two things follow from that and both are easy to get wrong:
+
+- **Never keep your own copy of "the current language" as the source of truth.**
+  The platform's is. It can change while your game is open, from the hub or from
+  another tab, and a game that updated a local variable in its click handler
+  will be a language behind with nothing erroring.
+- **The tag you are handed may be one you do not ship.** That is normal — the
+  platform stores the player's choice verbatim and each surface resolves it
+  against its own list. `watchLocale` does that for you and falls back to
+  `SUPPORTED[0]`. Do not treat it as an error, and do not write a corrected tag
+  back.
 
 Four rules that are easy to get wrong:
 

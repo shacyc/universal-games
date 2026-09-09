@@ -4,7 +4,11 @@ import { createIdbStorage } from './adapters/idb-storage.js';
 import { createSessionCounter } from './adapters/sessions.js';
 import { createStubAds } from './adapters/stub-ads.js';
 import { createHost, type HostCore } from './core.js';
-import { readLocalePreference, writeLocalePreference } from './locale-preference.js';
+import {
+  readLocalePreference,
+  watchLocalePreference,
+  writeLocalePreference,
+} from './locale-preference.js';
 
 /**
  * A host running inside the game's own document, for when there is no shell:
@@ -22,7 +26,7 @@ import { readLocalePreference, writeLocalePreference } from './locale-preference
 export function createStandaloneHost(_options: { slug: string }): HostCore {
   const sessions = createSessionCounter();
   const locale = readLocalePreference();
-  return createHost({
+  const host = createHost({
     storage: createIdbStorage(),
     ads: withFrequencyCap(createStubAds(), { isFirstSession: () => sessions.isFirstSession() }),
     analytics: createBufferedAnalytics(),
@@ -36,4 +40,10 @@ export function createStandaloneHost(_options: { slug: string }): HostCore {
     // difference between "no opinion" and "explicitly nothing" a real one.
     ...(locale !== null ? { context: { locale } } : {}),
   });
+
+  // The player changed language in another tab — the hub, or another installed
+  // game. One choice, every surface, without a reload.
+  watchLocalePreference((tag) => host.setLocale(tag));
+
+  return host;
 }

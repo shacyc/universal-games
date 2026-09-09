@@ -1,9 +1,27 @@
 import { useSyncExternalStore } from 'react';
-import { readLocalePreference, resolveLocale, writeLocalePreference } from '@platform/sdk/host';
+import {
+  readLocalePreference,
+  resolveLocale,
+  watchLocalePreference,
+  writeLocalePreference,
+} from '@platform/sdk/host';
 import { SUPPORTED, stringsFor, type Strings } from './index.js';
 
 /**
  * The one place the shell's language lives.
+ *
+ * Two values, and keeping them apart is the whole point:
+ *
+ * - **`choice`** is the player's, verbatim. It is what gets stored, what the
+ *   host broadcasts, and what every game resolves for itself.
+ * - **`rendered`** is `choice` resolved against the locales *the shell* ships,
+ *   and is only used to pick the shell's own strings.
+ *
+ * Collapsing the two would make the hub's translation status a ceiling on the
+ * whole platform: a game translated into a language the hub is not would be
+ * dragged back to English the moment the shell wrote the preference. The hub
+ * rendering English while a game renders French is the correct outcome, and
+ * `resolveLocale` is what makes it a normal one.
  *
  * Deliberately not React state and not a context: the host in `host.ts` has to
  * read the same value to tell games about it, and `install.ts`-style module
@@ -17,48 +35,67 @@ import { SUPPORTED, stringsFor, type Strings } from './index.js';
  */
 const FALLBACK = SUPPORTED[0];
 
-function initialLocale(): string {
-  // `navigator.language` is a starting guess and nothing more: the moment the
-  // player picks, the stored preference wins, on this and every later visit.
-  const stored = readLocalePreference();
-  return resolveLocale(stored ?? navigator.language, SUPPORTED, FALLBACK);
-}
-
-let locale = initialLocale();
-let strings = stringsFor(locale);
+/**
+ * `navigator.language` is a starting guess and nothing more: the moment the
+ * player picks, the stored preference wins, on this and every later visit.
+ */
+let choice = readLocalePreference() ?? navigator.language;
+let rendered = resolveLocale(choice, SUPPORTED, FALLBACK);
+let strings = stringsFor(rendered);
 const listeners = new Set<() => void>();
 
 /**
- * Stamps the chosen language onto the document.
+ * Stamps the language onto the document.
  *
  * Called once from `main.tsx` rather than at import time, so this module can be
  * read by anything that is not a browser — the test suite included. The
  * document's language is not decoration: it is what a screen reader picks a
- * voice from and what the browser offers to translate. Games set their own
- * inside their iframe.
+ * voice from and what the browser offers to translate. It gets `rendered`,
+ * because that is the language the words on this page are actually in. Games
+ * set their own inside their iframe, from their own resolution.
  */
 export function applyDocumentLocale(): void {
-  document.documentElement.lang = locale;
+  document.documentElement.lang = rendered;
 }
 
+/** The player's choice. What games are told, and what is persisted. */
 export function getLocale(): string {
-  return locale;
+  return choice;
+}
+
+/** The choice resolved to a language the shell has words for. */
+export function getRenderedLocale(): string {
+  return rendered;
 }
 
 export function getStrings(): Strings {
   return strings;
 }
 
-/** The player picked a language. Anything outside this list resolves into it. */
-export function setLocale(next: string): void {
-  const resolved = resolveLocale(next, SUPPORTED, FALLBACK);
-  if (resolved === locale) return;
-  locale = resolved;
-  strings = stringsFor(resolved);
-  document.documentElement.lang = resolved;
-  writeLocalePreference(resolved);
+/**
+ * The player picked a language — here, inside a game, or in another tab.
+ *
+ * `persist` is false only when the change *came from* storage: rewriting the
+ * key we were just told about is noise, and on a browser that echoes it back
+ * it would be a loop.
+ */
+function adopt(next: string, persist: boolean): void {
+  if (next === choice) return;
+  choice = next;
+  rendered = resolveLocale(next, SUPPORTED, FALLBACK);
+  strings = stringsFor(rendered);
+  document.documentElement.lang = rendered;
+  if (persist) writeLocalePreference(next);
   for (const listener of listeners) listener();
 }
+
+export function setLocale(next: string): void {
+  adopt(next, true);
+}
+
+// Another tab of this origin — the hub in a second window, or an installed game
+// — changed the language. One choice, every surface, no reload.
+watchLocalePreference((tag) => adopt(tag, false));
 
 export function subscribeLocale(listener: () => void): () => void {
   listeners.add(listener);
@@ -72,6 +109,7 @@ export function useStrings(): Strings {
   return useSyncExternalStore(subscribeLocale, getStrings);
 }
 
+/** The player's choice — what a picker should show as selected. */
 export function useLocale(): string {
   return useSyncExternalStore(subscribeLocale, getLocale);
 }

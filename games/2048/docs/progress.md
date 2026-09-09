@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Status | **Shipped** — with an unrecorded device pass, see §5 |
-| Tasks done | 10 / 10 |
+| Tasks done | 11 / 11 |
 | Last updated | 2026-09-09 |
 
 ## 1. Tasks
@@ -22,6 +22,7 @@ IDs from `plan.md` §9, reconstructed from the shipped code.
 | T8 | Register in `catalog.json` | done | one entry, no `demoData.ts` placeholder | |
 | T9 | i18n | done | `src/i18n/`, `test/i18n.test.ts` (11 cases), M8–M11 | |
 | T10 | Settings screen (platform rule 7) | done | `src/ui.ts` menu, `session.ts` `setLocale`/`exitToHub`, M17–M19 | added after the brief was frozen; see §4 |
+| T11 | One choice, every surface (platform rule 6) | done | M20 | platform-side only; no change in `games/2048/src/` |
 
 ## 2. Definition of done
 
@@ -56,6 +57,24 @@ shipped game is the honest state and the reason this file now exists.
       — M9, M10, M11, all measured 2026-09-09
 
 ## 3. Session log
+
+### 2026-09-09 (d) — One choice, every surface
+
+- **Requirement, from the owner:** the language follows the player — set once,
+  everywhere follows. Audited against it and found two places where it did not.
+- **The hub was narrowing the choice before storing it.** It resolved the tag
+  against the *shell's* locale list on the way into `localStorage`, which made
+  the hub's translation status a silent ceiling on the platform: a game shipping
+  a language the hub lacks would have been overwritten with English, with
+  nothing logged. The stored value is now the player's tag verbatim, and each
+  surface resolves at render. Nothing in `games/2048/src/` changed for it.
+- **A second tab did not follow.** `localStorage` was written and never watched.
+  Both hosts now watch it. Verified as M20 with a hub tab and a standalone
+  `/g/2048/` tab: both directions propagate live, and the receiving tab's
+  navigation count stayed at 1, so nothing reloaded.
+- **Tests:** a shell test that fails on the old behaviour (checked by reverting
+  it), plus cross-tab cases in the SDK.
+- **Still open:** the same six device checks. Q1 unchanged.
 
 ### 2026-09-09 (c) — Settings moved into the game, as the platform now requires
 

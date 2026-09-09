@@ -131,10 +131,18 @@ click.
 `exitToHub` is a navigation: the shell takes over when the game is embedded, the
 browser when it is installed and there is no shell. Save before calling it.
 
-The hub keeps a picker of its own in its topbar. The choice is remembered in
-`localStorage` under `arcade:locale`, which `createStandaloneHost` also reads, so
-a game opened from its own installed icon starts in the language picked in the
-hub rather than in the browser's.
+The hub keeps a picker of its own in its topbar. **One choice, every surface:**
+the choice is remembered in `localStorage` under `arcade:locale`, stored as the
+player's tag verbatim, and every surface resolves it against the locales it
+happens to ship. `createStandaloneHost` reads it too, so a game opened from its
+own installed icon starts in the language picked in the hub; and both hosts watch
+it, so a change in one tab reaches the others live without a reload.
+
+The tag your game receives may therefore be one you do not ship — that is
+normal, not an error. `watchLocale` resolves it for you and falls back to
+`SUPPORTED[0]`. Never assume the platform's tag is in your list, and never store
+a language of your own: the platform's value is the only one that is right.
+See decision 19 in `docs/sdk-decisions.md`.
 
 Two small pieces of this are exported outside `@platform/sdk/game`, because the
 shell needs the identical behaviour: `resolveLocale` is on the package root

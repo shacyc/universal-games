@@ -460,3 +460,46 @@ Consequences:
   it is bounded: the two required rows are four lines of glue each, and
   `building-a-game.md` §5 *Settings* states the rules that are easy to get wrong
   once, rather than each game rediscovering them.
+
+## 19. One choice, every surface: store the tag verbatim, resolve at render
+
+The requirement, stated plainly by the owner: **the language follows the
+player.** Set it once — in the hub, inside any game, in any tab — and everything
+else follows. Auditing against that found two places where it did not hold.
+
+**The hub was narrowing the choice on the way into storage.** The shell resolved
+the player's tag against its own `SUPPORTED` list *before* persisting it and
+before handing it to the host. That made the hub's translation status a silent
+ceiling on the whole platform: a game shipping `fr` before the hub had been
+translated would have its language overwritten with `en` the moment the shell
+wrote the preference, with nothing logged and nothing to notice.
+
+So the rule is now explicit and lives in one place: **what is stored is the
+player's tag, verbatim.** Resolution happens where words are rendered, never
+where the choice is written. The shell keeps two values — `choice`, which is
+persisted and broadcast, and `rendered`, which is `choice` resolved against what
+the *shell* ships and is used for nothing but picking its own strings. The hub
+reading English while a game reads French is the correct outcome, not a bug, and
+`resolveLocale` is what makes it an ordinary one.
+
+The hub's picker highlights `choice`, not `rendered`. If a game set a language
+the hub does not offer, nothing is highlighted — which is the truth, and better
+than telling the player they picked English.
+
+**A second tab did not follow.** The hub in one tab and an installed game in
+another are the same person, and `localStorage` was written but never watched.
+`watchLocalePreference` closes it with the `storage` event, which browsers fire
+only in the tabs that did *not* write — so it cannot loop with the write beside
+it. Both the shell's store and `createStandaloneHost` subscribe, and a change
+propagates live: verified with a hub tab and a standalone `/g/2048/` tab, in
+both directions, with `performance.getEntriesByType('navigation').length === 1`
+on the receiving side to show nothing reloaded.
+
+Two consequences worth stating:
+
+- **A storage-driven change is adopted but not written back.** Rewriting the key
+  we were just told about is noise at best, and a loop on any browser that
+  echoes a tab's own writes.
+- **iOS installed PWAs still stand apart.** Their storage bucket is their own,
+  so they neither see another tab's change nor publish theirs. Same boundary as
+  the install memory, and not fixable from here.

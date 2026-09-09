@@ -41,16 +41,24 @@ Business goals: ad revenue (rewarded + interstitial) and in-game purchases
 5. **No game state in `localStorage` as the source of truth.** iOS Safari
    evicts script-writable storage after ~7 days without use for uninstalled
    sites. `sdk.save()` writes local-first then syncs to the server.
-6. **Multi-language from the start.** The platform owns the language, each game
-   owns its words. The choice reaches games as `GameContext.locale` plus
-   `onLocaleChange`; a game ships `src/i18n/<locale>.ts` and reads it through
-   `watchLocale`. No user-facing string is written into a `.ts` or `.html` file,
-   in the shell or in a game: words live in a locale module, and catalog copy
-   (`tagline`) is a per-locale object inside `catalog.json`, so adding a game is
-   still one entry. `genre` is a key, never a label. Translation never crosses
-   the SDK wire — see decisions 15, 16 and 18 in `docs/sdk-decisions.md`.
-   Shipping `en` + `vi`; adding a locale is one file per package. LTR only for
-   now, and the PWA manifest stays English.
+6. **Multi-language from the start. One choice, every surface.** The language
+   follows the *player*: set once — in the hub, in any game, in any tab — and
+   the hub, every mounted game and every other tab of this origin follow, with
+   no reload. What is stored is the player's tag **verbatim**; each surface
+   resolves it against the locales it happens to ship (`resolveLocale`), so a
+   game translated into a language the hub is not keeps it instead of being
+   dragged back.
+
+   The platform owns the language, each game owns its words. The choice reaches
+   games as `GameContext.locale` plus `onLocaleChange`; a game ships
+   `src/i18n/<locale>.ts` and reads it through `watchLocale`. No user-facing
+   string is written into a `.ts` or `.html` file, in the shell or in a game:
+   words live in a locale module, and catalog copy (`tagline`) is a per-locale
+   object inside `catalog.json`, so adding a game is still one entry. `genre` is
+   a key, never a label. Translation never crosses the SDK wire — see decisions
+   15, 16, 18 and 19 in `docs/sdk-decisions.md`. Shipping `en` + `vi`; adding a
+   locale is one file per package. LTR only for now, and the PWA manifest stays
+   English.
 7. **Every game ships its own settings screen**, in its own style, holding at
    least the **language** and **back to the hub**. The shell draws nothing over
    a running game — it has a picker in the hub's topbar and that is all — so a

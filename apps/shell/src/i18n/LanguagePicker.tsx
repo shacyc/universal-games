@@ -10,6 +10,11 @@ import { setLocale, useLocale, useStrings } from './locale.js';
  * A language is labelled with its **own** name — someone hunting for
  * Vietnamese is looking for "Tiếng Việt" — and marked with `lang`, or a screen
  * reader set to English pronounces it as English.
+ *
+ * Selection follows the player's **choice**, not the language the hub fell back
+ * to rendering in. If a game set a language the hub does not ship, nothing here
+ * is highlighted — which is the truth, and better than claiming they picked
+ * English when they did not.
  */
 export function LanguagePicker(): JSX.Element {
   const t = useStrings();
