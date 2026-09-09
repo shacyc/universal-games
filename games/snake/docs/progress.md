@@ -20,7 +20,7 @@ case ID as evidence.
 | T5 | Reactive face + crash effect | todo | | M14, M16 |
 | T6 | `input.ts` — swipe + keyboard → `queueTurn` | done | `test/input.test.ts` — U25 swipe decode, U26 key decode; `typecheck` clean | `createInput` binds it; decode is two pure fns |
 | T7 | `ui.ts` — HUD, start card, idle/paused overlays, countdown | todo | | needs T4 |
-| T8 | `session.ts` — save/load via `createSaveSlot` | todo | | M5; unblocked (i18n `SUPPORTED` now exists) |
+| T8 | `session.ts` — save/load via `createSaveSlot` | partial | `src/session.ts` written, `typecheck` clean, dev server not broken | code complete; M5 (kill tab mid-run → paused restore) needs the loop from T4/T7 to verify |
 | T9 | Lifecycle — `gameStart`/`gameOver` | todo | | M13 |
 | T10 | Ads — rewarded revive + interstitial on New game | todo | | M7–M9 |
 | T11 | Pause/resume — one pair, idempotent resume | todo | | M10–M12 |
@@ -61,6 +61,22 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-09 — T8 session.ts written (verification deferred)
+
+- **Did:** `src/session.ts` — the single SDK boundary. `createSession()` wires
+  `createSaveSlot(sdk, isSaveState)` and exposes: `ready`/`load`/`save`,
+  `startRun`/`endRun` (gameStart + run_start; gameOver + run_end once),
+  `offerRevive` (`showRewarded('revive')`), `interstitialBeforeNewGame`
+  (`showInterstitial('run_end')`), `track`, `onMuteChange`/`onLocaleChange`
+  (via `watchMute`/`watchLocale`), `onPause`/`onResume`, `setLocale`/
+  `exitToHub`. Mirrors `games/2048/src/session.ts`.
+- **Verified:** `typecheck` clean; dev server still boots with no console
+  errors. **Not** verified: M5 (crash-restore) and M13 (one gameStart/gameOver
+  per run) need the game loop — deferred to after T4/T7. T8 is `partial` until
+  then.
+- **Next:** unchanged — T3 when the `agy-image` quota resets, then T4.
+- **Blocked by:** `agy-image` daily quota for the T3→T4→T5→T7 chain.
 
 ### 2026-09-09 — T6 input + i18n strings pulled forward; T3 blocked on image quota
 
