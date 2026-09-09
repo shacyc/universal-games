@@ -20,6 +20,7 @@ anything touching the DOM or canvas is verified by hand (testplan §2).
 | `src/main.ts` | boot, the RAF loop + tick accumulator, SW registration, wiring input → core → render → ui, the pause/resume pair | no |
 | `src/session.ts` | **every** `sdk.*` call; `createSaveSlot`; `watchLocale` / `watchMute` | no |
 | `src/snake.ts` | game rules — `newRun`, `queueTurn`, `step`, `reviveRun`, scoring, speed | **yes** |
+| `src/save.ts` | save shape (`SaveState`), `toSavedRun` / `fromSavedRun`, the `isSaveState` boundary validator | **yes** |
 | `src/input.ts` | swipe + keyboard → a `Dir`, fed to `queueTurn` | no |
 | `src/assets.ts` | loads the generated `.webp` art, decodes to `ImageBitmap`, exposes it ready-or-throwing | no |
 | `src/render.ts` | canvas: field, snake body path, head-face sprite, apple, inter-tick interpolation, crash shake/flash | no |
@@ -84,7 +85,9 @@ export function speedAfter(speed: number): number;   // min(14, speed + 0.35)
 ## 3. Save state and versioning
 
 Shape is brief §5. `load()` returns `unknown`; validation is once, at the
-boundary, in `createSaveSlot(sdk, isSaveState)` (as `games/2048/src/session.ts`).
+boundary, in `createSaveSlot(sdk, isSaveState)`. `isSaveState` and the shape
+live in `src/save.ts` (pure, no SDK import — progress.md §4 deviation 1);
+`session.ts` imports it and wires the slot.
 
 ```ts
 export interface SaveState {

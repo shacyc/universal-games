@@ -9,35 +9,35 @@
 
 ## 1. Unit cases — the pure core
 
-Automated, in `test/snake.test.ts`. No DOM, injected `rng`, no real clock.
+Automated, in `test/snake.test.ts` (39 concrete cases across the 24 IDs; some are `it.each`). No DOM, injected `rng`, no real clock.
 `Test` is the exact `it(...)` name so a failing run points straight back here.
 
 | ID | Area | Setup / input | Expected | Test | Status |
 | --- | --- | --- | --- | --- | --- |
-| U1 | Scoring | `scoreFor(6)` (level 0) | `10` | `scoreFor: first food is worth 10` | todo |
-| U2 | Scoring | `scoreFor(6 + 21*0.35)` (level 21) | `31` | `scoreFor: level 21 is worth 31` | todo |
-| U3 | Scoring | `scoreFor(6 + 22*0.35)` (level 22) | `32` | `scoreFor: level 22 is worth 32` | todo |
-| U4 | Scoring boundary | `scoreFor(14)` (speed capped, level would be 22+) | `32` — never more | `scoreFor: capped speed stays at 32` | todo |
-| U5 | Speed | `speedAfter(6)`, `speedAfter(13.8)` | `6.35`, `14` (clamped, not 14.15) | `speedAfter: rises by 0.35 and caps at 14` | todo |
-| U6 | Growth | head steps onto `food` | `body.length + 1`, new `food` spawned off the body, `score += scoreFor`, `justAte === true` | `step: eating grows the snake and spawns new food` | todo |
-| U7 | justAte | any tick where the head does not land on food | `justAte === false` | `step: justAte is false on a non-eating tick` | todo |
-| U8 | Move legality — tail chase | head moves into the cell the tail vacates this tick (snake did not just eat) | not `dead`; move succeeds | `step: moving into the vacating tail cell is legal` | todo |
-| U9 | Self-collision | head moves into an occupied body cell that is not the vacating tail | `dead === true` | `step: running into the body ends the run` | todo |
-| U10 | Wall death | from the edge, step off the top / bottom / left / right (parametrised) | `dead === true` for each; no wrap | `step: leaving each edge ends the run` | todo |
-| U11 | Randomness | spawn food 500 times against a near-full board with a stubbed `rng` sweep | food index is never in `body`, always in `[0, CELLS)` | `step: new food never lands on the snake` | todo |
-| U12 | Exhaustion | snake body fills every cell | `step` returns, run ends, no infinite loop (test has a hard iteration cap) | `step: a full board ends the run without hanging` | todo |
-| U13 | Reversal rejected | `dir = 'right'`, `queueTurn(run, 'left')` | queue unchanged; after `step`, `dir` is still `'right'` | `queueTurn: a direct 180 is dropped` | todo |
-| U14 | Reversal vs queued turn (D6) | `dir='right'`, `queueTurn('up')` then `queueTurn('down')` | `'down'` dropped — it reverses the pending `'up'`; queue is `['up']` | `queueTurn: a turn that reverses the last pending turn is dropped` | todo |
-| U15 | Queue depth | three distinct legal turns queued before a tick | only the first two are kept | `queueTurn: the queue never exceeds two` | todo |
-| U16 | Queue consumption | two legal turns queued, then two `step`s | one turn applied per tick, in order | `step: queued turns are consumed one per tick` | todo |
-| U17 | Revive — shape | `reviveRun` on a length-20 dead run | `body.length === 5`, centred, `score` and `speed` unchanged, `revived === true`, not `dead` | `reviveRun: 5 centred segments, score and speed kept` | todo |
-| U18 | Revive — short snake | `reviveRun` on a length-3 dead run | `body.length === 5` (grown up, never shorter) | `reviveRun: a short snake is grown to 5` | todo |
-| U19 | Revive — food | old `food` sits where the new centred body will be | `food` is respawned to a cell clear of the new body | `reviveRun: food is respawned clear of the new snake` | todo |
-| U20 | Dead run is frozen | `step` a dead run | returned run is equivalent — no movement, no score change, still `dead` | `step: a dead run does not advance` | todo |
-| U21 | End detected once | step a live run into a wall, then step again | first step sets `dead`; second step does not re-run end logic (e.g. `track` hook called once — asserted via a spy in the harness, or by state equality) | `step: the end of a run is detected exactly once` | todo |
-| U22 | Save round-trip | `run → toSave(run) → isSaveState → run'` | `run'` equals `run` minus the non-persisted fields (`pendingTurns` empty, `justAte`/`dead` false) | `save: a run survives a save/load round-trip` | todo |
-| U23 | Save validation | `isSaveState` on `{}`, `{ v: 1 }`, `{ v: 2, best: 0, run: null }`, a run with duplicate body indices, a run with `food` inside `body` | `null` for every one — never a throw | `save: a malformed save returns null` | todo |
-| U24 | Fresh run | `newRun(rng)` | length 3, centred, `dir === 'right'`, not moving semantics captured by `pendingTurns === []`, `food` off the body, `speed === 6`, `score === 0`, `revived === false` | `newRun: a fresh run matches the brief` | todo |
+| U1 | Scoring | `scoreFor(6)` (level 0) | `10` | `scoreFor: first food is worth 10` | pass |
+| U2 | Scoring | `scoreFor(6 + 21*0.35)` (level 21) | `31` | `scoreFor: level 21 is worth 31` | pass |
+| U3 | Scoring | `scoreFor(6 + 22*0.35)` (level 22) | `32` | `scoreFor: level 22 is worth 32` | pass |
+| U4 | Scoring boundary | `scoreFor(14)` (speed capped, level would be 22+) | `32` — never more | `scoreFor: capped speed stays at 32` | pass |
+| U5 | Speed | `speedAfter(6)`, `speedAfter(13.8)` | `6.35`, `14` (clamped, not 14.15) | `speedAfter: rises by 0.35 and caps at 14` | pass |
+| U6 | Growth | head steps onto `food` | `body.length + 1`, new `food` spawned off the body, `score += scoreFor`, `justAte === true` | `step: eating grows the snake and spawns new food` | pass |
+| U7 | justAte | any tick where the head does not land on food | `justAte === false` | `step: justAte is false on a non-eating tick` | pass |
+| U8 | Move legality — tail chase | head moves into the cell the tail vacates this tick (snake did not just eat) | not `dead`; move succeeds | `step: moving into the vacating tail cell is legal` | pass |
+| U9 | Self-collision | head moves into an occupied body cell that is not the vacating tail | `dead === true` | `step: running into the body ends the run` | pass |
+| U10 | Wall death | from the edge, step off the top / bottom / left / right (parametrised) | `dead === true` for each; no wrap | `step: leaving the <edge> edge ends the run` (it.each, 4) | pass |
+| U11 | Randomness | spawn food 500 times against a near-full board with a stubbed `rng` sweep | food index is never in `body`, always in `[0, CELLS)` | `step: new food never lands on the snake` | pass |
+| U12 | Exhaustion | snake body fills every cell | `step` returns, run ends, no infinite loop (test has a hard iteration cap) | `step: a full board ends the run without hanging` | pass |
+| U13 | Reversal rejected | `dir = 'right'`, `queueTurn(run, 'left')` | queue unchanged; after `step`, `dir` is still `'right'` | `queueTurn: a direct 180 is dropped` | pass |
+| U14 | Reversal vs queued turn (D6) | `dir='right'`, `queueTurn('up')` then `queueTurn('down')` | `'down'` dropped — it reverses the pending `'up'`; queue is `['up']` | `queueTurn: a turn that reverses the last pending turn is dropped` | pass |
+| U15 | Queue depth | three distinct legal turns queued before a tick | only the first two are kept | `queueTurn: the queue never exceeds two` | pass |
+| U16 | Queue consumption | two legal turns queued, then two `step`s | one turn applied per tick, in order | `step: queued turns are consumed one per tick` | pass |
+| U17 | Revive — shape | `reviveRun` on a length-20 dead run | `body.length === 5`, centred, `score` and `speed` unchanged, `revived === true`, not `dead` | `reviveRun: 5 centred segments, score and speed kept` | pass |
+| U18 | Revive — short snake | `reviveRun` on a length-3 dead run | `body.length === 5` (grown up, never shorter) | `reviveRun: a short snake is grown to 5` | pass |
+| U19 | Revive — food | old `food` sits where the new centred body will be | `food` is respawned to a cell clear of the new body | `reviveRun: food is respawned clear of the new snake` | pass |
+| U20 | Dead run is frozen | `step` a dead run | returned run is equivalent — no movement, no score change, still `dead` | `step: a dead run does not advance` | pass |
+| U21 | End detected once | step a live run into a wall, then step again | first step sets `dead`; second step does not re-run end logic (e.g. `track` hook called once — asserted via a spy in the harness, or by state equality) | `step: the end of a run is detected exactly once` | pass |
+| U22 | Save round-trip | `run → toSave(run) → isSaveState → run'` | `run'` equals `run` minus the non-persisted fields (`pendingTurns` empty, `justAte`/`dead` false) | `save: a run survives a save/load round-trip` | pass |
+| U23 | Save validation | `isSaveState` on `{}`, `{ v: 1 }`, `{ v: 2, best: 0, run: null }`, a run with duplicate body indices, a run with `food` inside `body` | `null` for every one — never a throw | `save: a malformed save returns null — <case>` (it.each, 12) + `save: a valid state parses` | pass |
+| U24 | Fresh run | `newRun(rng)` | length 3, centred, `dir === 'right'`, not moving semantics captured by `pendingTurns === []`, `food` off the body, `speed === 6`, `score === 0`, `revived === false` | `newRun: a fresh run matches the brief` | pass |
 
 Coverage map against `docs/building-a-game.md` §10 / the template's "must
 cover": scoring at a boundary — U2–U4; a non-move is not a move — U13/U20;
@@ -81,8 +81,8 @@ phone at least once. Record the date and device above.
 | ID | Check | Command / how | Status |
 | --- | --- | --- | --- |
 | S0 | Gates and invariants | `pnpm game:check snake` | todo |
-| S1 | Types | `pnpm --filter @game/snake typecheck` (both tsconfigs) | todo |
-| S2 | Unit tests | `pnpm --filter @game/snake test` | todo |
+| S1 | Types | `pnpm --filter @game/snake typecheck` (both tsconfigs) | pass |
+| S2 | Unit tests | `pnpm --filter @game/snake test` | pass |
 | S3 | Build output | `pnpm build`, then `dist/g/snake/` exists with the art | todo |
 | S4 | No forbidden platform access | `.githooks/pre-commit`; `pnpm game:status` reports it too | auto |
 | S5 | Only `session.ts` imports the SDK client | `.githooks/pre-commit` | auto |

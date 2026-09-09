@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Status | **Gate 2** — plan approved 2026-09-09; implementing |
-| Tasks done | 1 / 15 |
+| Tasks done | 2 / 15 |
 | Last updated | 2026-09-09 |
 
 ## 1. Tasks
@@ -17,7 +17,7 @@ case ID as evidence.
 | ID | Task | Status | Evidence | Note |
 | --- | --- | --- | --- | --- |
 | T1 | Scaffold from `games/2048/` | done | dev server serves the board at `/g/snake/`; `pnpm --filter @game/snake typecheck` clean; verified at 375px + 320px, no console errors | field drawing in `main.ts` is throwaway, `render.ts` replaces it at T4 |
-| T2 | Pure core `src/snake.ts` + unit tests | todo | | testplan §1 U1–U24 |
+| T2 | Pure core `src/snake.ts` + unit tests | done | `test/snake.test.ts` — 39 cases across U1–U24, all pass; `typecheck` clean | save shape + validator went in `src/save.ts`, not `session.ts` (§4) |
 | T3 | Generate art with `agy-image` → `public/art/*.webp` + `assets.ts` | todo | | field, apple, face sheet, start illustration |
 | T4 | `render.ts` — field, body path, apple, interpolation | todo | | |
 | T5 | Reactive face + crash effect | todo | | M14, M16 |
@@ -64,6 +64,28 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-09 — T2 pure core + unit tests
+
+- **Did:** `src/snake.ts` — `newRun`, `queueTurn` (D6: validates against the
+  last pending turn), `step` (one tick: consume a turn, advance, grow/move,
+  wall + self collision; tail-chase legal; dead run returned reference-equal),
+  `reviveRun` (exactly 5 centred segments, score + speed kept, food respawned
+  clear), `scoreFor` (`10 + level`, `round` not `floor` for float safety,
+  capped at level 22), `speedAfter` (`+0.35`, cap 14), `spawnFood` (walks the
+  free list, `-1` on a full board). `src/save.ts` — `SaveState` / `SavedRun`
+  shape, `toSavedRun` / `fromSavedRun`, `isSaveState` boundary validator.
+  `test/snake.test.ts` — 39 cases covering testplan §1 U1–U24.
+- **Verified:** `pnpm --filter @game/snake test` → 39 pass;
+  `pnpm --filter @game/snake typecheck` clean (both tsconfigs). testplan §1
+  all `pass`; §3 S1 + S2 `pass`.
+- **Deviation (see §4):** the save shape + validator live in `src/save.ts`, not
+  `session.ts` as plan §1 said, so the round-trip (U22/U23) is unit-tested
+  without importing the SDK client. `session.ts` (T8) imports `isSaveState`
+  from there. Plan §1 module map updated.
+- **Next:** T3 — generate the art with `agy-image` (`public/art/` field tile,
+  apple, face sheet, start illustration) + `src/assets.ts` loader.
+- **Blocked by:** nothing.
 
 ### 2026-09-09 — T1 scaffold (Gate 2 open)
 
@@ -182,7 +204,7 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 
 | # | What the doc says | What was built | Why | Doc updated? |
 | --- | --- | --- | --- | --- |
-| — | nothing built yet | | | |
+| 1 | plan §1: save shape + `isSaveState` live in `session.ts` | they live in `src/save.ts`; `session.ts` will import them | pure functions with no SDK import, so `test/snake.test.ts` covers the round-trip (U22/U23) without pulling in the client | yes — plan §1 module map adds `save.ts` |
 
 ## 5. Open questions for the owner
 
