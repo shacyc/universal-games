@@ -85,9 +85,10 @@ export function InstallPrompt(): JSX.Element | null {
  * when this target cannot be installed — a button that does nothing when
  * tapped is worse than no button.
  *
- * Over a running game there is no button at all: it is a row in the settings
- * sheet (`GameSettings`), because a second thing floating over the board is a
- * second thing covering the board.
+ * This is the hub's button. Over a running game the shell draws nothing at all
+ * (decision 18); a game that wants to offer the install puts a row in its own
+ * settings screen. The automatic prompt below is unaffected — it is what
+ * actually earns installs.
  */
 export function InstallButton(): JSX.Element | null {
   const t = useStrings();

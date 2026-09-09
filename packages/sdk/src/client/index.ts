@@ -77,6 +77,9 @@ export function createClient(options: CreateClientOptions): PlatformSDK {
         () => undefined,
       ),
 
+    setLocale: (locale: string) => notify('setLocale', { locale }),
+    exitToHub: () => notify('exitToHub'),
+
     gameStart: () => notify('gameStart'),
     gameOver: (payload: { score?: number }) => notify('gameOver', payload),
     track: (event: string, props?: Record<string, string | number | boolean>) =>

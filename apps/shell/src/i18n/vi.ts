@@ -83,9 +83,6 @@ export function vi(n: Intl.NumberFormat): Strings {
     prompt_install: 'Cài đặt',
     install_target: (target) => `Cài ${target}`,
 
-    back_to_games: 'Về danh sách trò chơi',
-    settings: 'Cài đặt',
-    settings_back: 'Quay lại',
     close: 'Đóng',
 
     foot_brand: (brand) => `${brand} — TRÒ CHƠI NHỎ, KHÔNG CẦN CÀI`,

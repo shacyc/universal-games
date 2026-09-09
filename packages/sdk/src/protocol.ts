@@ -41,7 +41,7 @@ export interface GameContext {
   isMuted: boolean;
 }
 
-/** The complete set of methods a v0 host answers. */
+/** The complete set of methods a host answers. */
 export const METHODS = [
   'getUser',
   'load',
@@ -51,6 +51,14 @@ export const METHODS = [
   'gameStart',
   'gameOver',
   'track',
+  /**
+   * Added in v0.1, when settings moved into the games. A game draws its own
+   * settings screen in its own style, so it needs to be able to *act* on the
+   * two platform-level things that screen offers. See decision 18 in
+   * `docs/sdk-decisions.md`.
+   */
+  'setLocale',
+  'exitToHub',
 ] as const;
 
 export type Method = (typeof METHODS)[number];

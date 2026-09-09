@@ -1,12 +1,12 @@
 {
   "v": 1,
   "_comment": [
-    "Machine-readable form of the gates in docs/building-a-game.md \u00a70 Step 2.",
+    "Machine-readable form of the gates in docs/building-a-game.md §0 Step 2.",
     "`pnpm game:status` computes which gate a game is really at from these",
     "checks, instead of trusting what progress.md claims. Keep the two in sync:",
-    "if you change a gate here, change \u00a70, and vice versa.",
+    "if you change a gate here, change §0, and vice versa.",
     "",
-    "JSON rather than YAML on purpose \u2014 YAML reads better for a hand-edited",
+    "JSON rather than YAML on purpose — YAML reads better for a hand-edited",
     "config, but it would cost a dependency, and catalog.json already set the",
     "precedent for data files here.",
     "",
@@ -24,7 +24,7 @@
           "id": "brief-exists",
           "label": "brief.md exists",
           "path": "games/<slug>/docs/brief.md",
-          "note": "Case A in \u00a70 Step 2 \u2014 run the interview and write it."
+          "note": "Case A in §0 Step 2 — run the interview and write it."
         },
         {
           "id": "brief-frozen",
@@ -42,10 +42,10 @@
         },
         {
           "id": "brief-questions-answered",
-          "label": "\u00a711 open questions answered",
+          "label": "§11 open questions answered",
           "path": "games/<slug>/docs/brief.md",
           "mustNot": "^\\|\\s*Q\\d+\\s*\\|[^|]*\\|[^|]*\\|\\s*\\|",
-          "note": "brief.md \u00a711 still has rows with an empty Answer column."
+          "note": "brief.md §11 still has rows with an empty Answer column."
         }
       ]
     },
@@ -66,14 +66,14 @@
           "label": "SDK call inventory filled",
           "path": "games/<slug>/docs/plan.md",
           "mustNot": "TODO\\(agent\\)",
-          "note": "\u00a76 is what makes the monetisation rules reviewable in one place."
+          "note": "§6 is what makes the monetisation rules reviewable in one place."
         },
         {
           "id": "plan-tasks",
           "label": "task breakdown exists",
           "path": "games/<slug>/docs/plan.md",
           "must": "\\|\\s*T1\\s*\\|",
-          "note": "progress.md has nothing to track until plan.md \u00a79 lists tasks."
+          "note": "progress.md has nothing to track until plan.md §9 lists tasks."
         },
         {
           "id": "testplan-cases",
@@ -86,7 +86,7 @@
           "id": "progress-exists",
           "label": "progress.md exists",
           "path": "games/<slug>/docs/progress.md",
-          "note": "Create it with every task from plan.md \u00a79 as todo."
+          "note": "Create it with every task from plan.md §9 as todo."
         }
       ]
     },
@@ -129,7 +129,14 @@
           "id": "i18n",
           "label": "i18n strings module exists",
           "path": "games/<slug>/src/i18n/index.ts",
-          "note": "Every user-facing string lives in src/i18n/ \u2014 building-a-game.md \u00a73.11."
+          "note": "Every user-facing string lives in src/i18n/ — building-a-game.md §3.11."
+        },
+        {
+          "id": "settings-screen",
+          "label": "settings screen wired to the platform",
+          "path": "games/<slug>/src/session.ts",
+          "must": "sdk\\.exitToHub\\s*\\(",
+          "note": "Every game ships its own settings holding the language and the way back to the hub — building-a-game.md §3.12. The call belongs in session.ts like every other sdk.* call."
         }
       ]
     },
@@ -149,7 +156,7 @@
           "id": "manual-pass-recorded",
           "label": "manual pass recorded",
           "path": "games/<slug>/docs/testplan.md",
-          "mustNot": "\\|\\s*Last full manual pass\\s*\\|\\s*(\u2014|YYYY-MM-DD[^|]*)\\|",
+          "mustNot": "\\|\\s*Last full manual pass\\s*\\|\\s*(—|YYYY-MM-DD[^|]*)\\|",
           "note": "Record the date and the device in the testplan header."
         }
       ]
@@ -174,14 +181,14 @@
           "label": "definition of done fully ticked",
           "path": "games/<slug>/docs/progress.md",
           "mustNot": "- \\[ \\]",
-          "note": "progress.md \u00a72. Do not tick a box you have not observed."
+          "note": "progress.md §2. Do not tick a box you have not observed."
         },
         {
           "id": "handover",
           "label": "handover entry written",
           "path": "games/<slug>/docs/progress.md",
-          "must": "Shipped \u2014 handover",
-          "note": "The closing session-log entry, per \u00a711."
+          "must": "Shipped — handover",
+          "note": "The closing session-log entry, per §11."
         }
       ]
     }
@@ -193,7 +200,7 @@
       "grep": "\\b(localStorage|sessionStorage|indexedDB)\\b|\\bfetch\\s*\\(",
       "in": "games/<slug>/src",
       "expect": "none",
-      "why": "Everything platform-shaped goes through the SDK (\u00a73.1). iOS evicts script-writable storage after ~7 days. The service worker is exempt: intercepting fetch events is what it is for.",
+      "why": "Everything platform-shaped goes through the SDK (§3.1). iOS evicts script-writable storage after ~7 days. The service worker is exempt: intercepting fetch events is what it is for.",
       "except": [
         "src/sw.ts"
       ]
@@ -204,7 +211,7 @@
       "grep": "@platform/sdk/client",
       "in": "games/<slug>/src",
       "expect": "only:session.ts",
-      "why": "One reviewable place for every platform call (\u00a75)."
+      "why": "One reviewable place for every platform call (§5)."
     },
     {
       "id": "sw-scope",
@@ -212,7 +219,7 @@
       "grep": "register\\((['\"`])/(?!g/)",
       "in": "games/<slug>/src",
       "expect": "none",
-      "why": "A root-scoped SW breaks per-game installability for every game (\u00a73.8)."
+      "why": "A root-scoped SW breaks per-game installability for every game (§3.8)."
     },
     {
       "id": "no-navigator-language",
@@ -220,7 +227,7 @@
       "grep": "navigator\\.language",
       "in": "games/<slug>/src",
       "expect": "none",
-      "why": "The shell owns the language picker; a game reads it with watchLocale (\u00a73.11). Reading navigator.language ignores the player's choice."
+      "why": "The shell owns the language picker; a game reads it with watchLocale (§3.11). Reading navigator.language ignores the player's choice."
     }
   ]
 }

@@ -408,3 +408,67 @@ describe('pause and resume', () => {
     expect(other).toEqual(['mute']);
   });
 });
+
+describe('setLocale', () => {
+  it('a game changing the language reaches every mounted game, itself included', async () => {
+    const { host, sdk } = connect();
+    const seen: string[] = [];
+    sdk.onLocaleChange((locale) => seen.push(locale));
+    await sdk.ready();
+
+    sdk.setLocale('vi');
+    await vi.waitFor(() => expect(seen).toEqual(['vi']));
+    expect(host.locale()).toBe('vi');
+    expect(host.context(SLUG).locale).toBe('vi');
+  });
+
+  it('tells the embedder, so the hub and the stored preference follow', async () => {
+    const onLocaleChanged = vi.fn();
+    const { sdk } = connect({ onLocaleChanged });
+    await sdk.ready();
+
+    sdk.setLocale('vi');
+    await vi.waitFor(() => expect(onLocaleChanged).toHaveBeenCalledWith('vi'));
+  });
+
+  it('says nothing when the language did not actually change', async () => {
+    const onLocaleChanged = vi.fn();
+    const { sdk } = connect({ context: { locale: 'vi' }, onLocaleChanged });
+    await sdk.ready();
+
+    sdk.setLocale('vi');
+    // Give the round trip a chance to happen before asserting it did not.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(onLocaleChanged).not.toHaveBeenCalled();
+  });
+
+  it('refuses a tag that is not one', async () => {
+    const { host } = createMockHost();
+    const response = await host.handle(SLUG, { v: PROTOCOL_VERSION, id: 1, method: 'setLocale', params: { locale: '' } });
+    expect(response).toMatchObject({ ok: false, error: { code: 'BAD_PARAMS' } });
+  });
+});
+
+describe('exitToHub', () => {
+  it('asks the embedder to navigate', async () => {
+    const onExitToHub = vi.fn();
+    const { sdk } = connect({ onExitToHub });
+    await sdk.ready();
+
+    sdk.exitToHub();
+    await vi.waitFor(() => expect(onExitToHub).toHaveBeenCalledTimes(1));
+  });
+
+  it('a host with nowhere to go says so rather than pretending', async () => {
+    const { host } = createMockHost();
+    const response = await host.handle(SLUG, { v: PROTOCOL_VERSION, id: 1, method: 'exitToHub' });
+    expect(response).toMatchObject({ ok: false, error: { code: 'UNKNOWN_METHOD' } });
+  });
+
+  it('never throws at the game, whatever the host answers', async () => {
+    const { sdk } = connect();
+    await sdk.ready();
+    // No handler wired: the host errors, and the game must not see it.
+    expect(() => sdk.exitToHub()).not.toThrow();
+  });
+});

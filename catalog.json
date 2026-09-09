@@ -9,13 +9,6 @@
       "themeColor": "#faf8ef",
       "backgroundColor": "#faf8ef",
       "devPort": 5174,
-      "chrome": {
-        "surface": "#faf8ef",
-        "ink": "#776e65",
-        "muted": "#bbada0",
-        "accent": "#8f7a66",
-        "onAccent": "#f9f6f2"
-      },
       "cover": {
         "bg": "#F3E9DA",
         "shapes": [

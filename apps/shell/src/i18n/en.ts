@@ -110,11 +110,6 @@ export function en(n: Intl.NumberFormat) {
     prompt_install: 'Install',
     install_target: (target: string) => `Install ${target}`,
 
-    // Game frame -----------------------------------------------------------
-    back_to_games: 'Back to games',
-    settings: 'Settings',
-    /** Goes back one level inside the settings sheet, not out of the game. */
-    settings_back: 'Back',
     close: 'Close',
 
     // Footer ---------------------------------------------------------------

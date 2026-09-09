@@ -102,13 +102,18 @@ built by concatenation. Name them here if the game has any beyond a score.
 One line per screen or overlay, and what is on it. Include the idle state, the
 paused state (if any), and game over.
 
+**The settings screen is required and is not a design choice** — every game has
+one, holding at least the language and the way back to the hub (CLAUDE.md rule
+7). What is optional is how it looks and what *else* is on it. Say here how the
+player opens it and what it holds beyond the two required rows.
+
 TODO(owner)
 
 ## 9. Explicitly out of scope
 
 List what this game will **not** have, so it does not creep in during
-implementation: tutorial, settings screen, difficulty picker, sound, a second
-mode, etc.
+implementation: tutorial, difficulty picker, sound, a second mode, etc. The
+settings screen is not available to cut — see §8.
 
 TODO(owner)
 

@@ -108,8 +108,8 @@ Three things pass that test today:
   `context.isMuted` is the obvious way to break that promise; the helper
   delivers the current value first, then changes.
 - **`game.css`** — safe-area insets, 44px hit targets, `touch-action: none` on
-  the play surface, reduced motion. These are CLAUDE.md rule 6, and left to
-  each game they will drift. Everything is wrapped in `:where()` so a game
+  the play surface, reduced motion. These are CLAUDE.md's portrait-first rule,
+  and left to each game they will drift. Everything is wrapped in `:where()` so a game
   overrides any of it with a plain selector. No colours, no fonts: games bring
   their own look.
 
@@ -359,6 +359,10 @@ Two consequences worth stating:
 
 ## 17. One settings sheet over a game, and the corner it lives in
 
+> **Superseded by decision 18.** The sheet moved into the games. Kept because
+> the corner problem it found is still real, and because the reasoning for
+> *where* platform controls may sit over a game is what decision 18 leans on.
+
 The chrome over a running game had grown to three floating things: a back arrow
 top-left, a language toggle and an install button top-right. That is a browser
 toolbar sitting on someone's game. It collapses to **one** button, and
@@ -408,3 +412,51 @@ Two consequences worth stating:
   Closing that means the SDK host drawing the sheet itself in standalone, which
   is the same shape as decision 14's unresolved install gap and waits for the
   same milestone.
+
+## 18. Settings belong to the game, and the SDK grew two methods to allow it
+
+Decision 17 put one settings sheet in the shell, floating over every game. This
+reverses it: **every game ships its own settings screen, in its own style**, and
+the shell draws nothing over a running game at all.
+
+The owner's call, and the reasoning holds up. A sheet the shell draws can only
+ever approximate the game underneath it — decision 17 tried, with a five-colour
+palette in the catalog, and a palette is not a design. More importantly it left
+a real hole: an installed game opened from its own icon has **no shell**, so it
+had no way to change language and no way back to the hub. Decision 17 recorded
+that as an accepted gap. Moving the screen into the game closes it, because the
+screen ships with the game and is therefore on screen in both modes.
+
+**The cost is two new SDK methods**, and this is the milestone's only exception
+to "no new SDK method":
+
+| Method | What the host does |
+| --- | --- |
+| `setLocale(tag)` | adopts the language, emits `locale` to every mounted game, tells the embedder to persist and re-render |
+| `exitToHub()` | the shell navigates to `/`; standalone, the browser does |
+
+Both meet the bar CLAUDE.md sets — every game needs them, not one — and both are
+answers to a question the game is not allowed to decide for itself. `setLocale`
+notably does **not** hand the game the language: the game asks, and learns the
+outcome through `onLocaleChange` like any other change. That single path is what
+keeps a language picked in a game's settings, one picked in the hub, and one
+restored from a previous visit from ever disagreeing, and it is why the host
+holds `adoptLocale` as the one place the value changes whoever asked.
+
+`exitToHub` returns `UNKNOWN_METHOD` from a host with no `onExitToHub`. That is
+the truth rather than a silent success — a host embedded somewhere with no hub
+is a real future case, and a game must be able to tell.
+
+Consequences:
+
+- **The shell's `GameFrame` is a frame and its wiring, nothing else.** No back
+  button, no picker, no install icon. The install *prompt* still appears on its
+  own after a finished run; only the manual button went, and it went into each
+  game's settings screen as the games get one.
+- **The catalog's `chrome` palette is gone**, along with `--platform-chrome` in
+  `game.css`. Both existed only to make decision 17's sheet fit over a game, and
+  a game styling its own screen needs neither.
+- **Ten games will each build a settings screen.** That is the honest price, and
+  it is bounded: the two required rows are four lines of glue each, and
+  `building-a-game.md` §5 *Settings* states the rules that are easy to get wrong
+  once, rather than each game rediscovering them.

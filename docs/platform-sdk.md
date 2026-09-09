@@ -52,6 +52,10 @@ interface PlatformSDK {
   // analytics
   track(event: string, props?: Record<string, string | number | boolean>): void;
 
+  // driven by the game's own settings screen — the game asks, the platform acts
+  setLocale(locale: string): void;
+  exitToHub(): void;
+
   // platform state the game subscribes to — never owns
   onMuteChange(listener: (isMuted: boolean) => void): () => void;
   onLocaleChange(listener: (locale: string) => void): () => void;
@@ -97,8 +101,10 @@ must call it exactly once per finished run.
 **Sound.** Games read `isMuted` from context and subscribe to changes; the
 platform owns the mute toggle so it is consistent across every game.
 
-**Language.** The same shape, for the same reason: the shell owns the picker,
-games read `locale` and subscribe to changes. `locale` is a BCP 47 tag
+**Language.** The same shape, for a related reason: the platform owns the
+language, games read `locale` and subscribe to changes. A game draws a picker
+but never *holds* the value — it can be changed from the hub, or from another
+mounted game, or restored from a previous visit. `locale` is a BCP 47 tag
 (`en`, `en-US`, `vi`), so a game resolves it against the locales it ships —
 use `watchLocale` from `@platform/sdk/game`, which delivers the current value
 first and then every change, already resolved. A game never reads
@@ -108,12 +114,27 @@ Translation itself does **not** cross the wire: each game ships its own strings
 under `src/i18n/`. See decision 15 in `docs/sdk-decisions.md` for why the SDK
 has no `t()`.
 
-The picker itself is shell chrome — a segmented control in the home page
-topbar, and a row in the settings sheet over a running game, so switching
-language does not cost the current run. A game ships none. The choice is
-remembered in `localStorage` under `arcade:locale`, which `createStandaloneHost`
-also reads, so a game opened from its own installed icon starts in the language
-picked in the hub rather than in the browser's.
+**Every game ships a settings screen**, holding at least the language and the
+way back to the hub (CLAUDE.md rule 7, decision 18). It acts through two methods:
+
+```ts
+sdk.setLocale('vi');   // ask the platform to change language
+sdk.exitToHub();       // leave the game; this document is on its way out
+```
+
+`setLocale` does not hand the game the language. The host adopts it, tells every
+mounted game through `onLocaleChange`, and remembers it — so a language picked
+in a game's settings, one picked in the hub's topbar and one restored from a
+previous visit can never disagree. Re-render from the event, never from the
+click.
+
+`exitToHub` is a navigation: the shell takes over when the game is embedded, the
+browser when it is installed and there is no shell. Save before calling it.
+
+The hub keeps a picker of its own in its topbar. The choice is remembered in
+`localStorage` under `arcade:locale`, which `createStandaloneHost` also reads, so
+a game opened from its own installed icon starts in the language picked in the
+hub rather than in the browser's.
 
 Two small pieces of this are exported outside `@platform/sdk/game`, because the
 shell needs the identical behaviour: `resolveLocale` is on the package root

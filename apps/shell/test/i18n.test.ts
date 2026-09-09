@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import catalog from '../../../catalog.json' with { type: 'json' };
-import { chromeTheme, pickText, type CatalogGame, type LocalisedText } from '../src/catalog.js';
+import { pickText, type LocalisedText } from '../src/catalog.js';
 import { demoCopyFor } from '../src/demo/copy.js';
 import { STATS, SAVED, homeGames } from '../src/demo/demoData.js';
 import {
@@ -121,22 +121,3 @@ describe('placeholder copy', () => {
   });
 });
 
-describe('chrome palette', () => {
-  it('gives a game with no palette a readable neutral one', () => {
-    const bare = { slug: 'x', title: 'X' } as unknown as CatalogGame;
-    const theme = chromeTheme(bare);
-    for (const [key, value] of Object.entries(theme)) {
-      expect(value, key).toMatch(/^#[0-9a-f]{3,8}$/i);
-    }
-  });
-
-  it('every declared palette is complete — a half-filled one is an unreadable sheet', () => {
-    for (const game of catalog.games) {
-      const declared = (game as { chrome?: Record<string, string> }).chrome;
-      if (!declared) continue;
-      for (const key of ['surface', 'ink', 'muted', 'accent', 'onAccent']) {
-        expect(declared[key], `${game.slug}/${key}`).toMatch(/^#[0-9a-f]{3,8}$/i);
-      }
-    }
-  });
-});

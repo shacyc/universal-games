@@ -20,25 +20,6 @@
   overscroll-behavior: none;
 }
 
-/*
- * The shell floats one 44px control over the BOTTOM-RIGHT corner of every
- * embedded game — settings, which is where the platform's language and the way
- * out live. Keep that corner clear.
- *
- * Bottom-right and not top-right: a game's own HUD is almost always along the
- * top (2048's score boxes and New button run right to the edge), and the bottom
- * is where a thumb already is — rule 7. A game whose own bottom row reaches the
- * right edge should pad it by this much; one that centres its controls, as 2048
- * does, already clears it.
- *
- * It is reserved in standalone too, where nothing is drawn there yet. A layout
- * that only fits when there is no shell above it is a layout that breaks the
- * first time it is embedded.
- */
-:where(html) {
-  --platform-chrome: 52px;
-}
-
 /* Portrait-first, one-handed. Put this on the outermost element so content
    clears the notch, the home indicator and rounded corners. */
 :where(.game-safe) {

@@ -258,11 +258,8 @@ These are non-negotiable. A review that finds any of them fails the game.
 7. **Portrait-first, thumb-first.** Fully playable one-handed in portrait at
    320px wide on a mid-range Android phone. Interactive controls >= 44px. No
    hover-only affordances. Honour `env(safe-area-inset-*)` and
-   `prefers-reduced-motion`. **Keep the bottom-right corner clear** — the shell
-   floats one 44px control there over every embedded game; `game.css` gives you
-   `--platform-chrome` as the size to reserve. A game whose own bottom row runs
-   to the right edge pads it by that much; one that centres its controls already
-   clears it.
+   `prefers-reduced-motion`. The whole screen is yours: the shell draws nothing
+   over a running game.
 8. **Your service worker is scoped to `/g/<slug>/` and caches only your build.**
    Never register at root scope. Never cache another game's URLs.
 9. **The slug is assigned by the shell, not by you.** You pass yours to
@@ -276,12 +273,18 @@ These are non-negotiable. A review that finds any of them fails the game.
     language and the game owns its words — read it with `watchLocale`, never
     `navigator.language`. A hardcoded `'Game over'` is the one that survives to
     launch, because it looks finished.
+12. **Every game ships a settings screen, and it holds at least the language
+    and the way back to the hub.** Both are required, in every game, however
+    small. You build it yourself, in your own style — the shell draws nothing
+    over a running game — and you act on it with `sdk.setLocale(tag)` and
+    `sdk.exitToHub()`. Neither is a decision you make: the platform owns which
+    language exists and where the hub is; your screen asks. See §5, *Settings*.
 
 ---
 
 ## 4. The SDK surface
 
-The complete set of methods a v0 host answers. Nothing else exists; do not call
+The complete set of methods a host answers. Nothing else exists; do not call
 anything else.
 
 ```ts
@@ -302,6 +305,9 @@ await sdk.showInterstitial('placement');  // → void, never rejects, may be sup
 sdk.gameStart();                    // opens a run
 sdk.gameOver({ score });            // closes it, once
 sdk.track('event', { ... });        // strings, numbers, booleans only
+
+sdk.setLocale('vi');                // from your settings screen; answer arrives via onLocaleChange
+sdk.exitToHub();                    // from your settings screen; this document is leaving
 
 sdk.onMuteChange(fn); sdk.onLocaleChange(fn);              // each returns an unsubscribe
 sdk.onPause(fn); sdk.onResume(fn);
@@ -365,7 +371,7 @@ games/<slug>/
   src/sw.ts                     scoped to /g/<slug>/
   src/i18n/en.ts                the fallback strings — the language you author in
   src/i18n/<locale>.ts          one per additional locale, typed against en.ts
-  src/i18n/index.ts             SUPPORTED + the lookup
+  src/i18n/index.ts             SUPPORTED + the lookup + LOCALE_NAMES
   src/styles.css                your look; imports nothing from the shell
   src/<core>.ts                 pure game rules, no DOM — this is what you unit-test
   test/<core>.test.ts           vitest
@@ -426,13 +432,12 @@ delivers the current locale first and then every change, already resolved from
 a reload**, and do not rebuild the DOM either if a canvas lives inside it —
 2048's `ui.ts` relabels in place for exactly that reason.
 
-**You do not ship a language picker, and you do not ship a way out of your own
-game.** Both are the shell's, the same way mute and install are: the home page
-has a picker in its topbar, and over a running game there is one floating
-settings button holding the language, the install offer and "back to games".
-The choice reaches you as a `locale` event. A game that drew its own would be a
-second control disagreeing with the first, and it would need SDK methods that do
-not exist — see decision 17 in `docs/sdk-decisions.md`.
+**You ship the language picker.** It lives in your own settings screen (§5.4),
+in your own style. You do not own the *language* — you call `sdk.setLocale(tag)`
+and the answer comes back through `onLocaleChange` like any other change, which
+is what you re-render from. Never keep your own copy of "the current language"
+as the source of truth: the platform's is, and a player can change it from the
+hub too.
 
 Four rules that are easy to get wrong:
 
@@ -458,6 +463,53 @@ Four rules that are easy to get wrong:
   does not exist) rather than trusting the screenshot on a machine that happens
   to have a good fallback — the shell's vintage theme had exactly this bug.
 
+### Settings — required, and yours to design
+
+Every game has a settings screen. It is not optional and not a nice-to-have for
+later: two of the things in it are the only way a player reaches the platform
+from inside your game, and if you do not draw them nobody does.
+
+**The two that are required:**
+
+| Row | What it does | How |
+| --- | --- | --- |
+| Language | lists the locales *this game* ships, marks the current one | `sdk.setLocale(tag)` |
+| Back to the hub | leaves the game | `sdk.exitToHub()` |
+
+Anything else your game needs — sound, difficulty, a rules reminder — goes in
+the same screen and is entirely yours.
+
+**Neither is a decision you make.** `setLocale` does not change your strings; it
+asks the platform, and the change arrives back through `onLocaleChange`, which
+is what re-renders you. That single path is what keeps a language picked in your
+settings, one picked in the hub, and one restored from a previous visit from
+ever disagreeing. `exitToHub` navigates: the shell takes over when you are
+embedded, the browser when you are installed and there is no shell. Both are
+fire-and-forget, and `exitToHub` is the end of your document — save before you
+call it, never after.
+
+**Rules that are easy to get wrong:**
+
+- **Name each language in itself.** `Tiếng Việt`, not `Vietnamese`. A player
+  looking for their language cannot read the one currently on screen — that is
+  precisely why they are in this screen. These names are never translated and
+  never live in a locale file; `LOCALE_NAMES` in `src/i18n/index.ts` is where
+  they go.
+- **Mark the rows with `lang`.** Otherwise a screen reader set to English
+  pronounces `Tiếng Việt` as English.
+- **Re-render the screen on a language change.** It is almost certainly what
+  the player just used, so it is the one thing that must not be left in the old
+  language. `games/2048/src/ui.ts` redraws it from `setStrings`.
+- **The settings screen is not the board overlay.** It has to be reachable
+  while a game-over card is up, and closing it must not dismiss that card.
+- **It must work standalone.** It ships with your game, so it is on screen with
+  or without a shell above it. That is the point of it being yours: an installed
+  game had no way to change language or leave until each game drew its own.
+
+`games/2048/src/ui.ts` is the worked example — a gear button in the footer, a
+sheet with a root page and a language page, in that game's own palette. Copy the
+shape, not the look.
+
 ### `session.ts` is mandatory
 
 Every `sdk.*` call lives in one module that exports a small game-specific
@@ -471,10 +523,10 @@ touches one file per game.
 `import '@platform/sdk/game.css'` first, then your own stylesheet. `game.css`
 gives you safe-area insets (`.game-safe`), the play-surface rules
 (`.game-surface` — `touch-action: none` is what stops a swipe scrolling the
-page), 44px minimum controls, reduced-motion, and `--platform-chrome`: the size
-of the bottom-right corner the shell reserves for its settings button (rule 7).
-It carries no colours and no fonts on purpose: bring your own look. Everything
-in it is `:where()`-wrapped, so any plain selector of yours overrides it.
+page), 44px minimum controls and reduced-motion. It carries no colours and no
+fonts on purpose: bring your own look, including for your settings screen.
+Everything in it is `:where()`-wrapped, so any plain selector of yours overrides
+it.
 
 ---
 
@@ -519,25 +571,9 @@ truth; the home page, the dev proxy and `scripts/assemble.ts` all read it.
   "themeColor": "#......",       // matches index.html <meta name="theme-color">
   "backgroundColor": "#......",  // matches the manifest
   "devPort": 51xx,               // see the table below
-  "chrome": {                    // optional; see below
-    "surface": "#......",        // the settings sheet's background
-    "ink": "#......",            // text on `surface`
-    "muted": "#......",          // secondary text, hairlines, row fills
-    "accent": "#......",         // the floating settings button, selected rows
-    "onAccent": "#......"        // text and icons on `accent`
-  },
   "cover": { "bg": "#......", "shapes": [ /* 4–10 positioned rects */ ] }
 }
 ```
-
-`chrome` is the palette the **shell's** settings sheet wears while your game is
-open. Give it your game's own colours and the sheet reads as part of the game
-rather than as a browser panel dropped on top of it; omit it and you get a
-neutral dark palette, which is readable but not yours. It is data and not CSS
-because the shell may not import your stylesheet (rule 1) and adding a game may
-not mean editing the shell (rule 3). Five values, all required if you declare
-it at all — a half-filled palette is an unreadable sheet, and the shell's test
-suite fails on one.
 
 `tagline` is an object because rule 3 and rule 6 have to hold at once: adding a
 game is one catalog entry with no shell code to touch, *and* nothing a player
@@ -650,8 +686,12 @@ least once.
 - [ ] `gameStart` once per run, `gameOver` once per run, verified in the console.
 - [ ] `prefers-reduced-motion` shortens animations to near-zero.
 - [ ] Every locale in `SUPPORTED` renders with no missing key and no clipped
-      control at 320px, and switching language in the shell re-renders the game
-      without a reload.
+      control at 320px, and switching language re-renders the game without a
+      reload — whether it was switched in your settings screen or in the hub.
+- [ ] The settings screen exists, is reachable while an end-of-run card is up,
+      offers every locale in `SUPPORTED` named in its own language, and leaves
+      to the hub. Verified **standalone as well as embedded** — that is the mode
+      it is the only affordance in.
 - [ ] No `localStorage`, no `fetch`, no direct IndexedDB anywhere in `src/`.
 - [ ] No files changed outside `games/<slug>/`, `catalog.json` and the one
       `demoData.ts` deletion.
@@ -694,6 +734,15 @@ Each of these looks fine locally and breaks the platform:
   nothing acts on it, and the player loses a life while watching a rewarded ad.
 - A `resume` handler that is not idempotent, so a suppressed interstitial
   restarts a loop that was never running.
+- Shipping without a settings screen, because the shell "probably has one".
+  It does not: over a running game the shell draws nothing at all, and an
+  installed game has no shell above it. A player with no settings screen cannot
+  change language and cannot leave.
+- Keeping your own `currentLocale` as the source of truth and updating it in the
+  click handler instead of re-rendering from `onLocaleChange`. It works until
+  the language is changed from the hub, and then the game is a language behind
+  with no error anywhere.
+- Calling `sdk.exitToHub()` and then saving. The document is already leaving.
 - Leaving the placeholder entry in `demoData.ts`, shipping two cards.
 - Reusing another game's `devPort`.
 - Adding a method to the SDK to make one game easier.

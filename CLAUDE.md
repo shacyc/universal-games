@@ -42,18 +42,23 @@ Business goals: ad revenue (rewarded + interstitial) and in-game purchases
    evicts script-writable storage after ~7 days without use for uninstalled
    sites. `sdk.save()` writes local-first then syncs to the server.
 6. **Multi-language from the start.** The platform owns the language, each game
-   owns its words. The shell ships the only language picker — in the home
-   topbar, and inside the settings sheet over a running game — and the choice
-   reaches games as
-   `GameContext.locale` plus `onLocaleChange`; a game ships
-   `src/i18n/<locale>.ts` and reads it through `watchLocale`. No user-facing
-   string is written into a `.ts` or `.html` file, in the shell or in a game:
-   words live in a locale module, and catalog copy (`tagline`) is a per-locale
-   object inside `catalog.json`, so adding a game is still one entry. `genre` is
-   a key, never a label. Translation never crosses the SDK wire — see decisions
-   15 and 16 in `docs/sdk-decisions.md`. Shipping `en` + `vi`; adding a locale is
-   one file per package. LTR only for now, and the PWA manifest stays English.
-7. **Portrait-first, thumb-first.** Every game must be fully playable one-handed
+   owns its words. The choice reaches games as `GameContext.locale` plus
+   `onLocaleChange`; a game ships `src/i18n/<locale>.ts` and reads it through
+   `watchLocale`. No user-facing string is written into a `.ts` or `.html` file,
+   in the shell or in a game: words live in a locale module, and catalog copy
+   (`tagline`) is a per-locale object inside `catalog.json`, so adding a game is
+   still one entry. `genre` is a key, never a label. Translation never crosses
+   the SDK wire — see decisions 15, 16 and 18 in `docs/sdk-decisions.md`.
+   Shipping `en` + `vi`; adding a locale is one file per package. LTR only for
+   now, and the PWA manifest stays English.
+7. **Every game ships its own settings screen**, in its own style, holding at
+   least the **language** and **back to the hub**. The shell draws nothing over
+   a running game — it has a picker in the hub's topbar and that is all — so a
+   game without a settings screen is a game the player cannot change language in
+   and cannot leave; standalone it is the only affordance there is. Both rows act
+   through `sdk.setLocale()` and `sdk.exitToHub()`: the game asks, the platform
+   decides. `games/2048/src/ui.ts` is the worked example.
+8. **Portrait-first, thumb-first.** Every game must be fully playable one-handed
    in portrait on a mid-range Android phone. Hit targets >= 44px. No hover-only
    interactions. Respect `env(safe-area-inset-*)`.
 
@@ -139,9 +144,12 @@ is the one case a branch per game is worth the ceremony. The blast-radius rule
 is what keeps parallel work safe, not the branch.
 
 Still out of scope, unchanged from v0: accounts, real ads, payments, shop,
-gems, leaderboards, a design system, and any new SDK method. An agent that
-needs one reports it instead of adding it — growing the SDK surface is a
-platform decision and it is made here, not in a game.
+gems, leaderboards and a design system. Also **any new SDK method** — an agent
+that needs one reports it instead of adding it; growing the SDK surface is a
+platform decision and it is made here, not in a game. Two were added in this
+milestone, `setLocale` and `exitToHub`, so that rule 7 could be obeyed at all
+(decision 18). That is the bar: a method exists because every game needs it, not
+because one game would be easier with it.
 
 ## How a game gets built
 

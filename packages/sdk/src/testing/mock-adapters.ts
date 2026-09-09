@@ -53,6 +53,13 @@ export interface MockHost {
 export interface MockHostOverrides extends Partial<Omit<MockHost, 'host'>> {
   /** Supply these to keep the host off `navigator` and `matchMedia` in tests. */
   context?: HostDeps['context'];
+  onLocaleChanged?: HostDeps['onLocaleChanged'];
+  /**
+   * Left out by default on purpose: a host with nowhere to go should answer
+   * `exitToHub` with `UNKNOWN_METHOD`, and a test that never wires it is the
+   * one that proves it.
+   */
+  onExitToHub?: HostDeps['onExitToHub'];
 }
 
 export function createMockHost(overrides: MockHostOverrides = {}): MockHost {
@@ -60,5 +67,13 @@ export function createMockHost(overrides: MockHostOverrides = {}): MockHost {
   const ads = overrides.ads ?? createScriptedAds();
   const analytics = overrides.analytics ?? createBufferedAnalytics();
   const context = overrides.context ?? { locale: 'en', isInstalled: false, isMuted: false };
-  return { host: createHost({ storage, ads, analytics, context }), storage, ads, analytics };
+  const host = createHost({
+    storage,
+    ads,
+    analytics,
+    context,
+    ...(overrides.onLocaleChanged ? { onLocaleChanged: overrides.onLocaleChanged } : {}),
+    ...(overrides.onExitToHub ? { onExitToHub: overrides.onExitToHub } : {}),
+  });
+  return { host, storage, ads, analytics };
 }

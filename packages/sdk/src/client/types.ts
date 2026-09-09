@@ -25,6 +25,25 @@ export interface PlatformSDK {
 
   track(event: string, props?: Record<string, string | number | boolean>): void;
 
+  /**
+   * Sets the platform's language, from this game's own settings screen.
+   *
+   * Pass a tag this game ships. The host resolves and remembers it, tells every
+   * mounted game through `onLocaleChange`, and keeps it for the next visit — so
+   * the game does not persist anything itself. Fire-and-forget: the change
+   * arrives back as a `locale` event, which is what the game re-renders from.
+   */
+  setLocale(locale: string): void;
+
+  /**
+   * Leaves the game and returns to the hub, from this game's own settings
+   * screen. Embedded, the shell navigates; standalone, the browser does.
+   *
+   * Fire-and-forget, and there is no "it worked" — by the time it has, this
+   * document is on its way out. Do not save after calling it; save first.
+   */
+  exitToHub(): void;
+
   /** Platform mute changes. Returns an unsubscribe function. */
   onMuteChange(listener: (isMuted: boolean) => void): () => void;
   /** Platform language changes. Prefer `watchLocale` — it resolves the tag. */

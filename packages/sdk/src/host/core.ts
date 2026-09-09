@@ -16,6 +16,18 @@ export interface HostDeps {
   analytics: AnalyticsAdapter;
   /** Overrides for context fields the environment cannot infer. */
   context?: Partial<Pick<GameContext, 'locale' | 'isInstalled' | 'isMuted'>>;
+  /**
+   * The language changed — including when a game's own settings screen asked
+   * for it (decision 18). The embedder persists it and re-renders whatever it
+   * has of its own; the host has already told every mounted game.
+   */
+  onLocaleChanged?: (locale: string) => void;
+  /**
+   * A game asked to leave. The embedder navigates: the shell back to the hub,
+   * a standalone document to `/`. Omitted, the request is answered with
+   * `UNKNOWN_METHOD`, which is the truth — this host has nowhere to go.
+   */
+  onExitToHub?: () => void;
 }
 
 export interface HostCore {
@@ -36,7 +48,10 @@ export interface HostCore {
   subscribeEvents(slug: string, listener: (event: HostEvent) => void): () => void;
   setMuted(isMuted: boolean): void;
   isMuted(): boolean;
-  /** The shell owns the language picker, exactly as it owns mute. */
+  /**
+   * Sets the platform language from the embedder's side. A game's own settings
+   * screen reaches the same code through the `setLocale` request.
+   */
   setLocale(locale: string): void;
   locale(): string;
 }
@@ -62,6 +77,18 @@ export function createHost(deps: HostDeps): HostCore {
     for (const entry of listeners) {
       if (target === undefined || entry.slug === target) entry.listener(event);
     }
+  }
+
+  /**
+   * The one place the language changes, whoever asked. Both `setLocale` on this
+   * interface and the `setLocale` request a game sends land here, so the shell's
+   * picker and a game's own settings screen cannot drift apart.
+   */
+  function adoptLocale(next: string): void {
+    if (next === locale) return;
+    locale = next;
+    emit({ v: PROTOCOL_VERSION, type: 'locale', data: { locale: next } });
+    deps.onLocaleChanged?.(next);
   }
 
   /**
@@ -146,6 +173,25 @@ export function createHost(deps: HostDeps): HostCore {
         return ok(request.id, null);
       }
 
+      case 'setLocale': {
+        const next = params.locale;
+        if (typeof next !== 'string' || next === '') {
+          return err(request.id, 'BAD_PARAMS', 'setLocale requires a BCP 47 tag');
+        }
+        // Same path as the embedder's own setter, so a language picked inside a
+        // game and one picked in the shell cannot behave differently.
+        adoptLocale(next);
+        return ok(request.id, null);
+      }
+
+      case 'exitToHub': {
+        if (!deps.onExitToHub) {
+          return err(request.id, 'UNKNOWN_METHOD', 'This host has no hub to return to');
+        }
+        deps.onExitToHub();
+        return ok(request.id, null);
+      }
+
       case 'track': {
         const event = params.event;
         if (typeof event !== 'string') return err(request.id, 'BAD_PARAMS', 'track requires an event name');
@@ -195,11 +241,7 @@ export function createHost(deps: HostDeps): HostCore {
 
     isMuted: () => muted,
 
-    setLocale(next) {
-      if (next === locale) return;
-      locale = next;
-      emit({ v: PROTOCOL_VERSION, type: 'locale', data: { locale: next } });
-    },
+    setLocale: adoptLocale,
 
     locale: () => locale,
   };

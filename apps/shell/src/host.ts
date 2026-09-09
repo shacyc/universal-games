@@ -8,7 +8,8 @@ import {
   type AnalyticsAdapter,
   type HostCore,
 } from '@platform/sdk/host';
-import { getLocale, subscribeLocale } from './i18n/locale.js';
+import { requestExitToHub } from './exit.js';
+import { getLocale, setLocale, subscribeLocale } from './i18n/locale.js';
 import { offerInstall } from './install.js';
 
 /**
@@ -51,12 +52,16 @@ export const host: HostCore = createHost({
   // and the first game mounted would open in the browser's language rather
   // than the chosen one.
   context: { locale: getLocale() },
+  // A game's own settings screen changed the language. The store persists it
+  // and re-renders the hub; the host has already told every mounted game, and
+  // the store calling back into `host.setLocale` is a no-op at the same value.
+  onLocaleChanged: setLocale,
+  onExitToHub: requestExitToHub,
 });
 
 /**
- * The picker is shell chrome and the games are behind the SDK, so this line is
- * the whole bridge between them. It runs once, at module load, and stays for
- * the life of the tab: a game mounted an hour from now still gets the language
- * that was picked before it existed, through the handshake context.
+ * The hub's own picker changed the language. It runs once, at module load, and
+ * stays for the life of the tab: a game mounted an hour from now still gets the
+ * language picked before it existed, through the handshake context.
  */
 subscribeLocale(() => host.setLocale(getLocale()));
