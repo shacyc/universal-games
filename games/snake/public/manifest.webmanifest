@@ -1,0 +1,14 @@
+{
+  "name": "Snake",
+  "short_name": "Snake",
+  "id": "/g/snake/",
+  "scope": "/g/snake/",
+  "start_url": "/g/snake/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#4a7a2c",
+  "background_color": "#8ecc39",
+  "icons": [
+    { "src": "/g/snake/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

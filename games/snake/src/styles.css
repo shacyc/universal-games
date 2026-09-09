@@ -1,0 +1,88 @@
+/*
+ * Snake's look. `@platform/sdk/game.css` first — it brings safe-area insets,
+ * 44px hit targets, `touch-action: none` on `.game-surface`, and reduced-motion
+ * defaults, all `:where()`-wrapped so anything below overrides it. It carries no
+ * colours and no fonts; those are ours.
+ */
+@import '@platform/sdk/game.css';
+
+:root {
+  --grass-a: #8ecc39;
+  --grass-b: #a2d84a;
+  --grass-dark: #4a7a2c;
+  --snake: #3b5bc0;
+  --apple: #e8412e;
+  --ink: #1e2a55;
+  --card: #3f7bd6;
+  --card-ink: #ffffff;
+
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--grass-dark);
+  color: var(--ink);
+  font-family: var(--font);
+  overscroll-behavior: none;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100%;
+  /* Honour the notch and the home indicator (hard rule 7). */
+  padding:
+    env(safe-area-inset-top)
+    env(safe-area-inset-right)
+    env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+/* Top score strip. */
+.hud {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--grass-dark);
+  color: #fff;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+}
+
+/* The play area: a square, as large as the shorter viewport axis allows. */
+.surface {
+  position: relative;
+  width: min(100vw, calc(100dvh - 120px), 560px);
+  aspect-ratio: 1;
+  margin: auto;
+  background: var(--grass-a);
+  touch-action: none;
+}
+
+.surface canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

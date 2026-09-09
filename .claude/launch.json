@@ -20,6 +20,16 @@
         "8788"
       ],
       "port": 8788
+    },
+    {
+      "name": "snake",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@game/snake",
+        "dev"
+      ],
+      "port": 5175
     }
   ]
 }

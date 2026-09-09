@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#8ecc39"/>
+  <rect width="512" height="512" rx="96" fill="#000" opacity="0.06"/>
+  <!-- snake: a rounded L-shaped body -->
+  <path d="M136 168 h176 a56 56 0 0 1 56 56 v152"
+        fill="none" stroke="#3b5bc0" stroke-width="72"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- head end cap detail: eye -->
+  <circle cx="368" cy="360" r="16" fill="#fff"/>
+  <circle cx="368" cy="360" r="7" fill="#1e2a55"/>
+  <!-- apple -->
+  <circle cx="150" cy="360" r="46" fill="#e8412e"/>
+  <rect x="143" y="300" width="14" height="26" rx="7" fill="#7a3c1d"/>
+  <path d="M156 306 q28 -20 44 4 q-30 14 -44 -4 z" fill="#54a838"/>
+</svg>
