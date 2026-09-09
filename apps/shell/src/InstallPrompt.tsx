@@ -36,7 +36,7 @@ export function InstallPrompt(): JSX.Element | null {
   return (
     <div className={`install-cta${ios ? ' install-cta--ios' : ''}`}>
       {ios ? (
-        <button type="button" className="install-cta__scrim" aria-label={t.prompt_close} onClick={dismissInstall} />
+        <button type="button" className="install-cta__scrim" aria-label={t.close} onClick={dismissInstall} />
       ) : null}
       <div className="install-cta__sheet" role="dialog" aria-labelledby="install-cta-title">
         <p className="install-cta__title" id="install-cta-title">
@@ -66,7 +66,7 @@ export function InstallPrompt(): JSX.Element | null {
             <p className="install-cta__note">{t.prompt_note}</p>
             <div className="install-cta__actions">
               <button type="button" className="install-cta__ghost" onClick={dismissInstall}>
-                {state.manual ? t.prompt_close : t.prompt_not_now}
+                {state.manual ? t.close : t.prompt_not_now}
               </button>
               <button type="button" className="install-cta__go" onClick={() => void promptInstall()}>
                 {t.prompt_install}
@@ -84,25 +84,15 @@ export function InstallPrompt(): JSX.Element | null {
  * chose, or who said "not now" once and changed their mind. Renders nothing
  * when this target cannot be installed — a button that does nothing when
  * tapped is worse than no button.
+ *
+ * Over a running game there is no button at all: it is a row in the settings
+ * sheet (`GameSettings`), because a second thing floating over the board is a
+ * second thing covering the board.
  */
-export function InstallButton({ variant }: { variant: 'icon' | 'text' }): JSX.Element | null {
+export function InstallButton(): JSX.Element | null {
   const t = useStrings();
   const state = useInstallState();
   if (!state.available) return null;
-
-  if (variant === 'icon') {
-    return (
-      <button
-        type="button"
-        className="game-frame__install"
-        onClick={openInstall}
-        aria-label={t.install_target(state.target)}
-        title={t.install_target(state.target)}
-      >
-        <Download />
-      </button>
-    );
-  }
 
   return (
     <button type="button" className="btn btn--primary install__btn" onClick={openInstall}>
@@ -126,26 +116,6 @@ function Share(): JSX.Element {
       <path d="M12 15V3" />
       <path d="m8 7 4-4 4 4" />
       <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
-    </svg>
-  );
-}
-
-function Download(): JSX.Element {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="20"
-      height="20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M12 3v12" />
-      <path d="m8 11 4 4 4-4" />
-      <path d="M5 21h14" />
     </svg>
   );
 }

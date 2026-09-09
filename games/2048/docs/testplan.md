@@ -46,15 +46,15 @@ in the test file rather than duplicated here.
 | --- | --- | --- | --- | --- |
 | M1 | Standalone | open `http://localhost:5174/g/2048/` | plays fully; no shell needed | pass |
 | M2 | Embedded | open `http://localhost:5173/play/2048` | identical behaviour to M1 | pass |
-| M3 | Narrow portrait | 320px wide viewport | playable one-handed; nothing clipped; controls >= 44px | **not recorded** |
+| M3 | Narrow portrait | 320px wide viewport | playable one-handed; nothing clipped; controls >= 44px | pass — 2026-09-09, measured in a 320x640 viewport in both locales: no element's `scrollWidth` exceeds its box, no horizontal page overflow, every button >= 44x44. The shell's settings button overlaps `.foot` but no control inside it |
 | M4 | Safe area | notched phone, portrait | no control under the notch or home indicator | **not recorded** |
 | M5 | Crash restore | kill the tab mid-run, reopen | exact board returns, no prompt | **not recorded** |
 | M6 | Fresh boot | no save present | two tiles, no error | pass |
 | M7 | Rewarded declined | dismiss the undo ad | nothing changes: no penalty, no toast | **not recorded** |
 | M8 | Locale at boot | load the game | `<html lang>` is the resolved locale; every label is translated | pass — `lang="en"` from a host reporting `en-US`, so resolution ran |
-| M9 | Locale switch mid-run | change language while the game is open | every label re-renders, scores re-format, **no reload**, board untouched | pass — 2026-09-09. `ĐIỂM 1.024 / CAO NHẤT 2.048` → `SCORE 1,024 / BEST 2,048`. A property set on the iframe's `contentWindow` before the switch was still there after it, so the document was never replaced; the loaded board and both scores were unchanged |
-| M10 | Locale switch with an overlay open | change language on the game-over card | the card re-renders in the new language | pass — 2026-09-09, on the *no moves left* card: title, note and both buttons switched in place, the card stayed open, and the undo badge went `AD` → `QC` (the B1 regression, still fixed) |
-| M11 | Vietnamese layout | run in `vi` at 320px | `CAO NHẤT` and the two-button card do not clip | **partial** — the shell was measured clean at 320px in both languages, and the game's chrome buttons are 44x44. The game's own canvas could not be laid out in the harness used (see progress.md), so the board and the two-button card at 320px are still unverified |
+| M9 | Locale switch mid-run | open settings, Language, pick the other one | every label re-renders, scores re-format, **no reload**, board untouched | pass — 2026-09-09. `ĐIỂM 1.024 / CAO NHẤT 2.048` → `SCORE 1,024 / BEST 2,048`. A property set on the iframe's `contentWindow` before the switch was still there after it, so the document was never replaced; the loaded board and both scores were unchanged |
+| M10 | Locale switch with an overlay open | change language from settings while the game-over card is up | the card re-renders in the new language | pass — 2026-09-09, on the *no moves left* card: title, note and both buttons switched in place, the card stayed open, and the undo badge went `AD` → `QC` (the B1 regression, still fixed) |
+| M11 | Vietnamese layout | run in `vi` at 320px | `CAO NHẤT` and the two-button card do not clip | pass — 2026-09-09, with the *Hết nước đi* card open at 320px: `CAO NHẤT 2.048` intact, both card buttons on their own lines, nothing clipped, no horizontal overflow |
 | M12 | Interstitial timing | game over → "New game" | interstitial fires there, never on the game-over card itself | **not recorded** |
 | M13 | Run lifecycle | play a full run with the console open | exactly one `gameStart` and one `gameOver` | **not recorded** |
 | M14 | Reduced motion | OS "reduce motion" on | animations near-zero; still playable | **not recorded** |
@@ -62,9 +62,10 @@ in the test file rather than duplicated here.
 | M16 | Offline | installed, airplane mode | boots and plays | **not recorded** |
 
 M9 and M10 were blocked on the shell's language picker; it exists as of
-2026-09-09 and both now pass. Everything still marked *not recorded* was very
-likely done during the original build; it was never written down, which is
-exactly the gap this process exists to close.
+2026-09-09 and both now pass, through the settings sheet that replaced the
+floating toggle. M3 and M11 were measured the same day. Everything still marked
+*not recorded* was very likely done during the original build; it was never
+written down, which is exactly the gap this process exists to close.
 
 ## 3. Static checks
 

@@ -32,7 +32,8 @@ shipped game is the honest state and the reason this file now exists.
       edge cases named in the brief.
 - [x] `pnpm --filter @game/2048 typecheck` and `test` both clean.
 - [x] `pnpm build` succeeds and `dist/g/2048/` contains the game.
-- [ ] Playable one-handed, portrait, 320px, all hit targets >= 44px. — M3
+- [x] Playable one-handed, portrait, 320px, all hit targets >= 44px. — M3,
+      measured 2026-09-09
 - [ ] 60fps on a mid-range phone; input during animation is queued, not dropped.
 - [ ] Kill the tab mid-run, reopen: the run comes back exactly. — M5
 - [x] Works embedded in the hub **and** standalone. — M1, M2
@@ -49,13 +50,36 @@ shipped game is the honest state and the reason this file now exists.
 - [ ] `docs/testplan.md` §1 and §3 all `pass`; §2 run on a real phone.
 - [x] `docs/progress.md` is current.
 - [x] Deviations in §4, SDK gaps in §6.
-- [ ] Every locale in `SUPPORTED` renders with no missing key and no clipped
+- [x] Every locale in `SUPPORTED` renders with no missing key and no clipped
       control at 320px, and switching language re-renders without a reload.
-      — the switching half is now proven (M9, M10); the 320px half is not
-      (M11 partial: the shell measures clean, the game's own board does not
-      lay out in the harness available)
+      — M9, M10, M11, all measured 2026-09-09
 
 ## 3. Session log
+
+### 2026-09-09 (b) — Settings sheet replaces the floating chrome; M3 and M11 close
+
+- **Did:** Again nothing in `games/2048/src/` changed. The shell's chrome over a
+  running game collapsed from three floating controls (back, language toggle,
+  install) to one settings button holding all three — see decision 17 in
+  `docs/sdk-decisions.md`. It wears this game's colours, declared as `chrome` in
+  its `catalog.json` entry, so it reads as part of 2048 rather than as a browser
+  panel.
+- **Found, and fixed in the platform:** the corner. With the button top-right it
+  landed exactly on this game's **New** button at 320px — a shell control
+  stealing a tap the game believed was its own. The HUD cannot give up 52px at
+  that width without reflowing, so the platform moved instead of the game:
+  bottom-right is now reserved for every game, stated as `--platform-chrome` in
+  `@platform/sdk/game.css`. 2048 needs no change for it, because its `.foot`
+  centres the undo button — measured, the button overlaps `.foot` but no control
+  inside it.
+- **Closed two definition-of-done boxes with real measurements**, not with
+  assumptions: M3 and M11. At 320x640 in both locales, with the *Hết nước đi*
+  card open, nothing clips, the page never scrolls sideways, and every button is
+  at least 44x44. M9 and M10 were re-run through the new path and still pass.
+- **Still open:** seven boxes in §2 — six real checks (60fps, crash restore,
+  install + offline, the rewarded-decline case, the run-lifecycle count,
+  reduced motion) plus the one that only closes when the rest do. All need a
+  device or a console session, which is Q1.
 
 ### 2026-09-09 — M9 and M10 unblocked by the shell's language picker
 

@@ -31,7 +31,8 @@ export function en(n: Intl.NumberFormat) {
     theme_group: 'Theme',
     theme_vintage: 'VINTAGE',
     theme_modern: 'MODERN',
-    language_group: 'Language',
+    /** Both the picker's group label and the settings row that opens the list. */
+    language: 'Language',
 
     // Spotlight ------------------------------------------------------------
     spotlight_title: 'SPOTLIGHT',
@@ -105,13 +106,16 @@ export function en(n: Intl.NumberFormat) {
     ios_note: 'It gets its own icon and opens full screen — nothing to download.',
     ios_done: 'Got it',
     prompt_note: 'Its own icon, its own full-screen window, and it works with no signal.',
-    prompt_close: 'Close',
     prompt_not_now: 'Not now',
     prompt_install: 'Install',
     install_target: (target: string) => `Install ${target}`,
 
     // Game frame -----------------------------------------------------------
     back_to_games: 'Back to games',
+    settings: 'Settings',
+    /** Goes back one level inside the settings sheet, not out of the game. */
+    settings_back: 'Back',
+    close: 'Close',
 
     // Footer ---------------------------------------------------------------
     /**

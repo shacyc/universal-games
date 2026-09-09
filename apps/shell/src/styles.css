@@ -31,71 +31,182 @@ body {
   border: 0;
 }
 
-.game-frame__back,
-.game-frame__install {
-  z-index: 1;
+/* The one control that floats over a running game.
+   Bottom-right is the corner `@platform/sdk/game.css` tells every game to keep
+   clear: a game's HUD runs along the top, and a thumb is already down here.
+   It wears the open game's own colours (`chrome` in catalog.json) so it reads
+   as part of the game rather than as a browser button dropped on top of it. */
+.game-frame__settings {
+  position: absolute;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 2;
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
   border: 0;
   border-radius: 22px;
-  background: rgba(0, 0, 0, 0.45);
-  color: #fff;
+  /* The fallback is for a game that declares no chrome palette. */
+  background: var(--sheet-accent, rgba(0, 0, 0, 0.45));
+  color: var(--sheet-on-accent, #fff);
   line-height: 1;
   cursor: pointer;
 }
 
-.game-frame__back {
-  position: absolute;
-  top: max(8px, env(safe-area-inset-top));
-  left: max(8px, env(safe-area-inset-left));
-  font-size: 24px;
+/* ---- settings sheet ----
+   Shell chrome, painted in the open game's colours. Every colour below comes
+   from a custom property set by GameSettings; nothing here is a fixed hex, so
+   the same markup is at home over a cream puzzle game and a dark arcade one. */
+
+.sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
-/* The right-hand chrome is a row, not two absolutely-positioned buttons: the
-   install button comes and goes with installability, and the language picker
-   must not move when it does. */
-.game-frame__tools {
+.sheet__scrim {
   position: absolute;
-  top: max(8px, env(safe-area-inset-top));
-  right: max(8px, env(safe-area-inset-right));
-  z-index: 1;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.sheet {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  /* A sheet on a phone: it comes up from the edge the thumb is already near. */
+  border-radius: 16px 16px 0 0;
+  background: var(--sheet-surface);
+  color: var(--sheet-ink);
+  box-shadow: 0 -20px 44px -20px rgba(0, 0, 0, 0.6);
+  animation: sheet-in 180ms ease-out;
+  overflow: hidden;
+}
+
+@media (min-width: 560px) {
+  /* With room, it is a dialog rather than a sheet. */
+  .sheet-layer { align-items: center; }
+  .sheet { border-radius: 16px; padding-bottom: 8px; }
+}
+
+.sheet__head {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--sheet-muted) 45%, transparent);
 }
 
-/* The picker over a running game cannot read the home page's theme tokens —
-   it sits on whatever the game is painting. Same neutral palette as the other
-   game-frame chrome. */
-/* Doubled class on purpose: `.toggle` is defined in home.css, which loads
-   after this file, so a single class here would lose the tie. */
-.toggle.toggle--overlay {
-  display: flex;
-  gap: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 22px;
-  background: rgba(0, 0, 0, 0.45);
+.sheet__title {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
 }
-/* 44px each way, same as the back and install buttons beside it — rule 7, and
-   this control sits under a thumb during a run. */
-.toggle--overlay .toggle__btn {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0 12px;
+
+/* Keeps the title optically centred on the root page, where there is no back
+   button on the left to balance the close button on the right. */
+.sheet__slot {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.sheet__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
   border: 0;
   border-radius: 22px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.72);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  color: var(--sheet-ink);
   cursor: pointer;
 }
-.toggle--overlay .toggle__btn--on { background: #fff; color: #1c1b1a; }
+
+.sheet__page {
+  padding: 10px;
+  animation: sheet-page-in 200ms ease-out;
+}
+
+.sheet__page[data-back] {
+  animation-name: sheet-page-back;
+}
+
+.sheet__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sheet__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sheet-muted) 22%, transparent);
+  color: var(--sheet-ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sheet__row[aria-checked='true'] {
+  background: color-mix(in srgb, var(--sheet-accent) 18%, transparent);
+}
+
+.sheet__row-label { flex: 1; }
+
+.sheet__row-value {
+  color: var(--sheet-muted);
+  font-weight: 500;
+}
+
+.sheet__chevron { flex-shrink: 0; color: var(--sheet-muted); }
+.sheet__check { flex-shrink: 0; color: var(--sheet-accent); }
+
+.sheet :focus-visible {
+  outline: 2px solid var(--sheet-accent);
+  outline-offset: 2px;
+}
+
+@keyframes sheet-in {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Forward goes in from the right, back from the left — otherwise every move
+   inside the sheet looks like the same move. */
+@keyframes sheet-page-in {
+  from { transform: translateX(14px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes sheet-page-back {
+  from { transform: translateX(-14px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet,
+  .sheet__page { animation: none; }
+}
 
 /* ---- install CTA ----
    Shell chrome, not home-page chrome: it can appear over a game, so it cannot

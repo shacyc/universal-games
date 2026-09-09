@@ -258,7 +258,11 @@ These are non-negotiable. A review that finds any of them fails the game.
 7. **Portrait-first, thumb-first.** Fully playable one-handed in portrait at
    320px wide on a mid-range Android phone. Interactive controls >= 44px. No
    hover-only affordances. Honour `env(safe-area-inset-*)` and
-   `prefers-reduced-motion`.
+   `prefers-reduced-motion`. **Keep the bottom-right corner clear** — the shell
+   floats one 44px control there over every embedded game; `game.css` gives you
+   `--platform-chrome` as the size to reserve. A game whose own bottom row runs
+   to the right edge pads it by that much; one that centres its controls already
+   clears it.
 8. **Your service worker is scoped to `/g/<slug>/` and caches only your build.**
    Never register at root scope. Never cache another game's URLs.
 9. **The slug is assigned by the shell, not by you.** You pass yours to
@@ -422,10 +426,13 @@ delivers the current locale first and then every change, already resolved from
 a reload**, and do not rebuild the DOM either if a canvas lives inside it —
 2048's `ui.ts` relabels in place for exactly that reason.
 
-**You do not ship a language picker.** The shell owns it, the same way it owns
-mute and install: it sits in the home page topbar and again over a running game,
-and it reaches you as a `locale` event. A game that draws its own would be a
-second control disagreeing with the first.
+**You do not ship a language picker, and you do not ship a way out of your own
+game.** Both are the shell's, the same way mute and install are: the home page
+has a picker in its topbar, and over a running game there is one floating
+settings button holding the language, the install offer and "back to games".
+The choice reaches you as a `locale` event. A game that drew its own would be a
+second control disagreeing with the first, and it would need SDK methods that do
+not exist — see decision 17 in `docs/sdk-decisions.md`.
 
 Four rules that are easy to get wrong:
 
@@ -464,9 +471,10 @@ touches one file per game.
 `import '@platform/sdk/game.css'` first, then your own stylesheet. `game.css`
 gives you safe-area insets (`.game-safe`), the play-surface rules
 (`.game-surface` — `touch-action: none` is what stops a swipe scrolling the
-page), 44px minimum controls and reduced-motion. It carries no colours and no
-fonts on purpose: bring your own look. Everything in it is `:where()`-wrapped,
-so any plain selector of yours overrides it.
+page), 44px minimum controls, reduced-motion, and `--platform-chrome`: the size
+of the bottom-right corner the shell reserves for its settings button (rule 7).
+It carries no colours and no fonts on purpose: bring your own look. Everything
+in it is `:where()`-wrapped, so any plain selector of yours overrides it.
 
 ---
 
@@ -511,9 +519,25 @@ truth; the home page, the dev proxy and `scripts/assemble.ts` all read it.
   "themeColor": "#......",       // matches index.html <meta name="theme-color">
   "backgroundColor": "#......",  // matches the manifest
   "devPort": 51xx,               // see the table below
+  "chrome": {                    // optional; see below
+    "surface": "#......",        // the settings sheet's background
+    "ink": "#......",            // text on `surface`
+    "muted": "#......",          // secondary text, hairlines, row fills
+    "accent": "#......",         // the floating settings button, selected rows
+    "onAccent": "#......"        // text and icons on `accent`
+  },
   "cover": { "bg": "#......", "shapes": [ /* 4–10 positioned rects */ ] }
 }
 ```
+
+`chrome` is the palette the **shell's** settings sheet wears while your game is
+open. Give it your game's own colours and the sheet reads as part of the game
+rather than as a browser panel dropped on top of it; omit it and you get a
+neutral dark palette, which is readable but not yours. It is data and not CSS
+because the shell may not import your stylesheet (rule 1) and adding a game may
+not mean editing the shell (rule 3). Five values, all required if you declare
+it at all — a half-filled palette is an unreadable sheet, and the shell's test
+suite fails on one.
 
 `tagline` is an object because rule 3 and rule 6 have to hold at once: adding a
 game is one catalog entry with no shell code to touch, *and* nothing a player

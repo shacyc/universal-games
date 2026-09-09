@@ -67,7 +67,7 @@ export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.
             <a href="#install">{t.nav_install}</a>
           </nav>
           <div className="topbar__prefs">
-            <LanguagePicker variant="bar" />
+            <LanguagePicker />
             <div className="toggle" role="group" aria-label={t.theme_group}>
               {themeButton('vintage', t.theme_vintage)}
               {themeButton('modern', t.theme_modern)}
@@ -235,7 +235,7 @@ export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.
                   {t.install_ios}
                 </li>
               </ul>
-              <InstallButton variant="text" />
+              <InstallButton />
             </div>
             <div className="phone">
               <div className="phone__screen">

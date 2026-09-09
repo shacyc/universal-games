@@ -16,16 +16,19 @@ import type { Strings } from './en.js';
  *   player looking for a row that is not there.
  * - `rank` stays `#142`. The symbol is read the same way here, and `Hạng 142`
  *   does not fit the leaderboard's rank column.
+ * - `nav_install` is `Cài về máy`, not `Cài đặt`. Vietnamese uses `Cài đặt` for
+ *   both *install* and *settings*, and the settings sheet over a running game
+ *   needs that word more than a nav link to a marketing section does.
  */
 export function vi(n: Intl.NumberFormat): Strings {
   return {
     nav_games: 'Trò chơi',
     nav_continue: 'Chơi tiếp',
-    nav_install: 'Cài đặt',
+    nav_install: 'Cài về máy',
     theme_group: 'Giao diện',
     theme_vintage: 'CỔ ĐIỂN',
     theme_modern: 'HIỆN ĐẠI',
-    language_group: 'Ngôn ngữ',
+    language: 'Ngôn ngữ',
 
     spotlight_title: 'NỔI BẬT',
     playing_now: (live) => `${n.format(live)} đang chơi`,
@@ -76,12 +79,14 @@ export function vi(n: Intl.NumberFormat): Strings {
     ios_note: 'Nó có biểu tượng riêng và mở toàn màn hình — không phải tải gì.',
     ios_done: 'Đã hiểu',
     prompt_note: 'Biểu tượng riêng, cửa sổ toàn màn hình riêng, và chơi được khi không có mạng.',
-    prompt_close: 'Đóng',
     prompt_not_now: 'Để sau',
     prompt_install: 'Cài đặt',
     install_target: (target) => `Cài ${target}`,
 
     back_to_games: 'Về danh sách trò chơi',
+    settings: 'Cài đặt',
+    settings_back: 'Quay lại',
+    close: 'Đóng',
 
     foot_brand: (brand) => `${brand} — TRÒ CHƠI NHỎ, KHÔNG CẦN CÀI`,
     foot_note: 'Làm cho trình duyệt · 2026',

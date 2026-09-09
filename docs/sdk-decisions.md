@@ -330,9 +330,9 @@ can invent, which is the right side to err on for a set of six.
 **The picker is in two places, not one.** The obvious home is the topbar. But
 the shell's other screen is a full-window game, and going home to change
 language unmounts the iframe — which would mean the `locale` event of decision
-15 never actually gets exercised in the one situation it exists for. So the same
-control also sits over a running game, next to install and back. It is the same
-component, styled for a surface whose colours the shell does not control.
+15 never actually gets exercised in the one situation it exists for. So language
+is reachable over a running game too. (It started as the same segmented control
+floating in the corner; decision 17 moved it into a settings sheet.)
 
 **The choice is stored where both hosts can see it.** `arcade:locale` in
 `localStorage`, written by the shell, read by `createStandaloneHost` — so a game
@@ -356,3 +356,55 @@ Two consequences worth stating:
   that is only written in English is fake data that makes half the page look
   untranslated, and demo numbers are stored as numbers so they re-format with
   the language rather than staying `128,940` under Vietnamese words.
+
+## 17. One settings sheet over a game, and the corner it lives in
+
+The chrome over a running game had grown to three floating things: a back arrow
+top-left, a language toggle and an install button top-right. That is a browser
+toolbar sitting on someone's game. It collapses to **one** button, and
+everything the shell can do lives behind it.
+
+**The sheet is the shell's, not the game's.** Both things in it are shell
+capabilities: the platform's language (decision 15) and leaving the game. A game
+drawing its own would need two SDK methods that do not exist — something like
+`setLocale` and `exitToHub` — and both are the kind of surface every future game
+then has to be supported on forever. It would also mean ten games each building
+their own settings screen. The sheet costs no SDK surface at all.
+
+**It wears the game's colours, from `catalog.json`.** A neutral panel over a
+cream puzzle board looks like an error message. But the shell may not import a
+game's stylesheet (rule 1), and adding a game may not mean editing the shell
+(rule 3), so the palette is *data*: an optional `chrome` object of five values
+on the catalog entry. A game that omits it gets a readable neutral. Deriving the
+palette from the existing `themeColor` was rejected — one hex cannot tell you
+what is readable on it, and a computed contrast failure is worse than an honest
+default.
+
+**Navigation, not a switch.** Language is a row that opens a page listing every
+locale, with the current one checked; a segmented toggle is fewer taps for two
+languages and unusable at five, and the sheet is where a language a player
+cannot read must still be findable. Escape pops one level rather than closing,
+because a sub-page that exits the whole sheet loses the player's place.
+
+**The reserved corner is bottom-right.** This is the part that touches every
+game, so it is stated in `@platform/sdk/game.css` as `--platform-chrome` rather
+than left to each game to discover. Top-right was the first attempt and it
+failed on the only game that exists: 2048's HUD runs to the right edge, and at
+320px the button landed exactly on "New game" — a shell control stealing a tap
+the game believed was its own. The HUD cannot give up 52px at that width without
+reflowing, so the platform moved instead of the game. Bottom-right is also where
+a thumb already is (rule 7), and a game's own primary control is usually centred
+there rather than in the corner.
+
+Two consequences worth stating:
+
+- **The install icon is gone from the game screen.** It is a row in the sheet,
+  shown only when the target is actually installable. The automatic prompt that
+  appears after a finished run is untouched — that is the one that earns
+  installs; the button was only ever the manual way back to it.
+- **Standalone still has no settings at all.** A game opened from its own
+  installed icon has no shell, so no language row and no way back to the hub.
+  It inherits the language chosen in the hub (decision 16) and nothing more.
+  Closing that means the SDK host drawing the sheet itself in standalone, which
+  is the same shape as decision 14's unresolved install gap and waits for the
+  same milestone.

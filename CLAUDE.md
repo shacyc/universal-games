@@ -42,8 +42,9 @@ Business goals: ad revenue (rewarded + interstitial) and in-game purchases
    evicts script-writable storage after ~7 days without use for uninstalled
    sites. `sdk.save()` writes local-first then syncs to the server.
 6. **Multi-language from the start.** The platform owns the language, each game
-   owns its words. The shell ships the only language picker — in the topbar and
-   again over a running game — and the choice reaches games as
+   owns its words. The shell ships the only language picker — in the home
+   topbar, and inside the settings sheet over a running game — and the choice
+   reaches games as
    `GameContext.locale` plus `onLocaleChange`; a game ships
    `src/i18n/<locale>.ts` and reads it through `watchLocale`. No user-facing
    string is written into a `.ts` or `.html` file, in the shell or in a game:
