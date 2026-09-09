@@ -305,3 +305,54 @@ Three consequences worth stating:
 - **No RTL.** Nothing in the initial locale set needs it, and honouring it means
   layout work in the shell and in every game. Adding an RTL language is a new
   decision, not a translation.
+
+## 16. Where the shell's own words live, and where the picker lives
+
+Decision 15 settled how a *game* gets its language. The shell then needed the
+other half — its own strings, and the control that sets the language in the
+first place — and three sub-decisions were not obvious.
+
+**Catalog copy is per-locale inside `catalog.json`, not in the shell's locale
+files.** A game's tagline and genre are read by the home page, so the tempting
+shape is a lookup in `apps/shell/src/i18n/` keyed by slug. That breaks rule 3:
+adding a game would stop being "one folder plus one catalog entry" and become a
+shell edit that every parallel agent conflicts on — and the tagline of a game
+nobody remembered to add would be a blank card, not an error. So `tagline` is
+`{ "en": ..., "vi": ... }` in the entry itself, `pickText` resolves it, and
+`apps/shell/test/i18n.test.ts` fails when a locale is missing.
+
+`genre` went the other way and became a **key** (`puzzle`, not `Puzzle`), with
+the label in the locale files. The filter chips compare genres; comparing
+translated words would empty the grid the moment the player switched language.
+The cost is that a new genre is a platform decision rather than something a game
+can invent, which is the right side to err on for a set of six.
+
+**The picker is in two places, not one.** The obvious home is the topbar. But
+the shell's other screen is a full-window game, and going home to change
+language unmounts the iframe — which would mean the `locale` event of decision
+15 never actually gets exercised in the one situation it exists for. So the same
+control also sits over a running game, next to install and back. It is the same
+component, styled for a surface whose colours the shell does not control.
+
+**The choice is stored where both hosts can see it.** `arcade:locale` in
+`localStorage`, written by the shell, read by `createStandaloneHost` — so a game
+launched from its own installed icon, with no shell above it, opens in the
+language picked in the hub. Games are same-origin by rule 1, so this needs no
+sync and no SDK method; it is the same trick the install memory already uses,
+with the same known hole (an installed PWA on iOS gets its own storage bucket
+and starts from the browser's language).
+
+Two consequences worth stating:
+
+- **Display fonts are opted into per language.** Silkscreen, the vintage theme's
+  whole personality, ships no Vietnamese glyphs, and the browser's per-character
+  fallback renders a heading half in one face and half in another with nothing
+  thrown. So `--font-display` defaults to a face that covers everything and the
+  pixel face is switched on for `:lang(en)` only. A locale added tomorrow looks
+  plain rather than broken, and turning the pixel face on for it is a deliberate
+  step after checking coverage.
+- **Placeholder copy is a locale file too.** `apps/shell/src/demo/copy.en.ts`
+  and `copy.vi.ts` sit beside `demoData.ts` and are deleted with it. Fake data
+  that is only written in English is fake data that makes half the page look
+  untranslated, and demo numbers are stored as numbers so they re-format with
+  the language rather than staying `128,940` under Vietnamese words.

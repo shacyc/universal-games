@@ -378,52 +378,78 @@ dev port. Three details that break silently if you get them wrong:
 
 ### Strings
 
-Every word the player reads lives in `src/i18n/`, one module per locale, keyed:
+Every word the player reads lives in `src/i18n/`, one module per locale. Each
+locale is a **factory** that takes the number formatter for that locale, so a
+sentence containing a score is still a single entry:
 
 ```ts
 // src/i18n/en.ts — the fallback, and the language you author in.
-export const en = {
-  game_over: 'Game over',
-  new_game: 'New game',
-  watch_ad: 'Watch ad',
-  score: 'Score',
-} as const;
+export function en(n: Intl.NumberFormat) {
+  return {
+    game_over: 'Game over',
+    new_game: 'New game',
+    watch_ad: 'Watch ad',
+    final_score: (score: number) => `Score ${n.format(score)}`,
+  };
+}
 
-export type Strings = typeof en;
+// Every other locale is typed against this, so a key nobody translated is a
+// build error rather than a blank on someone's screen.
+export type Strings = ReturnType<typeof en>;
 ```
 
 ```ts
 // src/i18n/index.ts
-import { en } from './en.js';
+import { en, type Strings } from './en.js';
 import { vi } from './vi.js';
 
 export const SUPPORTED = ['en', 'vi'] as const;   // first entry is the fallback
-export const STRINGS: Record<string, Strings> = { en, vi };
+
+const FACTORIES: Record<string, (n: Intl.NumberFormat) => Strings> = { en, vi };
+
+export function stringsFor(locale: string): Strings {
+  return (FACTORIES[locale] ?? en)(new Intl.NumberFormat(locale));
+}
 ```
 
 `games/2048/src/i18n/` is the worked example — read it. `vi.ts` there is typed
-as `Strings`, so a key you forget to translate is a type error rather than a
-blank on screen, and the two entries that are not literal translations carry a
-comment saying why. A translation that is wrong for the layout is still a bug. Wire it up once, in `session.ts`, with
-`watchLocale(sdk, SUPPORTED, ...)` — it delivers the current locale first and
-then every change, already resolved from `en-US` or `vi-VN` down to what you
-ship. Re-render on change; do not require a reload.
+as `Strings`, and the two entries that are not literal translations carry a
+comment saying why.
 
-Three rules that are easy to get wrong:
+Wire it up once, in `session.ts`, with `watchLocale(sdk, SUPPORTED, ...)` — it
+delivers the current locale first and then every change, already resolved from
+`en-US` or `vi-VN` down to what you ship. Re-render on change; **do not require
+a reload**, and do not rebuild the DOM either if a canvas lives inside it —
+2048's `ui.ts` relabels in place for exactly that reason.
+
+**You do not ship a language picker.** The shell owns it, the same way it owns
+mute and install: it sits in the home page topbar and again over a running game,
+and it reaches you as a `locale` event. A game that draws its own would be a
+second control disagreeing with the first.
+
+Four rules that are easy to get wrong:
 
 - **No concatenation.** `'Score: ' + n` cannot be translated into a language
   that orders it differently. Make the whole sentence one entry, as a function:
 
   ```ts
-  score: (n: number) => `Score: ${n}`,   // vi.ts: (n) => `Điểm: ${n}`
+  final_score: (n: number) => `Score ${fmt.format(n)}`,   // vi.ts: `Điểm ${...}`
   ```
 
 - **Format numbers with `Intl.NumberFormat(locale)`**, not `toLocaleString()`
   with no argument — the latter follows the device, not the platform's locale,
-  so a score reads one way and the UI around it another.
-- **Layout must survive a longer word.** German and Vietnamese run
-  noticeably longer than English; a button sized to fit `New game` exactly will
-  clip. Test at 320px in every locale you ship.
+  so a score reads one way and the UI around it another. `1,024` and `1.024` are
+  the same number; showing the wrong one is showing the wrong number.
+- **Layout must survive a longer word.** Vietnamese runs 20–30% longer than
+  English here. Check at 320px in every locale you ship, and fix the *layout* —
+  abbreviating the translation to fit a box tuned for English is the wrong end
+  to fix it from.
+- **Check the font actually has the glyphs.** A display face can be
+  Latin-only, in which case the browser silently falls back per character and
+  the heading renders half in one font and half in another. Nothing throws.
+  Measure it (`canvas.measureText` of a glyph in your face versus in a font that
+  does not exist) rather than trusting the screenshot on a machine that happens
+  to have a good fallback — the shell's vintage theme had exactly this bug.
 
 ### `session.ts` is mandatory
 
@@ -476,15 +502,29 @@ truth; the home page, the dev proxy and `scripts/assemble.ts` all read it.
 ```jsonc
 {
   "slug": "<slug>",
-  "title": "<Title>",
-  "tagline": "<six words max>",
-  "genre": "Puzzle | Arcade | Cards | Word | Casual",   // must be one of these
+  "title": "<Title>",                 // a proper noun. Never translated.
+  "tagline": {                        // one entry per locale in i18n/index.ts
+    "en": "<six words max>",
+    "vi": "<six words max>"
+  },
+  "genre": "puzzle | arcade | cards | word | casual",  // a KEY, lowercase
   "themeColor": "#......",       // matches index.html <meta name="theme-color">
   "backgroundColor": "#......",  // matches the manifest
   "devPort": 51xx,               // see the table below
   "cover": { "bg": "#......", "shapes": [ /* 4–10 positioned rects */ ] }
 }
 ```
+
+`tagline` is an object because rule 3 and rule 6 have to hold at once: adding a
+game is one catalog entry with no shell code to touch, *and* nothing a player
+reads exists in only one language. Ship every locale in
+`apps/shell/src/i18n/index.ts` — a missing one falls back to English silently,
+and `apps/shell/test/i18n.test.ts` is what fails instead.
+
+`genre` is a **key**, not a label: the shell holds the words for it, one per
+locale, and the filter chips compare keys. A label there would empty the grid
+the moment the player switched language. The five keys above are the whole set;
+needing a sixth is a platform decision — report it, do not invent it.
 
 `cover` is data-driven art: a background plus positioned rectangles, each with
 `x/y/w/h` as percentages, `r` a border radius and `c` a colour. It has to read
@@ -497,12 +537,18 @@ good references. Your `public/icon.svg` should be the same artwork.
 placeholders are appended after them, so leaving it in ships a duplicate card
 that renders "COMING SOON".
 
-Leave `SPOTLIGHT`, `STATS`, `BOARDS`, `YOU` and `SAVED` alone. They are keyed by
-slug and `gameBySlug` resolves your slug from the catalog once it is there, so
-the spotlight keeps working and your game picks up placeholder stats — which is
-the intent until the API lands. The only thing that would break is a `SPOTLIGHT`
-slug that exists in neither the catalog nor `DEMO_GAMES`; that is why you delete
-the placeholder in the same commit as the catalog entry, never before.
+Leave `SPOTLIGHT`, `STATS`, `BOARDS`, `YOU` and `SAVED` alone, and leave
+`copy.en.ts` / `copy.vi.ts` alone too. They are keyed by slug and `gameBySlug`
+resolves your slug from the catalog once it is there, so the spotlight keeps
+working and your game picks up placeholder stats and a placeholder blurb —
+which is the intent until the API lands. Your tagline stops being read from the
+placeholder file the moment your catalog entry exists, because a real game
+carries its own; deleting the line as well would only widen your blast radius
+for no gain.
+
+The only thing that would break is a `SPOTLIGHT` slug that exists in neither the
+catalog nor `DEMO_GAMES`; that is why you delete the placeholder in the same
+commit as the catalog entry, never before.
 
 **Dev port allocation** — one per game, never reused, or two dev servers fight:
 

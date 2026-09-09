@@ -1,26 +1,5 @@
+import { resolveLocale } from '../locale.js';
 import type { PlatformSDK } from '../client/index.js';
-
-/**
- * Resolves a BCP 47 tag against the locales a game actually ships.
- *
- * Exact match first, then the primary subtag, then the fallback: `vi-VN` finds
- * `vi`, `en-GB` finds `en`, `de` finds nothing and gets the fallback. Case is
- * ignored because `navigator.language` is not consistent about it across
- * browsers.
- *
- * This lives in the SDK rather than in each game because getting it subtly
- * wrong is silent — the game just renders English to a Vietnamese player and
- * nobody files a bug.
- */
-export function resolveLocale(tag: string, supported: readonly string[], fallback: string): string {
-  const wanted = tag.toLowerCase();
-  const exact = supported.find((s) => s.toLowerCase() === wanted);
-  if (exact !== undefined) return exact;
-
-  const primary = wanted.split('-')[0] ?? wanted;
-  const base = supported.find((s) => s.toLowerCase() === primary);
-  return base ?? fallback;
-}
 
 /**
  * Subscribes to the platform language, **including its current value**,

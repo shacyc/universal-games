@@ -1,11 +1,16 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Console } from './Console.js';
 import { CoverArt } from './CoverArt.js';
 import { GameGrid } from './GameGrid.js';
 import { useTheme, type Theme } from './theme.js';
 import { InstallButton } from '../InstallPrompt.js';
+import { BRAND } from '../i18n/brand.js';
+import { LanguagePicker } from '../i18n/LanguagePicker.js';
+import { genreLabel } from '../i18n/index.js';
+import { useStrings } from '../i18n/locale.js';
+import { useGameCopy } from '../demo/copy.js';
 import {
-  BOARDS, SAVED, SPOTLIGHT, STATS, YOU, gameBySlug, homeGames, type HomeGame
+  ANON_ID, BOARDS, SAVED, SPOTLIGHT, STATS, YOU, gameBySlug, homeGames, type HomeGame
 } from '../demo/demoData.js';
 
 const RAINBOW = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6'];
@@ -21,6 +26,8 @@ function Rainbow({ className }: { className: string }): JSX.Element {
 }
 
 export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.Element {
+  const t = useStrings();
+  const copy = useGameCopy();
   const [theme, setTheme] = useTheme();
   const [index, setIndex] = useState(0);
 
@@ -52,16 +59,19 @@ export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.
         <header className="topbar">
           <div className="brand">
             <Rainbow className="brand__mark" />
-            <span className="brand__name">ARCADE</span>
+            <span className="brand__name">{BRAND}</span>
           </div>
           <nav className="topbar__nav">
-            <a href="#games">Games</a>
-            <a href="#continue">Continue</a>
-            <a href="#install">Install</a>
+            <a href="#games">{t.nav_games}</a>
+            <a href="#continue">{t.nav_continue}</a>
+            <a href="#install">{t.nav_install}</a>
           </nav>
-          <div className="toggle">
-            {themeButton('vintage', 'VINTAGE')}
-            {themeButton('modern', 'MODERN')}
+          <div className="topbar__prefs">
+            <LanguagePicker variant="bar" />
+            <div className="toggle" role="group" aria-label={t.theme_group}>
+              {themeButton('vintage', t.theme_vintage)}
+              {themeButton('modern', t.theme_modern)}
+            </div>
           </div>
         </header>
 
@@ -69,7 +79,7 @@ export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.
           <div className="window__bar">
             <span className="window__box" />
             <span className="window__pin" />
-            <span className="window__title">SPOTLIGHT</span>
+            <span className="window__title">{t.spotlight_title}</span>
             <span className="window__pin" />
             <span className="window__box" />
           </div>
@@ -90,7 +100,7 @@ export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.
                     type="button"
                     className={`dots__hit${i === index ? ' dots__hit--on' : ''}`}
                     onClick={() => setIndex(i)}
-                    aria-label={`Show ${gameBySlug(s)?.title ?? s}`}
+                    aria-label={t.show_game(gameBySlug(s)?.title ?? s)}
                     aria-current={i === index}
                   >
                     <span />
@@ -101,26 +111,30 @@ export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.
 
             <div className="spotlight__info">
               <div className="spotlight__meta">
-                <span className="pill">{hero.genre}</span>
-                <span className="spotlight__live">{stats?.live ?? '—'} playing now</span>
+                <span className="pill">{genreLabel(t, hero.genre)}</span>
+                <span className="spotlight__live">
+                  {stats ? t.playing_now(stats.live) : '—'}
+                </span>
               </div>
 
               <h2 className="spotlight__title">{hero.title}</h2>
-              <p className="spotlight__pitch">{hero.tagline}</p>
-              <p className="spotlight__blurb">{stats?.blurb}</p>
+              <p className="spotlight__pitch">{copy.tagline(hero)}</p>
+              <p className="spotlight__blurb">{copy.blurb(slug)}</p>
 
               <div className="stats">
                 <div className="stats__cell">
-                  <span className="stats__value">{stats?.plays ?? '—'}</span>
-                  <span className="stats__label">Plays</span>
+                  <span className="stats__value">{stats ? t.number(stats.plays) : '—'}</span>
+                  <span className="stats__label">{t.stat_plays}</span>
                 </div>
                 <div className="stats__cell">
-                  <span className="stats__value">{stats?.session ?? '—'}</span>
-                  <span className="stats__label">Avg run</span>
+                  <span className="stats__value">
+                    {stats ? t.duration(stats.session.minutes, stats.session.seconds) : '—'}
+                  </span>
+                  <span className="stats__label">{t.stat_session}</span>
                 </div>
                 <div className="stats__cell">
-                  <span className="stats__value">{stats?.best ?? '—'}</span>
-                  <span className="stats__label">World best</span>
+                  <span className="stats__value">{stats ? t.number(stats.best) : '—'}</span>
+                  <span className="stats__label">{t.stat_best}</span>
                 </div>
               </div>
 
@@ -130,28 +144,30 @@ export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.
                 onClick={() => onPlay(hero)}
                 disabled={!hero.playable}
               >
-                {hero.playable ? 'PLAY NOW' : 'COMING SOON'}
+                {hero.playable ? t.play_now : t.coming_soon}
               </button>
 
               <div className="board">
                 <div className="board__head">
-                  <h3 className="board__title">TOP PLAYERS</h3>
-                  <span className="board__season">SEASON 3 · ENDS IN 4D 12H</span>
+                  <h3 className="board__title">{t.board_title}</h3>
+                  <span className="board__season">{copy.season}</span>
                 </div>
                 <div className="board__rows">
                   {board.map((row, i) => (
                     <div className="board__row" key={row.name}>
                       <span className={`board__rank board__rank--${i < 3 ? i + 1 : 'n'}`}>{i + 1}</span>
                       <span className="board__name">{row.name}</span>
-                      <span className="board__score">{row.score}</span>
+                      <span className="board__score">{t.number(row.score)}</span>
                     </div>
                   ))}
                   <div className="board__row board__row--you">
-                    <span className="board__rank board__rank--you">{you?.rank ?? '—'}</span>
-                    <span className="board__name">
-                      You <span className="board__anon">· anon-4f2a</span>
+                    <span className="board__rank board__rank--you">
+                      {you ? t.rank(you.rank) : '—'}
                     </span>
-                    <span className="board__score">{you?.score ?? '—'}</span>
+                    <span className="board__name">
+                      {t.board_you} <span className="board__anon">· {ANON_ID}</span>
+                    </span>
+                    <span className="board__score">{you ? t.number(you.score) : '—'}</span>
                   </div>
                 </div>
               </div>
@@ -163,8 +179,8 @@ export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.
 
         <section className="section" id="continue">
           <div className="section__head section__head--stack">
-            <h2 className="section__title">PICK UP WHERE YOU LEFT OFF</h2>
-            <p className="section__sub">Saved on this device — no account needed.</p>
+            <h2 className="section__title">{t.resume_title}</h2>
+            <p className="section__sub">{t.resume_sub}</p>
           </div>
           <ul className="resume">
             {SAVED.map((run) => {
@@ -177,7 +193,7 @@ export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.
                   </span>
                   <span className="resume__body">
                     <span className="resume__title">{game.title}</span>
-                    <span className="resume__detail">{run.detail}</span>
+                    <span className="resume__detail">{copy.saved(run.slug)}</span>
                     <span className="resume__track">
                       <span className="resume__fill" style={{ width: `${run.pct}%` }} />
                     </span>
@@ -188,7 +204,7 @@ export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.
                     onClick={() => onPlay(game)}
                     disabled={!game.playable}
                   >
-                    RESUME
+                    {t.resume_action}
                   </button>
                 </li>
               );
@@ -199,24 +215,24 @@ export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.
         <section className="section" id="install">
           <div className="install">
             <div className="install__copy">
+              {/* The break is the translator's, not the layout's — see `install_title`. */}
               <h2 className="install__title">
-                EVERY GAME GETS
-                <br />
-                ITS OWN ICON
+                {t.install_title.split('\n').map((line, i) => (
+                  <Fragment key={line}>
+                    {i > 0 ? <br /> : null}
+                    {line}
+                  </Fragment>
+                ))}
               </h2>
-              <p className="install__body">
-                Add a game to your home screen and it installs on its own — its own icon, its own
-                full-screen window, and it keeps working with no signal. Nothing to download from a
-                store.
-              </p>
+              <p className="install__body">{t.install_body}</p>
               <ul className="install__list">
                 <li>
                   <Check />
-                  Android — one tap from the game screen
+                  {t.install_android}
                 </li>
                 <li>
                   <Check />
-                  iPhone — Share, then Add to Home Screen
+                  {t.install_ios}
                 </li>
               </ul>
               <InstallButton variant="text" />
@@ -239,8 +255,8 @@ export function HomePage({ onPlay }: { onPlay: (game: HomeGame) => void }): JSX.
         <footer className="foot">
           <Rainbow className="foot__stripe" />
           <div className="foot__row">
-            <span className="foot__brand">ARCADE — SMALL GAMES, NO INSTALL</span>
-            <span className="foot__note">Made for the browser · 2026</span>
+            <span className="foot__brand">{t.foot_brand(BRAND)}</span>
+            <span className="foot__note">{t.foot_note}</span>
           </div>
         </footer>
       </div>

@@ -8,6 +8,7 @@ import {
   type AnalyticsAdapter,
   type HostCore,
 } from '@platform/sdk/host';
+import { getLocale, subscribeLocale } from './i18n/locale.js';
 import { offerInstall } from './install.js';
 
 /**
@@ -45,4 +46,17 @@ export const host: HostCore = createHost({
   storage: createIdbStorage(),
   ads: withFrequencyCap(createStubAds(), { isFirstSession: () => sessions.isFirstSession() }),
   analytics: withInstallOffer(createBufferedAnalytics()),
+  // The shell has already resolved the player's language by the time this
+  // module loads; without it the host would fall back to `navigator.language`
+  // and the first game mounted would open in the browser's language rather
+  // than the chosen one.
+  context: { locale: getLocale() },
 });
+
+/**
+ * The picker is shell chrome and the games are behind the SDK, so this line is
+ * the whole bridge between them. It runs once, at module load, and stays for
+ * the life of the tab: a game mounted an hour from now still gets the language
+ * that was picked before it existed, through the handshake context.
+ */
+subscribeLocale(() => host.setLocale(getLocale()));

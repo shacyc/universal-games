@@ -11,11 +11,28 @@
   --radius: 5px; --radius-lg: 8px; --pill: 5px;
   --shadow: 5px 5px 0 var(--ink); --shadow-sm: 3px 3px 0 var(--ink);
   --case: #e7dcc5; --case-2: #cfc0a2; --bezel: #4a4034; --led: #61bb46;
-  --font-display: 'Silkscreen', 'Courier New', monospace;
+  --font-display: 'IBM Plex Mono', 'Courier New', monospace;
   --font-body: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
   --chrome: repeating-linear-gradient(to bottom, var(--ink) 0 1px, transparent 1px 3px);
   --track: 0.04em; --scan: 0.16;
+}
+
+/* Silkscreen is the vintage theme's whole personality, and it is Latin-only:
+   it ships no Vietnamese glyphs, so `KỶ LỤC THẾ GIỚI` renders half in the pixel
+   face and half in the browser's fallback, at a different height and weight.
+   (Measured, not assumed — a canvas probe shows every Vietnamese glyph falling
+   through.)
+
+   So the pixel face is opted *into* per language rather than out of. A locale
+   added tomorrow gets IBM Plex Mono — which the vintage theme already uses for
+   its counters and scores, and which does cover Vietnamese — and looks plain
+   rather than broken. Add a `:lang()` here once you have checked the font
+   actually covers that language.
+
+   The modern theme needs none of this: Space Grotesk covers Vietnamese. */
+.home.t-vintage:lang(en) {
+  --font-display: 'Silkscreen', 'Courier New', monospace;
 }
 
 .home.t-modern {
@@ -84,6 +101,11 @@
 .topbar__nav { display: flex; gap: 26px; font-size: 15px; }
 /* 44px floor per the hit-target rule — these are reached by thumb in portrait. */
 .topbar__nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink-2); }
+
+/* Language and theme are both per-device display preferences and read as one
+   group. They wrap together rather than separately when the bar runs out of
+   room, so the nav never ends up between them. */
+.topbar__prefs { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
 .toggle {
   display: flex;
@@ -628,11 +650,20 @@
 @media (max-width: 560px) {
   .topbar { gap: 12px; }
   .topbar__nav { order: 3; width: 100%; gap: 20px; }
+  /* Two segmented controls do not fit beside the brand on a 320px screen. */
+  .topbar__prefs { order: 2; }
+  .toggle__btn { padding: 0 12px; }
   .search { width: 100%; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   .card__art { height: 104px; }
   .card__tagline { display: none; }
   .resume { grid-template-columns: minmax(0, 1fr); }
+  /* The action drops to its own line rather than competing with the title for
+     a 320px row. Vietnamese forced this — "CHƠI TIẾP" is half again as wide as
+     "RESUME" and left the title 35px — but English was already clipping
+     "Klondike", so the row was wrong before the translation found it. */
+  .resume__item { flex-wrap: wrap; }
+  .resume__item > .btn { flex-basis: 100%; }
   .stats { grid-template-columns: minmax(0, 1fr); }
   .foot__row { flex-direction: column; align-items: flex-start; gap: 6px; }
 }

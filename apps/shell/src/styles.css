@@ -33,8 +33,6 @@ body {
 
 .game-frame__back,
 .game-frame__install {
-  position: absolute;
-  top: max(8px, env(safe-area-inset-top));
   z-index: 1;
   display: grid;
   place-items: center;
@@ -49,13 +47,55 @@ body {
 }
 
 .game-frame__back {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
   left: max(8px, env(safe-area-inset-left));
   font-size: 24px;
 }
 
-.game-frame__install {
+/* The right-hand chrome is a row, not two absolutely-positioned buttons: the
+   install button comes and goes with installability, and the language picker
+   must not move when it does. */
+.game-frame__tools {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
   right: max(8px, env(safe-area-inset-right));
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
+/* The picker over a running game cannot read the home page's theme tokens —
+   it sits on whatever the game is painting. Same neutral palette as the other
+   game-frame chrome. */
+/* Doubled class on purpose: `.toggle` is defined in home.css, which loads
+   after this file, so a single class here would lose the tie. */
+.toggle.toggle--overlay {
+  display: flex;
+  gap: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  background: rgba(0, 0, 0, 0.45);
+}
+/* 44px each way, same as the back and install buttons beside it — rule 7, and
+   this control sits under a thumb during a run. */
+.toggle--overlay .toggle__btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 22px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.toggle--overlay .toggle__btn--on { background: #fff; color: #1c1b1a; }
 
 /* ---- install CTA ----
    Shell chrome, not home-page chrome: it can appear over a game, so it cannot

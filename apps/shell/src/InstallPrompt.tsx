@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { useStrings } from './i18n/locale.js';
 import {
   dismissInstall,
   getInstallState,
@@ -26,6 +27,7 @@ export function useInstallState(): InstallState {
  * before they answer.
  */
 export function InstallPrompt(): JSX.Element | null {
+  const t = useStrings();
   const state = useInstallState();
   if (!state.open) return null;
 
@@ -34,41 +36,40 @@ export function InstallPrompt(): JSX.Element | null {
   return (
     <div className={`install-cta${ios ? ' install-cta--ios' : ''}`}>
       {ios ? (
-        <button type="button" className="install-cta__scrim" aria-label="Close" onClick={dismissInstall} />
+        <button type="button" className="install-cta__scrim" aria-label={t.prompt_close} onClick={dismissInstall} />
       ) : null}
       <div className="install-cta__sheet" role="dialog" aria-labelledby="install-cta-title">
         <p className="install-cta__title" id="install-cta-title">
-          Add {state.target} to your home screen
+          {t.install_sheet_title(state.target)}
         </p>
 
         {ios ? (
           <>
             <ol className="install-cta__steps">
+              {/* The glyph leads the line rather than sitting inside it: a
+                  sentence split around an icon is two half-strings, and no
+                  translator can put the halves back in their own word order. */}
               <li>
-                Tap <Share /> Share, at the bottom of Safari
+                <Share /> {t.ios_step_share}
               </li>
-              <li>Choose “Add to Home Screen”</li>
+              <li>{t.ios_step_add}</li>
             </ol>
-            <p className="install-cta__note">
-              It gets its own icon and opens full screen — nothing to download.
-            </p>
+            <p className="install-cta__note">{t.ios_note}</p>
             <div className="install-cta__actions">
               <button type="button" className="install-cta__ghost" onClick={dismissInstall}>
-                Got it
+                {t.ios_done}
               </button>
             </div>
           </>
         ) : (
           <>
-            <p className="install-cta__note">
-              Its own icon, its own full-screen window, and it works with no signal.
-            </p>
+            <p className="install-cta__note">{t.prompt_note}</p>
             <div className="install-cta__actions">
               <button type="button" className="install-cta__ghost" onClick={dismissInstall}>
-                {state.manual ? 'Close' : 'Not now'}
+                {state.manual ? t.prompt_close : t.prompt_not_now}
               </button>
               <button type="button" className="install-cta__go" onClick={() => void promptInstall()}>
-                Install
+                {t.prompt_install}
               </button>
             </div>
           </>
@@ -85,6 +86,7 @@ export function InstallPrompt(): JSX.Element | null {
  * tapped is worse than no button.
  */
 export function InstallButton({ variant }: { variant: 'icon' | 'text' }): JSX.Element | null {
+  const t = useStrings();
   const state = useInstallState();
   if (!state.available) return null;
 
@@ -94,8 +96,8 @@ export function InstallButton({ variant }: { variant: 'icon' | 'text' }): JSX.El
         type="button"
         className="game-frame__install"
         onClick={openInstall}
-        aria-label={`Install ${state.target}`}
-        title={`Install ${state.target}`}
+        aria-label={t.install_target(state.target)}
+        title={t.install_target(state.target)}
       >
         <Download />
       </button>
@@ -104,7 +106,7 @@ export function InstallButton({ variant }: { variant: 'icon' | 'text' }): JSX.El
 
   return (
     <button type="button" className="btn btn--primary install__btn" onClick={openInstall}>
-      INSTALL {state.target.toUpperCase()}
+      {t.install_cta(state.target)}
     </button>
   );
 }

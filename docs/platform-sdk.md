@@ -108,6 +108,17 @@ Translation itself does **not** cross the wire: each game ships its own strings
 under `src/i18n/`. See decision 15 in `docs/sdk-decisions.md` for why the SDK
 has no `t()`.
 
+The picker itself is shell chrome — topbar on the home page, and again over a
+running game so switching language does not cost the current run. A game ships
+none. The choice is remembered in `localStorage` under `arcade:locale`, which
+`createStandaloneHost` also reads, so a game opened from its own installed icon
+starts in the language picked in the hub rather than in the browser's.
+
+Two small pieces of this are exported outside `@platform/sdk/game`, because the
+shell needs the identical behaviour: `resolveLocale` is on the package root
+(and re-exported from `/game` and `/host`), and `readLocalePreference` /
+`writeLocalePreference` are on `/host`.
+
 ## Install prompt ownership
 
 The shell owns installation, not the game.

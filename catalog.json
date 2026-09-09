@@ -4,8 +4,8 @@
     {
       "slug": "2048",
       "title": "2048",
-      "tagline": "Slide, merge, repeat.",
-      "genre": "Puzzle",
+      "tagline": { "en": "Slide, merge, repeat.", "vi": "Trượt, ghép, lặp lại." },
+      "genre": "puzzle",
       "themeColor": "#faf8ef",
       "backgroundColor": "#faf8ef",
       "devPort": 5174,

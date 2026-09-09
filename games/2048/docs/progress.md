@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | **Shipped** — with an unrecorded device pass, see §5 |
 | Tasks done | 9 / 9 |
-| Last updated | 2026-09-08 |
+| Last updated | 2026-09-09 |
 
 ## 1. Tasks
 
@@ -20,7 +20,7 @@ IDs from `plan.md` §9, reconstructed from the shipped code.
 | T6 | Ads: undo, continue, interstitial | done | three call sites in `session.ts` | M7, M12 never recorded |
 | T7 | PWA: manifest, icon, scoped SW | done | `public/manifest.webmanifest`, `src/sw.ts` | M15, M16 never recorded |
 | T8 | Register in `catalog.json` | done | one entry, no `demoData.ts` placeholder | |
-| T9 | i18n | done | `src/i18n/`, `test/i18n.test.ts` (8 cases), M8 | M9–M11 blocked or unrecorded |
+| T9 | i18n | done | `src/i18n/`, `test/i18n.test.ts` (8 cases), M8, M9, M10 | M11 partial |
 
 ## 2. Definition of done
 
@@ -51,9 +51,35 @@ shipped game is the honest state and the reason this file now exists.
 - [x] Deviations in §4, SDK gaps in §6.
 - [ ] Every locale in `SUPPORTED` renders with no missing key and no clipped
       control at 320px, and switching language re-renders without a reload.
-      — M9, M10, M11
+      — the switching half is now proven (M9, M10); the 320px half is not
+      (M11 partial: the shell measures clean, the game's own board does not
+      lay out in the harness available)
 
 ## 3. Session log
+
+### 2026-09-09 — M9 and M10 unblocked by the shell's language picker
+
+- **Did:** Nothing in `games/2048/src/` changed. The shell gained the language
+  picker this game's testplan was waiting on (topbar, and again over a running
+  game), so M9 and M10 could finally be run against the code as shipped.
+- **Result:** both pass. Mid-run switch: `ĐIỂM 1.024 / CAO NHẤT 2.048` became
+  `SCORE 1,024 / BEST 2,048`, with the board and both scores untouched. A
+  property planted on the iframe's `contentWindow` before the switch survived
+  it, which is the proof that the document was never reloaded — the `locale`
+  event did the work, not a remount. With the *no moves left* card open, the
+  card re-rendered in place and the undo badge went `AD` → `QC`, so the B1
+  regression from the `ui.ts` rewrite is still fixed under a live relabel.
+- **Also:** the platform now stores the language under `arcade:locale`, which
+  `createStandaloneHost` reads. Opening `/g/2048/` directly, with no shell, came
+  up in Vietnamese from a browser reporting `en-US` — the installed-icon path
+  inherits the choice made in the hub.
+- **Still open:** M11. The board and the two-button card at 320px in Vietnamese
+  are unverified: the harness renders the iframe with no layout, so the canvas
+  sized itself to 1x1 and nothing on the board could be measured. The shell
+  around it measured clean at 320px in both languages, and the game-frame
+  buttons are 44x44. This needs a real phone or a visible browser, and it joins
+  Q1's list rather than being claimed.
+- **Next:** Q1 in §5 is still the decision that gates the eight unticked boxes.
 
 ### 2026-09-08 — Shipped — handover, and multi-language retrofitted
 
@@ -101,4 +127,4 @@ manifest — platform-wide, recorded in `docs/sdk-decisions.md` §15.
 | # | Gap | Worked around by | Reported? |
 | --- | --- | --- | --- |
 | 1 | The PWA manifest is single-language, so the home-screen name cannot be translated | Accepted — `name` is the numeral `2048`, which needs no translation. A game with a word for a name would feel this | yes — `docs/sdk-decisions.md` §15 |
-| 2 | No language picker in the shell, so a language change cannot be exercised end to end | Covered by SDK unit tests instead | yes — M9/M10 in `testplan.md` |
+| 2 | No language picker in the shell, so a language change cannot be exercised end to end | ~~Covered by SDK unit tests instead~~ | **closed 2026-09-09** — the shell ships one, in the topbar and over a running game. M9 and M10 pass |

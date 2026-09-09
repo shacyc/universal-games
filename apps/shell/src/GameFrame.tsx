@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { attachFrameHost } from '@platform/sdk/host';
 import type { CatalogGame } from './catalog.js';
 import { host } from './host.js';
+import { LanguagePicker } from './i18n/LanguagePicker.js';
+import { useStrings } from './i18n/locale.js';
 import { InstallButton } from './InstallPrompt.js';
 
 /**
@@ -12,6 +14,7 @@ import { InstallButton } from './InstallPrompt.js';
  * this component knowing which slug it just mounted.
  */
 export function GameFrame({ game, onExit }: { game: CatalogGame; onExit: () => void }): JSX.Element {
+  const t = useStrings();
   const frameRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -22,12 +25,18 @@ export function GameFrame({ game, onExit }: { game: CatalogGame; onExit: () => v
 
   return (
     <div className="game-frame">
-      <button type="button" className="game-frame__back" onClick={onExit} aria-label="Back to games">
+      <button type="button" className="game-frame__back" onClick={onExit} aria-label={t.back_to_games}>
         ‹
       </button>
       {/* Shell chrome, so every game in the catalog gets it without shipping
-          any install code of its own. */}
-      <InstallButton variant="icon" />
+          any install code or language picker of its own. The picker is here and
+          not only on the home page because going home to change language would
+          unmount the iframe — and switching language without losing the run is
+          the whole reason the SDK has a `locale` event. */}
+      <div className="game-frame__tools">
+        <LanguagePicker variant="overlay" />
+        <InstallButton variant="icon" />
+      </div>
       <iframe
         ref={frameRef}
         className="game-frame__frame"

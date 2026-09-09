@@ -1,6 +1,8 @@
 export { createHost, StorageError, type HostCore, type HostDeps } from './core.js';
 export { attachFrameHost, type AttachFrameHostOptions } from './frame-host.js';
 export { createStandaloneHost } from './standalone.js';
+export { readLocalePreference, writeLocalePreference } from './locale-preference.js';
+export { resolveLocale } from '../locale.js';
 
 export { createIdbStorage } from './adapters/idb-storage.js';
 export { createStubAds } from './adapters/stub-ads.js';
