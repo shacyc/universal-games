@@ -1,15 +1,12 @@
-# Neon Snake — Progress
+# Snake — Progress
 
 | | |
 | --- | --- |
 | Status | **Gate 2** — plan approved 2026-09-09; implementing |
-| Tasks done | 2 / 15 |
+| Tasks done | 3 / 15 |
 | Last updated | 2026-09-09 |
 
 ## 1. Tasks
-
-Empty until `plan.md` §9 exists. Writing tasks against an unfrozen brief would
-be inventing the game rather than planning it.
 
 From `plan.md` §9. A task is `done` only with a test name, a commit or a manual
 case ID as evidence.
@@ -18,16 +15,16 @@ case ID as evidence.
 | --- | --- | --- | --- | --- |
 | T1 | Scaffold from `games/2048/` | done | dev server serves the board at `/g/snake/`; `pnpm --filter @game/snake typecheck` clean; verified at 375px + 320px, no console errors | field drawing in `main.ts` is throwaway, `render.ts` replaces it at T4 |
 | T2 | Pure core `src/snake.ts` + unit tests | done | `test/snake.test.ts` — 39 cases across U1–U24, all pass; `typecheck` clean | save shape + validator went in `src/save.ts`, not `session.ts` (§4) |
-| T3 | Generate art with `agy-image` → `public/art/*.webp` + `assets.ts` | todo | | field, apple, face sheet, start illustration |
-| T4 | `render.ts` — field, body path, apple, interpolation | todo | | |
+| T3 | Generate art with `agy-image` → `public/art/*.webp` + `assets.ts` | blocked | | **image model out of daily quota, resets ~20:55 local 2026-09-09**; field, apple, face sheet, start illustration |
+| T4 | `render.ts` — field, body path, apple, interpolation | todo | | needs T3 |
 | T5 | Reactive face + crash effect | todo | | M14, M16 |
-| T6 | `input.ts` — swipe + keyboard → `queueTurn` | todo | | |
-| T7 | `ui.ts` — HUD, start card, idle/paused overlays, countdown | todo | | |
-| T8 | `session.ts` — save/load via `createSaveSlot` | todo | | M5 |
+| T6 | `input.ts` — swipe + keyboard → `queueTurn` | done | `test/input.test.ts` — U25 swipe decode, U26 key decode; `typecheck` clean | `createInput` binds it; decode is two pure fns |
+| T7 | `ui.ts` — HUD, start card, idle/paused overlays, countdown | todo | | needs T4 |
+| T8 | `session.ts` — save/load via `createSaveSlot` | todo | | M5; unblocked (i18n `SUPPORTED` now exists) |
 | T9 | Lifecycle — `gameStart`/`gameOver` | todo | | M13 |
 | T10 | Ads — rewarded revive + interstitial on New game | todo | | M7–M9 |
 | T11 | Pause/resume — one pair, idempotent resume | todo | | M10–M12 |
-| T12 | i18n `en`+`vi` + settings screen | todo | | M18–M20 |
+| T12 | i18n `en`+`vi` (done early) + settings screen | partial | `test/i18n.test.ts` (S11) — `src/i18n/en.ts` `vi.ts` `index.ts` done; settings screen still `todo` (needs T7) | M18–M20 |
 | T13 | PWA — manifest, icon, SW scoped to `/g/snake/` | todo | | M17, M21 |
 | T14 | Register — `catalog.json` + `demoData.ts` deletion | todo | | own commit, pull first |
 | T15 | Manual pass on device | todo | | testplan §2 |
@@ -38,7 +35,7 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 
 - [ ] Core rules covered by unit tests on a pure, DOM-free module, including the
       edge cases named in the brief.
-- [ ] `pnpm --filter @game/snake typecheck` and `test` both clean.
+- [x] `pnpm --filter @game/snake typecheck` and `test` both clean. *(57 tests, as of T6; re-check each task.)*
 - [ ] `pnpm build` succeeds and `dist/g/snake/` contains the game.
 - [ ] Playable one-handed, portrait, 320px, all hit targets >= 44px.
 - [ ] 60fps on a mid-range phone; input during animation is queued, not dropped.
@@ -64,6 +61,29 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-09 — T6 input + i18n strings pulled forward; T3 blocked on image quota
+
+- **Did:** T6 — `src/input.ts`: `swipeDir` / `keyDir` pure decoders (24px
+  threshold, larger axis wins, arrows + WASD either case) plus `createInput`
+  binding pointer + keydown; `test/input.test.ts` (U25, U26). Pulled the i18n
+  string modules forward from T12 because `session.ts` needs `SUPPORTED`:
+  `src/i18n/en.ts` (keys from brief §7 + `back`, `number`), `vi.ts` typed
+  against it (one non-literal entry noted — `best` = "Cao nhất"), `index.ts`
+  (`SUPPORTED`, `LOCALE_NAMES`, `stringsFor`); `test/i18n.test.ts` (S11).
+- **Why out of order:** T3 needs the `agy-image` model, which hit its daily
+  quota on the first call (`429`, resets ~20:55 local). T4/T5 render that art,
+  so the whole T3→T4→T5→T7 chain waits. T6 and the i18n strings are the
+  art-free work that was ready.
+- **Verified:** `pnpm --filter @game/snake test` → 57 pass (snake 39, input 7,
+  i18n 11); `typecheck` clean.
+- **Deviation (§4):** T12 split — i18n strings landed now, settings screen
+  stays in T12 (needs the UI layer). Task table updated.
+- **Next (when the quota resets):** T3 — generate `field.webp`, `apple.webp`,
+  the head-face sheet and `title.webp` into `public/art/`, write `assets.ts`.
+  Then T4. `session.ts` (T8) can also be written now — deferred only because it
+  is verified against a running loop (M5), which needs T4/T7.
+- **Blocked by:** `agy-image` daily quota for T3.
 
 ### 2026-09-09 — T2 pure core + unit tests
 
@@ -205,6 +225,7 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 | # | What the doc says | What was built | Why | Doc updated? |
 | --- | --- | --- | --- | --- |
 | 1 | plan §1: save shape + `isSaveState` live in `session.ts` | they live in `src/save.ts`; `session.ts` will import them | pure functions with no SDK import, so `test/snake.test.ts` covers the round-trip (U22/U23) without pulling in the client | yes — plan §1 module map adds `save.ts` |
+| 2 | plan §9: T12 is "i18n + settings screen" | the i18n string modules (`en`/`vi`/`index`) were built during the T6 session | `session.ts` needs `SUPPORTED`, and the strings are art-free work that was ready while T3 was quota-blocked | yes — T12 marked `partial`, task note updated |
 
 ## 5. Open questions for the owner
 

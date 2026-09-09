@@ -9,8 +9,10 @@
 
 ## 1. Unit cases — the pure core
 
-Automated, in `test/snake.test.ts` (39 concrete cases across the 24 IDs; some are `it.each`). No DOM, injected `rng`, no real clock.
-`Test` is the exact `it(...)` name so a failing run points straight back here.
+Automated. `test/snake.test.ts` covers U1–U24 (39 concrete cases, some
+`it.each`); `test/input.test.ts` covers U25–U26; `test/i18n.test.ts` is S11.
+No DOM, injected `rng`, no real clock. `Test` is the exact `it(...)` name so a
+failing run points straight back here.
 
 | ID | Area | Setup / input | Expected | Test | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -38,6 +40,8 @@ Automated, in `test/snake.test.ts` (39 concrete cases across the 24 IDs; some ar
 | U22 | Save round-trip | `run → toSave(run) → isSaveState → run'` | `run'` equals `run` minus the non-persisted fields (`pendingTurns` empty, `justAte`/`dead` false) | `save: a run survives a save/load round-trip` | pass |
 | U23 | Save validation | `isSaveState` on `{}`, `{ v: 1 }`, `{ v: 2, best: 0, run: null }`, a run with duplicate body indices, a run with `food` inside `body` | `null` for every one — never a throw | `save: a malformed save returns null — <case>` (it.each, 12) + `save: a valid state parses` | pass |
 | U24 | Fresh run | `newRun(rng)` | length 3, centred, `dir === 'right'`, not moving semantics captured by `pendingTurns === []`, `food` off the body, `speed === 6`, `score === 0`, `revived === false` | `newRun: a fresh run matches the brief` | pass |
+| U25 | Swipe decode | `swipeDir(dx, dy)` — under threshold, each axis, a diagonal, a tie | `null` under 24px; larger axis wins; a tie goes horizontal; never a diagonal result | `swipeDir: *` (4 cases) | pass |
+| U26 | Key decode | `keyDir(key)` — arrows, WASD either case, anything else | arrows + WASD map to the four dirs; everything else is `null` | `keyDir: *` (3 cases) | pass |
 
 Coverage map against `docs/building-a-game.md` §10 / the template's "must
 cover": scoring at a boundary — U2–U4; a non-move is not a move — U13/U20;
@@ -91,6 +95,7 @@ phone at least once. Record the date and device above.
 | S8 | Blast radius | each commit touches only `games/snake/`, `catalog.json`, one `demoData.ts` line | todo |
 | S9 | Dev port | `5175` is not used by another `catalog.json` entry | todo |
 | S10 | No text in generated art | eyeball every `public/art/*.webp`; a word there is a string rule 11 can't reach | todo |
+| S11 | i18n integrity | `test/i18n.test.ts` — fallback first, no empty string, `vi` not a copy of `en`, numbers via `Intl`, `LOCALE_NAMES` self-named | pass |
 
 ## 4. Bugs found
 
