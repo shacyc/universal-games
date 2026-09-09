@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Status | **Gate 2** — plan approved 2026-09-09; implementing |
-| Tasks done | 3 / 15 |
+| Tasks done | 5 / 15 |
 | Last updated | 2026-09-09 |
 
 ## 1. Tasks
@@ -15,9 +15,9 @@ case ID as evidence.
 | --- | --- | --- | --- | --- |
 | T1 | Scaffold from `games/2048/` | done | dev server serves the board at `/g/snake/`; `pnpm --filter @game/snake typecheck` clean; verified at 375px + 320px, no console errors | field drawing in `main.ts` is throwaway, `render.ts` replaces it at T4 |
 | T2 | Pure core `src/snake.ts` + unit tests | done | `test/snake.test.ts` — 39 cases across U1–U24, all pass; `typecheck` clean | save shape + validator went in `src/save.ts`, not `session.ts` (§4) |
-| T3 | Generate art with `agy-image` → `public/art/*.webp` + `assets.ts` | blocked | | **image model out of daily quota, resets ~20:55 local 2026-09-09**; field, apple, face sheet, start illustration |
-| T4 | `render.ts` — field, body path, apple, interpolation | todo | | needs T3 |
-| T5 | Reactive face + crash effect | todo | | M14, M16 |
+| T3 | Generate art with `agy-image` → `public/art/*.webp` + `assets.ts` | partial | `src/assets.ts` done (chroma-key loader, graceful 404 → procedural fallback); `docs/art-assets.md` has the 3 prompts + commands | **art generation itself blocked on the image-model daily quota** (resets ~20:45 local); scope cut to 3 files (field, apple, title) — head/face is canvas, see §4 |
+| T4 | `render.ts` — field, body path, apple, interpolation | done | `src/render.ts`; verified in-browser — movement, interpolation, eat (score/len/speed), wall death; 320px + desktop | procedural now; bitmaps slot in when the webp files land |
+| T5 | Reactive face + crash effect | done | `src/render.ts` — chomp face (pink mouth, 150ms), dizzy dead face, dead-tint, shake + white flash; verified via `__snake.paintFace` + pixel sampling | reduced-motion keeps tint, drops shake/flash |
 | T6 | `input.ts` — swipe + keyboard → `queueTurn` | done | `test/input.test.ts` — U25 swipe decode, U26 key decode; `typecheck` clean | `createInput` binds it; decode is two pure fns |
 | T7 | `ui.ts` — HUD, start card, idle/paused overlays, countdown | todo | | needs T4 |
 | T8 | `session.ts` — save/load via `createSaveSlot` | partial | `src/session.ts` written, `typecheck` clean, dev server not broken | code complete; M5 (kill tab mid-run → paused restore) needs the loop from T4/T7 to verify |
@@ -61,6 +61,36 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-09 — T4 + T5 render (procedural), T3 loader, dev hook
+
+- **Did:** Owner said keep going without waiting for the image quota, and to
+  record the art run-list for later. Wrote `docs/art-assets.md` — 3 assets
+  (`field` / `apple` / `title`), exact prompts + `agy_image.py` commands,
+  chroma-key notes. `src/assets.ts` — loads the 3 webp from `public/art/`,
+  keys magenta → alpha, and **falls back to `null` on 404 so render draws
+  procedurally**; the game is fully playable before any art exists. `src/render.ts`
+  — square DPR fit, checker field (bitmap-or-drawn), apple (bitmap-or-drawn,
+  pulsing), snake as a rounded interpolated path, chomp face (pink open mouth,
+  150ms after `justAte`), dizzy dead face (spiral eyes), dead-tint, crash shake
+  + white flash; `prefers-reduced-motion` keeps the tint, drops shake/flash.
+  Rewrote `src/main.ts` as the loop: phase (idle/running/dead), tick
+  accumulator, `tickMs = 1000/speed` recomputed each step, input → `queueTurn`,
+  HUD (stopgap). Added a `DEV`-only `window.__snake` hook (§4 dev-tooling row).
+- **Verified in-browser** (standalone `/g/snake/`): idle board; first key
+  starts motion; snake advances with interpolation; eating → score +10,
+  length +1, speed 6→6.35 (read via `__snake.state`); wall death → dead;
+  dead body goes navy; `paintFace` + canvas pixel sampling confirm cruise vs
+  chomp (pink mouth, 31px) vs dizzy differ, and the white flash covers the
+  board at `deadAt≈now`. 320×560 and desktop both fine, no console errors.
+  `typecheck` + `test` (57) clean.
+- **Deviations (§4):** #3 the snake/face is fully canvas-drawn (not a generated
+  sprite sheet) — the image model has no alpha; #4 the dev hook.
+- **Next:** T7 — `src/ui.ts`: HUD (i18n), start card, idle/paused overlays,
+  3-2-1 countdown, game-over card, settings screen. Then T9/T10/T11 wire
+  `session.ts` (lifecycle, ads, pause/resume) into `main.ts`. T3 art whenever
+  the quota is up — drop the 3 webp in and rebuild.
+- **Blocked by:** nothing for T7; `agy-image` quota for the T3 art files only.
 
 ### 2026-09-09 — T8 session.ts written (verification deferred)
 
@@ -242,6 +272,8 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 | --- | --- | --- | --- | --- |
 | 1 | plan §1: save shape + `isSaveState` live in `session.ts` | they live in `src/save.ts`; `session.ts` will import them | pure functions with no SDK import, so `test/snake.test.ts` covers the round-trip (U22/U23) without pulling in the client | yes — plan §1 module map adds `save.ts` |
 | 2 | plan §9: T12 is "i18n + settings screen" | the i18n string modules (`en`/`vi`/`index`) were built during the T6 session | `session.ts` needs `SUPPORTED`, and the strings are art-free work that was ready while T3 was quota-blocked | yes — T12 marked `partial`, task note updated |
+| 3 | brief §4 / plan §1: the snake's three **face states** are a generated sprite sheet | the whole snake — body, head, all three faces, crash tint — is **canvas-drawn**; only field / apple / title are bitmaps (3 files, not 4 + a sheet) | the `agy-image` model paints a background, not alpha; a magenta-keyed head sprite over the canvas-blue body fringes and cannot rotate to 4 dirs crisply or switch state in one frame. Canvas gives sharp palette-exact faces. Documented in `docs/art-assets.md`. | yes — `art-assets.md`, brief §4 note pending owner ack |
+| 4 | none (tooling) | `main.ts` has a `import.meta.env.DEV`-only `window.__snake` hook (`state`, `feedAhead`, `paintFace`) for verifying sub-150ms render states from a still screenshot | screenshot latency exceeds the chomp/flash windows; stripped from any production build | n/a — dev-only |
 
 ## 5. Open questions for the owner
 
