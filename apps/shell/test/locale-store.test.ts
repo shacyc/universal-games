@@ -2,51 +2,45 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * The shell's locale store, exercised against stubbed globals rather than a
- * jsdom dependency — it touches exactly two browser things (`localStorage` and
- * `document.documentElement.lang`) and stubbing those is more honest about what
+ * jsdom dependency — it touches exactly one browser thing
+ * (`document.documentElement.lang`) and stubbing that is more honest about what
  * is under test than pulling in a DOM.
  *
- * What is being pinned is one property: **the player's choice is what gets
- * stored and broadcast, and the shell's own translation status never narrows
- * it.** Getting this wrong is silent — the hub simply overwrites a language a
- * game could have rendered, and nothing errors.
+ * Two properties are pinned here, both of which fail silently when broken:
+ *
+ * 1. **The player's choice is not narrowed by what the hub can render.** The
+ *    hub's translation status must never become a ceiling on the platform.
+ * 2. **The language is not a device-local key.** It belongs to the player and
+ *    lives on their user record; a copy kept beside it is a second source of
+ *    truth that will disagree with the first.
+ *
+ * Fetching it at boot lives in `host.ts`, which owns the storage adapter, and
+ * is verified in the browser rather than here — importing it would mean
+ * stubbing IndexedDB, `matchMedia` and the install machinery to test one await.
  */
-const KEY = 'arcade:locale';
-
 interface Env {
-  store: Map<string, string>;
   lang: () => string;
-  storage: (key: string, newValue: string | null) => void;
+  deviceWrites: Map<string, string>;
 }
 
 let env: Env;
 
-async function load(stored: string | null, browserLanguage = 'en-US') {
-  const store = new Map<string, string>();
-  if (stored !== null) store.set(KEY, stored);
-  const handlers: ((e: unknown) => void)[] = [];
+async function load(browserLanguage = 'en-US') {
   const documentElement = { lang: '' };
+  const deviceWrites = new Map<string, string>();
 
   vi.stubGlobal('window', {
     localStorage: {
-      getItem: (k: string) => store.get(k) ?? null,
-      setItem: (k: string, v: string) => void store.set(k, v),
+      getItem: () => null,
+      setItem: (k: string, v: string) => void deviceWrites.set(k, v),
     },
-    addEventListener: (type: string, fn: (e: unknown) => void) => {
-      if (type === 'storage') handlers.push(fn);
-    },
+    addEventListener: () => {},
     removeEventListener: () => {},
   });
   vi.stubGlobal('document', { documentElement });
   vi.stubGlobal('navigator', { language: browserLanguage });
 
-  env = {
-    store,
-    lang: () => documentElement.lang,
-    storage: (key, newValue) => {
-      for (const fn of handlers) fn({ key, newValue });
-    },
-  };
+  env = { lang: () => documentElement.lang, deviceWrites };
 
   // Fresh module state per case: this store is module-level on purpose, so it
   // has to be re-evaluated rather than reset through its own API.
@@ -58,56 +52,62 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('the stored choice', () => {
-  it('is what the player picked, not what the hub can render', async () => {
-    const locale = await load(null);
+describe('the player’s choice', () => {
+  it('is not narrowed to what the hub happens to ship', async () => {
+    const locale = await load();
     // `fr` is a language a game may ship before the hub is translated into it.
     locale.setLocale('fr');
 
-    expect(locale.getLocale(), 'the choice games are told about').toBe('fr');
-    expect(env.store.get(KEY), 'what survives to the next visit').toBe('fr');
+    expect(locale.getLocale(), 'what games are told').toBe('fr');
     expect(locale.getRenderedLocale(), 'what the hub has words for').toBe('en');
+    expect(locale.getStrings().play_now).toBe('PLAY NOW');
+
+    locale.applyDocumentLocale();
     expect(env.lang(), '<html lang> is the language on the page').toBe('en');
   });
 
-  it('survives a reload rather than being narrowed on the way back in', async () => {
-    const locale = await load('fr');
-    expect(locale.getLocale()).toBe('fr');
-    expect(env.store.get(KEY)).toBe('fr');
+  it('is applied when the hub does ship it', async () => {
+    const locale = await load();
+    locale.setLocale('vi');
+
+    expect(locale.getLocale()).toBe('vi');
+    expect(locale.getRenderedLocale()).toBe('vi');
+    expect(locale.getStrings().play_now).toBe('CHƠI NGAY');
   });
 
-  it('is the browser language until the player has picked once', async () => {
-    const locale = await load(null, 'vi-VN');
+  it('resolves a regional tag for rendering while keeping it whole', async () => {
+    const locale = await load();
+    locale.setLocale('vi-VN');
+
     expect(locale.getLocale()).toBe('vi-VN');
     expect(locale.getRenderedLocale()).toBe('vi');
   });
-});
 
-describe('one choice, every surface', () => {
-  it('a change in another tab is adopted here', async () => {
-    const locale = await load('en');
+  it('starts from the browser until the user record has been read', async () => {
+    const locale = await load('vi-VN');
+    expect(locale.getLocale()).toBe('vi-VN');
+    expect(locale.getRenderedLocale()).toBe('vi');
+  });
+
+  it('notifies subscribers once, and not at all for the same language', async () => {
+    const locale = await load();
     let notified = 0;
     locale.subscribeLocale(() => (notified += 1));
 
-    env.storage(KEY, 'vi');
-
-    expect(locale.getLocale()).toBe('vi');
-    expect(locale.getStrings().play_now).toBe('CHƠI NGAY');
+    locale.setLocale('vi');
+    locale.setLocale('vi');
     expect(notified).toBe(1);
   });
+});
 
-  it('does not write back what a storage event just told it', async () => {
-    const locale = await load('en');
-    env.storage(KEY, 'vi');
-    // Rewriting the key we were told about is noise at best, and a loop on a
-    // browser that echoes its own writes back.
-    expect(env.store.get(KEY)).toBe('en');
-    expect(locale.getLocale()).toBe('vi');
-  });
+describe('where the language is kept', () => {
+  it('is never written to a device-local key', async () => {
+    const locale = await load();
+    locale.setLocale('vi');
 
-  it('ignores storage traffic for the origin\'s other keys', async () => {
-    const locale = await load('en');
-    env.storage('arcade:theme', 'modern');
-    expect(locale.getLocale()).toBe('en');
+    // Recording it is the host's job, on the user record. A copy here would be
+    // a second source of truth, and the two would drift the first time the
+    // player changed language on another device.
+    expect(env.deviceWrites.size).toBe(0);
   });
 });

@@ -1,6 +1,6 @@
 import { StorageError } from '../core.js';
 import { idb } from './idb.js';
-import type { StorageAdapter } from './types.js';
+import type { StorageAdapter, User } from './types.js';
 
 const USER_KEY = 'user';
 const saveKey = (slug: string): string => `save:${slug}`;
@@ -16,21 +16,45 @@ const saveKey = (slug: string): string => `save:${slug}`;
  * the coalescing belongs on the server sync instead (v1+).
  */
 export function createIdbStorage(): StorageAdapter {
-  let userPromise: Promise<{ id: string; isAnonymous: boolean }> | undefined;
+  let userPromise: Promise<User> | undefined;
+
+  function readUser(): Promise<User> {
+    userPromise ??= (async () => {
+      const existing = await idb.get<Partial<User>>(USER_KEY);
+      if (existing?.id !== undefined) {
+        // `locale` is newer than the first records written; an older one simply
+        // has not chosen yet.
+        return {
+          id: existing.id,
+          isAnonymous: existing.isAnonymous ?? true,
+          locale: existing.locale ?? null,
+        };
+      }
+      const user: User = { id: crypto.randomUUID(), isAnonymous: true, locale: null };
+      await idb.set(USER_KEY, user);
+      return user;
+    })().catch((cause: unknown) => {
+      userPromise = undefined; // let a later call retry
+      throw new StorageError('Could not read or create the anonymous user', { cause });
+    });
+    return userPromise;
+  }
 
   return {
-    getUser() {
-      userPromise ??= (async () => {
-        const existing = await idb.get<{ id: string; isAnonymous: boolean }>(USER_KEY);
-        if (existing) return existing;
-        const user = { id: crypto.randomUUID(), isAnonymous: true };
-        await idb.set(USER_KEY, user);
-        return user;
-      })().catch((cause: unknown) => {
-        userPromise = undefined; // let a later call retry
-        throw new StorageError('Could not read or create the anonymous user', { cause });
-      });
-      return userPromise;
+    getUser: readUser,
+
+    async saveUserLocale(locale) {
+      try {
+        const user = await readUser();
+        if (user.locale === locale) return;
+        const next: User = { ...user, locale };
+        await idb.set(USER_KEY, next);
+        // Keep the cached promise honest, or the next getUser() in this tab
+        // hands back the language the player just changed away from.
+        userPromise = Promise.resolve(next);
+      } catch (cause) {
+        throw new StorageError('Could not record the language on the user', { cause });
+      }
     },
 
     async load(slug) {

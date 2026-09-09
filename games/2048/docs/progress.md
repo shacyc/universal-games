@@ -22,7 +22,7 @@ IDs from `plan.md` §9, reconstructed from the shipped code.
 | T8 | Register in `catalog.json` | done | one entry, no `demoData.ts` placeholder | |
 | T9 | i18n | done | `src/i18n/`, `test/i18n.test.ts` (11 cases), M8–M11 | |
 | T10 | Settings screen (platform rule 7) | done | `src/ui.ts` menu, `session.ts` `setLocale`/`exitToHub`, M17–M19 | added after the brief was frozen; see §4 |
-| T11 | One choice, every surface (platform rule 6) | done | M20 | platform-side only; no change in `games/2048/src/` |
+| T11 | The language belongs to the player (platform rule 6) | done | M20 | platform-side only; no change in `games/2048/src/` |
 
 ## 2. Definition of done
 
@@ -57,6 +57,32 @@ shipped game is the honest state and the reason this file now exists.
       — M9, M10, M11, all measured 2026-09-09
 
 ## 3. Session log
+
+### 2026-09-09 (e) — The language moved onto the user record
+
+- **Owner's call:** no device storage — the language comes back with the user
+  when the page loads. It is now a field on the user record (`getUser()` returns
+  `{ id, isAnonymous, locale }`), and `arcade:locale` in `localStorage` is gone.
+  Nothing in `games/2048/src/` changed for it.
+- **Why it is better than what it replaced:** the device key was a second source
+  of truth that had to be kept in step with everything else about the player.
+  `getUser()` already existed and every surface already calls it. When the API
+  lands, the record comes from the server and the language arrives with it, with
+  nothing in the shell or in any game to change — where a device key would have
+  needed a migration and a rule for which device wins.
+- **One writer:** `adoptLocale` in `createHost` records it, whichever host is
+  running and whoever asked. A write that fails is logged; the change still
+  stands for the session and it is the next boot that has forgotten it.
+- **Read before first paint:** the shell awaits it in `boot()` and the
+  standalone host awaits it before it exists, so neither renders one language
+  and swaps. Measured on the standalone game: first contentful paint at 132ms
+  with `<html lang>` already correct.
+- **A real loss, recorded not hidden:** cross-tab changes are no longer live.
+  That was the `storage` event, and IndexedDB has no equivalent. A second tab
+  picks the language up on its next load. M20 was rewritten to test what is now
+  true, and M21 records the next-load behaviour as unverified rather than
+  leaving a `pass` on a capability that no longer exists.
+- **Still open:** the same six device checks. Q1 unchanged.
 
 ### 2026-09-09 (d) — One choice, every surface
 

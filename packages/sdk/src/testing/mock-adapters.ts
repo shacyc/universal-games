@@ -1,4 +1,4 @@
-import type { AdsAdapter, AnalyticsAdapter, StorageAdapter } from '../host/adapters/types.js';
+import type { AdsAdapter, AnalyticsAdapter, StorageAdapter, User } from '../host/adapters/types.js';
 import { createBufferedAnalytics } from '../host/adapters/analytics.js';
 import { createHost, type HostCore, type HostDeps } from '../host/core.js';
 
@@ -11,9 +11,12 @@ import { createHost, type HostCore, type HostDeps } from '../host/core.js';
 
 export function createMemoryStorage(seed: Record<string, unknown> = {}): StorageAdapter {
   const saves = new Map<string, unknown>(Object.entries(seed));
-  const user = { id: 'test-user', isAnonymous: true };
+  let user: User = { id: 'test-user', isAnonymous: true, locale: null };
   return {
     getUser: async () => user,
+    saveUserLocale: async (locale) => {
+      user = { ...user, locale };
+    },
     load: async (slug) => saves.get(slug) ?? null,
     save: async (slug, state) => {
       saves.set(slug, state);

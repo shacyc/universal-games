@@ -43,18 +43,23 @@ function withInstallOffer(inner: AnalyticsAdapter): AnalyticsAdapter {
   };
 }
 
+/**
+ * Hoisted so the language read below and the host share one adapter — and, once
+ * the API lands, one fetch of the player's record rather than two.
+ */
+const storage = createIdbStorage();
+
 export const host: HostCore = createHost({
-  storage: createIdbStorage(),
+  storage,
   ads: withFrequencyCap(createStubAds(), { isFirstSession: () => sessions.isFirstSession() }),
   analytics: withInstallOffer(createBufferedAnalytics()),
-  // The shell has already resolved the player's language by the time this
-  // module loads; without it the host would fall back to `navigator.language`
-  // and the first game mounted would open in the browser's language rather
-  // than the chosen one.
+  // The store's guess at module-load time — `navigator.language`. `hydrateLocale`
+  // below replaces it with the player's own before anything renders, and the
+  // host is told through the subscription at the bottom of this file.
   context: { locale: getLocale() },
-  // A game's own settings screen changed the language. The store persists it
-  // and re-renders the hub; the host has already told every mounted game, and
-  // the store calling back into `host.setLocale` is a no-op at the same value.
+  // The language changed, here or inside a game. The host has already recorded
+  // it on the user and told every mounted game; this only re-renders the hub.
+  // The store calling back into `host.setLocale` is a no-op at the same value.
   onLocaleChanged: setLocale,
   onExitToHub: requestExitToHub,
 });
@@ -65,3 +70,25 @@ export const host: HostCore = createHost({
  * language picked before it existed, through the handshake context.
  */
 subscribeLocale(() => host.setLocale(getLocale()));
+
+/**
+ * Reads the player's language off their user record, before the first render.
+ *
+ * A language belongs to the player, not to the device, so fetching the user is
+ * what tells the hub which language to be in — there is no separate key to keep
+ * in step, and when the API lands this same read comes from the server with
+ * nothing here to change.
+ *
+ * `main.tsx` awaits it, so the hub never paints in one language and swaps to
+ * another, and no game has been mounted yet to be told the wrong one. A read
+ * that fails leaves the browser's language standing: a worse guess, not a
+ * broken page.
+ */
+export async function hydrateLocale(): Promise<void> {
+  try {
+    const user = await storage.getUser();
+    if (user.locale !== null) setLocale(user.locale);
+  } catch (error) {
+    console.debug('[shell] could not read the language off the user', error);
+  }
+}

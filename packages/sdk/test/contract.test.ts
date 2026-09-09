@@ -61,9 +61,43 @@ describe('identity', () => {
 });
 
 describe('getUser', () => {
-  it('returns an anonymous identity', async () => {
+  it('returns an anonymous identity, carrying the language', async () => {
     const { sdk } = connect();
-    await expect(sdk.getUser()).resolves.toEqual({ id: 'test-user', isAnonymous: true });
+    // The language is a property of the player, so fetching them is what tells
+    // you which one to be in. `null` = they have never chosen.
+    await expect(sdk.getUser()).resolves.toEqual({
+      id: 'test-user',
+      isAnonymous: true,
+      locale: null,
+    });
+  });
+
+  it('records a language change on the user, whoever asked for it', async () => {
+    const { sdk, storage } = connect();
+    await sdk.ready();
+
+    sdk.setLocale('vi');
+    await vi.waitFor(async () => expect((await storage.getUser()).locale).toBe('vi'));
+  });
+
+  it('keeps the tag verbatim — resolution belongs at render, not at storage', async () => {
+    const { sdk, storage } = connect();
+    await sdk.ready();
+
+    // A game may ship a locale the hub does not. Narrowing on the way in would
+    // let the surface with the shortest list overwrite everyone else's choice.
+    sdk.setLocale('fr-CA');
+    await vi.waitFor(async () => expect((await storage.getUser()).locale).toBe('fr-CA'));
+  });
+
+  it('a language that cannot be recorded still applies for this session', async () => {
+    const storage = createMemoryStorage();
+    storage.saveUserLocale = () => Promise.reject(new Error('disk on fire'));
+    const { sdk, host } = connect({ storage });
+    await sdk.ready();
+
+    sdk.setLocale('vi');
+    await vi.waitFor(() => expect(host.locale()).toBe('vi'));
   });
 
   it('rejects when storage fails', async () => {

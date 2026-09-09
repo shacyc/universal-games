@@ -5,7 +5,13 @@ export interface PlatformSDK {
   /** Resolves once the handshake with the host has completed. */
   ready(): Promise<GameContext>;
 
-  getUser(): Promise<{ id: string; isAnonymous: boolean }>;
+  /**
+   * Who is playing. `locale` is on the record because a language belongs to the
+   * player rather than to the device — but **do not render from it**: it is a
+   * snapshot, and the language can change while your game is open. Use
+   * `watchLocale`, which gives you the current value *and* every change.
+   */
+  getUser(): Promise<{ id: string; isAnonymous: boolean; locale: string | null }>;
 
   /**
    * Returns whatever was last saved, or `null`. Deliberately `unknown`:

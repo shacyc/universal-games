@@ -295,7 +295,7 @@ const sdk = createClient({ slug: '<slug>' });
 
 await sdk.ready();                  // → GameContext { slug, locale, isInstalled, isMuted }
 
-await sdk.getUser();                // → { id, isAnonymous }
+await sdk.getUser();                // → { id, isAnonymous, locale } — read the language with watchLocale, not this
 await sdk.load();                   // → unknown (validate it!)
 await sdk.save(state);              // JSON-serialisable, keep it under ~1KB
 
@@ -437,19 +437,23 @@ a reload**, and do not rebuild the DOM either if a canvas lives inside it —
 `sdk.setLocale(tag)` and the answer comes back through `onLocaleChange` like any
 other change, which is what you re-render from.
 
-**One choice, every surface** (CLAUDE.md rule 6). The player sets the language
-once and it follows them: your settings screen, the hub, every other game, every
-other tab. Two things follow from that and both are easy to get wrong:
+**The language belongs to the player** (CLAUDE.md rule 6), so it lives on their
+user record rather than on the device, and every surface reads it when it loads.
+They set it once — in your settings screen or in the hub — and it follows them.
+Three things follow from that, and all three are easy to get wrong:
 
 - **Never keep your own copy of "the current language" as the source of truth.**
   The platform's is. It can change while your game is open, from the hub or from
   another tab, and a game that updated a local variable in its click handler
   will be a language behind with nothing erroring.
 - **The tag you are handed may be one you do not ship.** That is normal — the
-  platform stores the player's choice verbatim and each surface resolves it
+  platform records the player's choice verbatim and each surface resolves it
   against its own list. `watchLocale` does that for you and falls back to
   `SUPPORTED[0]`. Do not treat it as an error, and do not write a corrected tag
   back.
+- **Do not persist a language yourself.** It is a field on the player's user
+  record and the host writes it there; a copy in your save state is a second
+  source of truth that will disagree the first time they change it elsewhere.
 
 Four rules that are easy to get wrong:
 

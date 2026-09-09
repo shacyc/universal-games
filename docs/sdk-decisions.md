@@ -342,6 +342,9 @@ sync and no SDK method; it is the same trick the install memory already uses,
 with the same known hole (an installed PWA on iOS gets its own storage bucket
 and starts from the browser's language).
 
+> **Superseded by decision 20.** The language moved off the device and onto the
+> user record. Everything else in this decision stands.
+
 Two consequences worth stating:
 
 - **Display fonts are opted into per language.** Silkscreen, the vintage theme's
@@ -463,6 +466,10 @@ Consequences:
 
 ## 19. One choice, every surface: store the tag verbatim, resolve at render
 
+> **Half superseded by decision 20.** Storing the tag verbatim and resolving at
+> render is unchanged and is the part that mattered. The `localStorage` home and
+> the cross-tab `storage` event are gone with it.
+
 The requirement, stated plainly by the owner: **the language follows the
 player.** Set it once — in the hub, inside any game, in any tab — and everything
 else follows. Auditing against that found two places where it did not hold.
@@ -503,3 +510,51 @@ Two consequences worth stating:
 - **iOS installed PWAs still stand apart.** Their storage bucket is their own,
   so they neither see another tab's change nor publish theirs. Same boundary as
   the install memory, and not fixable from here.
+
+## 20. The language is on the user, not on the device
+
+The owner's framing, and it is the right one: **a language belongs to the
+player.** So it is a field on the user record, and fetching the user at boot is
+what tells a surface which language to be in. There is no device-local key
+beside it.
+
+That deletes a whole class of problem rather than solving it. `arcade:locale`
+was a second source of truth that had to be kept in step with everything else
+about the player, and every place that read or wrote it was a place the two
+could drift. `getUser()` already existed, every surface already calls it, and
+`locale` rides along.
+
+It also makes the eventual server trivial. `createIdbStorage` is local-first by
+rule 5 and becomes the API client; when it does, the language arrives from the
+server with the rest of the record and **nothing in the shell or in any game
+changes**. A device-local key would have needed a migration and a merge rule for
+"which device is right".
+
+**One place writes it.** `adoptLocale` in `createHost` calls
+`storage.saveUserLocale`, whichever host is running and whoever asked — the
+hub's picker, a game's settings screen, a future server push. Neither embedder
+can forget to, and the two cannot persist it differently. A write that fails is
+logged and nothing else: the change still stands for this session, and it is the
+*next* boot that will have forgotten it. Nothing the player did failed, so
+nothing is shown to them.
+
+**Reading it is awaited before the first render.** `hydrateLocale()` in the
+shell and the `await` inside `createStandaloneHost` both fetch the record before
+anything paints, so the hub never renders one language and swaps, and no game
+has been mounted yet to be told the wrong one. The shell's boot moved into an
+async `boot()` for it — top-level `await` is not in the es2020/Safari 14 build
+target, and raising the target for the whole app to save one function is not a
+trade worth making.
+
+Two consequences, one of them a real loss:
+
+- **Cross-tab changes are no longer live.** Decision 19 propagated them with the
+  `storage` event; IndexedDB has no equivalent. A second tab now picks the
+  language up the next time it loads. Within a document everything is still
+  live — every mounted game gets the `locale` event as before. Restoring
+  liveness means a `BroadcastChannel`, which is a small addition, and it is not
+  here because nobody has asked for it and an unused mechanism is a liability.
+- **iOS installed PWAs still stand apart**, and will until the record is
+  genuinely server-side. Their storage bucket is their own, so their user record
+  is a different anonymous user. That is now visibly the same problem as "this
+  player has no account", which is the honest shape of it.

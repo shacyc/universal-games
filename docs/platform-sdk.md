@@ -35,7 +35,7 @@ interface PlatformSDK {
   ready(): Promise<GameContext>;
 
   // identity
-  getUser(): Promise<{ id: string; isAnonymous: boolean }>;
+  getUser(): Promise<{ id: string; isAnonymous: boolean; locale: string | null }>;
 
   // persistence — the game passes a plain JSON-serialisable object
   load<T>(): Promise<T | null>;
@@ -131,23 +131,30 @@ click.
 `exitToHub` is a navigation: the shell takes over when the game is embedded, the
 browser when it is installed and there is no shell. Save before calling it.
 
-The hub keeps a picker of its own in its topbar. **One choice, every surface:**
-the choice is remembered in `localStorage` under `arcade:locale`, stored as the
-player's tag verbatim, and every surface resolves it against the locales it
-happens to ship. `createStandaloneHost` reads it too, so a game opened from its
-own installed icon starts in the language picked in the hub; and both hosts watch
-it, so a change in one tab reaches the others live without a reload.
+The hub keeps a picker of its own in its topbar.
 
-The tag your game receives may therefore be one you do not ship — that is
-normal, not an error. `watchLocale` resolves it for you and falls back to
-`SUPPORTED[0]`. Never assume the platform's tag is in your list, and never store
-a language of your own: the platform's value is the only one that is right.
-See decision 19 in `docs/sdk-decisions.md`.
+**The language lives on the user record**, not on the device: `getUser()`
+returns `locale`, and fetching the user at boot is what tells a surface which
+language to be in. `adoptLocale` in the host writes it there whoever asked, so
+the hub's picker and a game's settings screen cannot record it differently, and
+a game opened from its own installed icon starts in the language chosen in the
+hub. When the API lands the record comes from the server and the language
+arrives with it, with nothing here to change.
 
-Two small pieces of this are exported outside `@platform/sdk/game`, because the
-shell needs the identical behaviour: `resolveLocale` is on the package root
-(and re-exported from `/game` and `/host`), and `readLocalePreference` /
-`writeLocalePreference` are on `/host`.
+It is recorded as the player's tag **verbatim**; every surface resolves it
+against the locales it happens to ship. So the tag your game receives may be one
+you do not ship — that is normal, not an error. `watchLocale` resolves it for
+you and falls back to `SUPPORTED[0]`. Never assume the platform's tag is in your
+list, never keep a language of your own, and do not render from
+`getUser().locale`: it is a snapshot, and the language can change while your
+game is open. See decisions 19 and 20 in `docs/sdk-decisions.md`.
+
+A second tab picks up a change the next time it loads, not live — see decision
+20 for why, and what it would cost to restore.
+
+`resolveLocale` is exported outside `@platform/sdk/game` — it is on the package
+root, and re-exported from `/game` and `/host` — because the shell resolves the
+player's tag against its own locales exactly the way a game does.
 
 ## Install prompt ownership
 
@@ -169,7 +176,7 @@ The shell owns installation, not the game.
 - `showInterstitial` — same but non-skippable for 3 seconds, then auto-close.
 - `track` — `console.debug` plus an in-memory buffer. No network.
 - `getUser` — generate a UUID on first run, persist in IndexedDB,
-  `isAnonymous: true`.
+  `isAnonymous: true`, `locale: null` until the player chooses one.
 
 Keeping the call sites real from day one is the whole point: when a real ad
 network is plugged in at v1, no game code changes.

@@ -58,7 +58,7 @@ export function createClient(options: CreateClientOptions): PlatformSDK {
   return {
     ready: () => ready,
 
-    getUser: () => call('getUser') as Promise<{ id: string; isAnonymous: boolean }>,
+    getUser: () => call('getUser') as Promise<{ id: string; isAnonymous: boolean; locale: string | null }>,
 
     load: () => call('load'),
     save: (state: unknown) => call('save', { state }).then(() => undefined),
@@ -119,7 +119,7 @@ function createDeferredLocalTransport(slug: string): ClientTransport {
         import('../host/standalone.js'),
         import('./local-transport.js'),
       ]);
-      inner = createLocalTransport(createStandaloneHost({ slug }), slug);
+      inner = createLocalTransport(await createStandaloneHost({ slug }), slug);
       const context = await inner.connect(handlers);
       for (const request of pending.splice(0)) inner.send(request);
       return context;

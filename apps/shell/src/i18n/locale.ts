@@ -1,10 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import {
-  readLocalePreference,
-  resolveLocale,
-  watchLocalePreference,
-  writeLocalePreference,
-} from '@platform/sdk/host';
+import { resolveLocale } from '@platform/sdk/host';
 import { SUPPORTED, stringsFor, type Strings } from './index.js';
 
 /**
@@ -23,6 +18,11 @@ import { SUPPORTED, stringsFor, type Strings } from './index.js';
  * rendering English while a game renders French is the correct outcome, and
  * `resolveLocale` is what makes it a normal one.
  *
+ * The value itself is **not** stored here or on the device: it belongs to the
+ * player, so it lives on their user record and `hydrate()` fetches it at boot
+ * along with everything else about them. Writing it back is the host's job, in
+ * one place, for both hosts.
+ *
  * Deliberately not React state and not a context: the host in `host.ts` has to
  * read the same value to tell games about it, and `install.ts`-style module
  * state with `useSyncExternalStore` on top is the pattern this shell already
@@ -36,10 +36,11 @@ import { SUPPORTED, stringsFor, type Strings } from './index.js';
 const FALLBACK = SUPPORTED[0];
 
 /**
- * `navigator.language` is a starting guess and nothing more: the moment the
- * player picks, the stored preference wins, on this and every later visit.
+ * `navigator.language` is the guess the page opens with, replaced by the
+ * player's own language as soon as their record has been read. Nothing is
+ * rendered in between — `main.tsx` awaits `hydrate()` before the first paint.
  */
-let choice = readLocalePreference() ?? navigator.language;
+let choice = navigator.language;
 let rendered = resolveLocale(choice, SUPPORTED, FALLBACK);
 let strings = stringsFor(rendered);
 const listeners = new Set<() => void>();
@@ -47,12 +48,13 @@ const listeners = new Set<() => void>();
 /**
  * Stamps the language onto the document.
  *
- * Called once from `main.tsx` rather than at import time, so this module can be
- * read by anything that is not a browser — the test suite included. The
- * document's language is not decoration: it is what a screen reader picks a
- * voice from and what the browser offers to translate. It gets `rendered`,
- * because that is the language the words on this page are actually in. Games
- * set their own inside their iframe, from their own resolution.
+ * Called from `main.tsx` after the player's record has been read and before the
+ * first render, rather than at import time — so this module can be read by
+ * anything that is not a browser, the test suite included.
+ *
+ * `<html lang>` gets `rendered`, because that is the language the words on this
+ * page are actually in. Games set their own inside their iframe, from their own
+ * resolution.
  */
 export function applyDocumentLocale(): void {
   document.documentElement.lang = rendered;
@@ -72,30 +74,25 @@ export function getStrings(): Strings {
   return strings;
 }
 
-/**
- * The player picked a language — here, inside a game, or in another tab.
- *
- * `persist` is false only when the change *came from* storage: rewriting the
- * key we were just told about is noise, and on a browser that echoes it back
- * it would be a loop.
- */
-function adopt(next: string, persist: boolean): void {
+/** The player picked a language — here, or inside a game. */
+function adopt(next: string): void {
   if (next === choice) return;
   choice = next;
   rendered = resolveLocale(next, SUPPORTED, FALLBACK);
   strings = stringsFor(rendered);
   document.documentElement.lang = rendered;
-  if (persist) writeLocalePreference(next);
   for (const listener of listeners) listener();
 }
 
+/**
+ * Recording it is the host's job, not this module's — `adoptLocale` in
+ * `createHost` writes it to the user record whoever asked, so the hub's picker
+ * and a game's settings screen cannot persist it differently. This store is
+ * told through `onLocaleChanged`.
+ */
 export function setLocale(next: string): void {
-  adopt(next, true);
+  adopt(next);
 }
-
-// Another tab of this origin — the hub in a second window, or an installed game
-// — changed the language. One choice, every surface, no reload.
-watchLocalePreference((tag) => adopt(tag, false));
 
 export function subscribeLocale(listener: () => void): () => void {
   listeners.add(listener);

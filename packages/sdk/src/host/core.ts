@@ -18,8 +18,9 @@ export interface HostDeps {
   context?: Partial<Pick<GameContext, 'locale' | 'isInstalled' | 'isMuted'>>;
   /**
    * The language changed — including when a game's own settings screen asked
-   * for it (decision 18). The embedder persists it and re-renders whatever it
-   * has of its own; the host has already told every mounted game.
+   * for it (decision 18). Persistence is not the embedder's job: the host has
+   * already written it to the user record and told every mounted game. This is
+   * only so the embedder can re-render whatever chrome it has of its own.
    */
   onLocaleChanged?: (locale: string) => void;
   /**
@@ -69,7 +70,9 @@ export function createHost(deps: HostDeps): HostCore {
   let nextRunId = 1;
   let muted = deps.context?.isMuted ?? false;
   // Read once: navigator.language cannot change mid-session, and re-reading it
-  // per context() would quietly undo a locale the player picked in the shell.
+  // per context() would quietly undo a locale the player picked. The embedder
+  // passes the language off the user record, having already fetched it; this
+  // fallback is only for a host built before that read has happened.
   let locale = deps.context?.locale ?? navigator.language;
 
   /** `target` undefined = every game; a slug = only that game. */
@@ -88,6 +91,15 @@ export function createHost(deps: HostDeps): HostCore {
     if (next === locale) return;
     locale = next;
     emit({ v: PROTOCOL_VERSION, type: 'locale', data: { locale: next } });
+    // A language belongs to the player, so it is written to their record rather
+    // than to a key beside it. One place does this, whichever host is running
+    // and whoever asked — so neither embedder can forget to.
+    void deps.storage.saveUserLocale(next).catch((error: unknown) => {
+      // The change still stands for this session; it is the *next* boot that
+      // will have forgotten it. Nothing the player did failed, so nothing is
+      // surfaced to them.
+      console.debug('[host] could not record the language on the user', error);
+    });
     deps.onLocaleChanged?.(next);
   }
 
