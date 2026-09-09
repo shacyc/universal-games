@@ -279,6 +279,18 @@ These are non-negotiable. A review that finds any of them fails the game.
     over a running game — and you act on it with `sdk.setLocale(tag)` and
     `sdk.exitToHub()`. Neither is a decision you make: the platform owns which
     language exists and where the hub is; your screen asks. See §5, *Settings*.
+13. **Image files are generated with the `agy-image` skill, never sourced from
+    the web.** A texture, a background, a sprite sheet, an illustration on the
+    title card: generate it and commit it under `games/<slug>/public/`. Never
+    download art, hotlink a CDN, or ship a `TODO: art` placeholder — an
+    installed game plays offline, so anything the build does not contain is a
+    blank rectangle on a phone in a tunnel, and the licence on a downloaded
+    asset is nobody's job to untangle a year later. Two things stay
+    hand-authored, because a generator is the wrong tool for them:
+    `public/icon.svg` and the catalog `cover`, which are flat vector shapes that
+    have to read at 42px. And **no generated image may contain words** — a word
+    baked into a PNG is a user-facing string rule 11 cannot reach and no
+    translator can change. See §8, *Art*.
 
 ---
 
@@ -654,6 +666,27 @@ commit as the catalog entry, never before.
 - Comments explain *why*, not what. If a line looks wrong but is deliberate,
   say why — that is the house style, see any file in `games/2048/src/`.
 
+### Art
+
+Rule 13: bitmap art is generated locally, with the `agy-image` skill. Invoke the
+skill by name if your assistant has it; it drives one script, so this works
+anywhere:
+
+```bash
+python3 ~/.claude/skills/agy-image/scripts/agy_image.py \
+  --prompt "<subject, then style, palette, lighting, framing — no text in the image>" \
+  --aspect 9:16 \
+  --out games/<slug>/public/art/<name>.png
+```
+
+Write the prompt in English and be concrete about the art direction; it reaches
+the model verbatim. Keep the assets few and small — every one of them is in your
+service worker's precache and is downloaded before the game is playable offline,
+so resize to the size you actually draw at (`--resize`) and prefer `.webp`, which
+carries alpha too; `.png` only for a sprite sheet that must stay lossless. If the game needs no bitmap at all, which is
+the normal case for a puzzle or a board game, generate nothing: CSS and canvas
+drawing are smaller, sharper and translatable.
+
 ---
 
 ## 9. Running and verifying
@@ -760,6 +793,9 @@ Each of these looks fine locally and breaks the platform:
   with no error anywhere.
 - Calling `sdk.exitToHub()` and then saving. The document is already leaving.
 - Leaving the placeholder entry in `demoData.ts`, shipping two cards.
+- Pulling a texture off the web because it was faster than generating one. It
+  is an unlicensed asset in a commercial app, and if it was hotlinked it is also
+  a blank rectangle the first time the game is opened offline.
 - Reusing another game's `devPort`.
 - Adding a method to the SDK to make one game easier.
 - One `'Game over'` left in a `.ts` file. It looks finished, so it ships, and it

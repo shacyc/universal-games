@@ -54,6 +54,19 @@ for slug in $SLUGS; do
     esac
   done
 
+  # Rule 13: art is generated and committed, never fetched from someone else's
+  # origin. A hotlinked image is a blank rectangle the first time the installed
+  # game is opened offline, and an unlicensed asset in a commercial app.
+  for f in $FILES games/$slug/index.html; do
+    printf '%s\n' "$STAGED" | grep -qx "$f" || continue
+    if staged_body "$f" | grep -nEi 'https?://[^"'"'"')[:space:]]+\.(png|jpe?g|webp|gif|avif|svg)' >/dev/null 2>&1; then
+      echo "BLOCKED  $f points at a remote image." >&2
+      echo "         Generate it with the agy-image skill and commit it under" >&2
+      echo "         games/$slug/public/ — building-a-game.md §3.13." >&2
+      BLOCKED=1
+    fi
+  done
+
   # A game changing the SDK breaks every other game's cached wire protocol.
   if printf '%s\n' "$STAGED" | grep -qE '^packages/sdk/'; then
     echo "BLOCKED  this commit changes games/$slug/src/ and packages/sdk/ together." >&2
