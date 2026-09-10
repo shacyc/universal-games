@@ -89,8 +89,9 @@ The exact file list and sizes are settled in `plan.md`.
   around the play area. A darker green top strip carries the score HUD (§8).
 - **Snake:** one continuous rounded body in a single royal blue, rounded caps,
   width ≈ 0.8 of a cell, corners rounded where it turns — not a row of squares.
-  The head is a rounded blob with two white eyes and dark pupils. The last ~5
-  cells taper to a thin tip (a real snake's tail), added 2026-09-10.
+  The head is a rounded blob with two white eyes and dark pupils, and a small
+  red forked tongue that flicks in and out. The last ~5 cells taper to a thin
+  tip (a real snake's tail). Tongue + taper added 2026-09-10.
 - **Apple:** red circle with a short green leaf and a small highlight. Pulses
   gently. A brief flash on the cell when eaten.
 - **Reactive face — required:**

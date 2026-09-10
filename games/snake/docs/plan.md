@@ -145,10 +145,11 @@ Real-time. One RAF loop in `main.ts`.
   corners are clean right angles; within a tick only the head slides out of the
   neck and the tail retracts `prevTailCell → curTailCell` (identical on a growth
   tick, so it holds still — no lurch). `render.ts` `bodyPoints`. (§4 #6, #7)
-- **Body shape:** `drawSnakeBody` fills a dense chain of overlapping discs (one
-  `fill()`), not a stroked polyline — smooth round corners, no shimmer. Radius
-  eases from `0.41·cell` to `0.14·cell` over the last 5 points for a real taper.
-  (§4 #7, #8)
+- **Body shape:** `drawSnakeBody` **strokes** the full-width run (round
+  `lineJoin`/`lineCap` → smooth corners, no shimmer) and fills a short ribbon
+  for the taper only — half-width eases `0.41·cell → 0` over the last ≤5 cells.
+  A disc hides the seam; the head blob is ~1.2× body width. `drawTongue` adds a
+  cosmetic flicking forked tongue. (§4 #7, #8)
 - `prefers-reduced-motion`: `render` ignores `t` (snaps per tick), stops the
   apple pulse, and drops the crash shake + flash — but keeps the dead-tint and
   the dead face, which are information (brief §4, §10).

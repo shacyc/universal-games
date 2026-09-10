@@ -17,6 +17,7 @@ const COLORS = {
   snakeDead: '#2b3350',
   apple: '#e8412e',
   appleLeaf: '#54a838',
+  tongue: '#e23c2e',
   eyeWhite: '#ffffff',
   eyeDark: '#1e2a55',
   mouth: '#ff6b8a', // pink, reads clearly against the royal-blue head
@@ -165,55 +166,105 @@ export function createRenderer(
   }
 
   /**
-   * The body as a dense chain of overlapping discs whose radius is full for
-   * most of the length and eases down over the last few points to a thin tip —
-   * a real snake's taper. Discs (not a stroked path) mean every turn reads as a
-   * smooth round bend with no diagonal shortcut and no overlapping-segment
-   * shimmer; one `fill()` unions them, so there are no seams.
+   * One smooth body. The full-width run is a plain round-joined **stroke** — so
+   * every corner is a clean round bend and there is nothing to shimmer — and
+   * only the last few cells are drawn as a **filled ribbon** that eases from the
+   * body width down to a point, the way a real tail narrows. A disc at the seam
+   * hides the join.
    */
   function drawSnakeBody(pts: Point[], dead: boolean): void {
     if (pts.length === 0) return;
     const head = pts[0];
     if (!head) return;
 
-    const baseR = cellSize() * 0.41;
-    const tipR = cellSize() * 0.14;
-    const taper = Math.min(5, pts.length - 1); // last N points shrink toward the tip
-    const radiusAt = (seg: number): number => {
-      const fromTail = pts.length - 1 - seg;
-      if (fromTail >= taper || taper <= 0) return baseR;
-      const k = Math.max(0, fromTail / taper); // 0 at the tip … 1 where the taper starts
-      return tipR + (baseR - tipR) * (k * k * (3 - 2 * k)); // smoothstep
-    };
+    const col = dead ? COLORS.snakeDead : COLORS.snake;
+    const w = cellSize() * 0.82; // body width (brief §4)
+    ctx.fillStyle = col;
+    ctx.strokeStyle = col;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
 
-    ctx.fillStyle = dead ? COLORS.snakeDead : COLORS.snake;
+    if (pts.length === 1) {
+      ctx.beginPath();
+      ctx.arc(head.x, head.y, w / 2, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+
+    const taper = Math.min(5, pts.length - 1); // last N points narrow to the tip
+    const seam = pts.length - 1 - taper; // stroke pts[0..seam+1]; ribbon pts[seam..end]
+
+    // 1) full-width body — a round-capped stroke keeps corners smooth
+    ctx.lineWidth = w;
     ctx.beginPath();
-
-    const STEP = 0.34; // sub-cell disc spacing — < 2·(min radius / cell) so discs always overlap
-    for (let i = 0; i < pts.length - 1; i += 1) {
-      const a = pts[i];
-      const b = pts[i + 1];
-      if (!a || !b) continue;
-      for (let f = 0; f < 1; f += STEP) {
-        const r = radiusAt(i + f);
-        const x = a.x + (b.x - a.x) * f;
-        const y = a.y + (b.y - a.y) * f;
-        ctx.moveTo(x + r, y);
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-      }
+    ctx.moveTo(head.x, head.y);
+    for (let i = 1; i <= Math.max(1, seam + 1); i += 1) {
+      const p = pts[i];
+      if (p) ctx.lineTo(p.x, p.y);
     }
-    const tail = pts[pts.length - 1];
-    if (tail) {
-      const r = radiusAt(pts.length - 1);
-      ctx.moveTo(tail.x + r, tail.y);
-      ctx.arc(tail.x, tail.y, r, 0, Math.PI * 2);
-    }
-    // a slightly fuller head blob (brief §4)
-    const hr = baseR * 1.08;
-    ctx.moveTo(head.x + hr, head.y);
-    ctx.arc(head.x, head.y, hr, 0, Math.PI * 2);
+    ctx.stroke();
 
+    // 2) tapering tail — a filled ribbon from full width at `start` to a point
+    const start = Math.max(0, seam);
+    const halfAt = (i: number): number => {
+      const k = Math.max(0, Math.min(1, (pts.length - 1 - i) / taper)); // 1 at start .. 0 at tip
+      return (w / 2) * (k * k * (3 - 2 * k)); // smoothstep
+    };
+    const left: Point[] = [];
+    const right: Point[] = [];
+    for (let i = start; i < pts.length; i += 1) {
+      const p = pts[i]!;
+      const a = pts[Math.max(start, i - 1)]!;
+      const b = pts[Math.min(pts.length - 1, i + 1)]!;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = -dy / len;
+      const ny = dx / len;
+      const h = halfAt(i);
+      left.push({ x: p.x + nx * h, y: p.y + ny * h });
+      right.push({ x: p.x - nx * h, y: p.y - ny * h });
+    }
+    ctx.beginPath();
+    ctx.moveTo(left[0]!.x, left[0]!.y);
+    for (let i = 1; i < left.length; i += 1) ctx.lineTo(left[i]!.x, left[i]!.y);
+    for (let i = right.length - 1; i >= 0; i -= 1) ctx.lineTo(right[i]!.x, right[i]!.y);
+    ctx.closePath();
     ctx.fill();
+
+    // 3) round the seam and a slightly fuller head blob (brief §4)
+    const s = pts[start]!;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, w / 2, 0, Math.PI * 2);
+    ctx.arc(head.x, head.y, w * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /** A quick red forked tongue that flicks in and out (cosmetic). */
+  function drawTongue(head: Point, dir: Dir, now: number, reduced: boolean): void {
+    const c = cellSize();
+    // flick cycle: out for a beat, gone for a beat
+    const phase = reduced ? 0.5 : Math.max(0, Math.sin(now / 240));
+    if (phase < 0.05) return;
+    ctx.save();
+    ctx.translate(head.x, head.y);
+    ctx.rotate(DIR_ANGLE[dir]);
+    const base = c * 0.5;
+    const reach = c * (0.18 + 0.42 * phase);
+    const fork = c * 0.12;
+    ctx.strokeStyle = COLORS.tongue;
+    ctx.lineWidth = c * 0.07;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(base, 0);
+    ctx.lineTo(base + reach * 0.55, 0);
+    ctx.moveTo(base + reach * 0.55, 0);
+    ctx.lineTo(base + reach, -fork);
+    ctx.moveTo(base + reach * 0.55, 0);
+    ctx.lineTo(base + reach, fork);
+    ctx.stroke();
+    ctx.restore();
   }
 
   /**
@@ -302,6 +353,7 @@ export function createRenderer(
       if (head) {
         const chomping =
           !run.dead && ateAt !== null && now - ateAt >= 0 && now - ateAt < EAT_FACE_MS;
+        if (!run.dead && !chomping) drawTongue(head, run.dir, now, reducedMotion);
         drawFace(head, run.dir, run.dead, chomping);
       }
 

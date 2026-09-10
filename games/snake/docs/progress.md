@@ -62,6 +62,25 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 
 ## 3. Session log
 
+### 2026-09-10 — body is a smooth stroke again (disc-chain was lumpy), + tongue
+
+- **Did:** The disc-chain body from the previous entry read as "bubbly" (owner
+  rejected it, wants the smooth look). `drawSnakeBody()` now **strokes** the
+  full-width part of the spine (`lineJoin`/`lineCap` round → smooth body, clean
+  round corners) and fills a short **ribbon** for the taper only (half-width
+  smoothstep `0.41·cell → 0` over the last ≤5 cells), with a disc over the
+  stroke↔ribbon seam and a ~1.2× head blob. Added `drawTongue()` — a red forked
+  tongue that flicks with `sin(now/240)`, hidden while dead or mid-chomp, static
+  under reduced motion. `COLORS.tongue`.
+- **Verified:** `typecheck` + 57 tests green. Frozen-frame screenshot (dev
+  `paintFace` hook) shows a smooth tapered body with the tongue — no lumps. A
+  longer live snake / mid-turn corner still isn't screenshottable (Browser pane
+  throttles rAF to ~2 fps and the snake walls itself before a shot lands);
+  corner smoothness rides on `ctx.stroke()` round joins over the grid-aligned
+  spine, which is standard — a T15 device confirm.
+- **Next:** T15 device pass; then S0 and the Gate 4 handover.
+- **Blocked by:** a physical phone (T15).
+
 ### 2026-09-10 — body render rework: no diagonal on turns, tapered tail (testplan §4 #6–#8)
 
 - **Did:** Owner reported the body cutting a diagonal across corners with a
