@@ -299,11 +299,11 @@ async function boot(): Promise<void> {
   }
 
   // vite-plugin-pwa emits sw.js only in a build; the failed registration under
-  // `vite dev` is expected (docs/building-a-game.md §9).
+  // `vite dev` is expected (docs/building-a-game.md §9). Registered directly
+  // rather than on `load` — `boot()` is async and `load` has usually already
+  // fired by the time we get here.
   if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      void navigator.serviceWorker.register('/g/snake/sw.js', { scope: '/g/snake/' });
-    });
+    void navigator.serviceWorker.register('/g/snake/sw.js', { scope: '/g/snake/' });
   }
 
   void input;

@@ -25,7 +25,7 @@ case ID as evidence.
 | T10 | Ads — rewarded revive + interstitial on New game | done | verified: revive button → stub `showRewarded` 3s modal → `reviveRun` (L5, score kept) → countdown → running; "New game" → `showInterstitial('run_end')` (suppressed first session, handled) | M7–M9 |
 | T11 | Pause/resume — one pair, idempotent resume | done | `pause()`/`resume()` fed from `onPause`/`onResume` + `visibilitychange` + `pagehide`; both guarded (no-op unless running/paused); ad pause/resume were no-ops on the game-over board | M10–M12 |
 | T12 | i18n `en`+`vi` + settings screen | done | `test/i18n.test.ts` (S11); settings sheet verified — language page (en/vi self-named + `lang` + radio), live re-render on switch with **no reload**, back-to-hub row | M18–M20 |
-| T13 | PWA — manifest, icon, SW scoped to `/g/snake/` | todo | | M17, M21 |
+| T13 | PWA — manifest, icon, SW scoped to `/g/snake/` | partial | `pnpm --filter @game/snake build` OK; `dist/` has index/assets/icon/manifest/sw.js; sw.js = classic worker scoped `/g/snake/`, precache 7 entries all snake-only, `snake-` cache prefix; index links absolute; DEV `__snake` hook stripped from the prod bundle; registration fixed (direct call — `load` had already fired) | **SW runtime + offline + install → device pass (T15)**: the Browser pane blocks all Service Workers (a 1-line noop SW fails identically) |
 | T14 | Register — `catalog.json` + `demoData.ts` deletion | todo | | own commit, pull first |
 | T15 | Manual pass on device | todo | | testplan §2 |
 
@@ -61,6 +61,27 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-10 — art run-list → JSON; T13 PWA build
+
+- **Did:** Owner asked for the art run-list as machine-readable JSON for another
+  agent to consume — `docs/art-assets.json` (per-image `prompt` / `path` /
+  `file` / `command` / chroma-key / accept check + tool & constraints);
+  `art-assets.md` trimmed to a pointer. T13: `pnpm --filter @game/snake build`
+  clean; inspected `dist/` — index/assets/icon/manifest/sw.js all present, sw.js
+  is a classic worker scoped to `/g/snake/` with a 7-entry snake-only precache
+  and `snake-` cache prefix, index links absolute, and the DEV `__snake` hook is
+  absent from the prod bundle (`import.meta.env.DEV` strips it). Fixed the SW
+  registration: it was on `window`'s `load` event, which has already fired by
+  the time the async `boot()` reaches it — now a direct call.
+- **Could not verify:** SW *runtime* registration / offline / install. The
+  Browser pane blocks all Service Workers — a 1-line noop SW fails to register
+  with the same "unknown error when fetching the script". Deferred to the device
+  pass (testplan M17, M21). Everything checkable from the build artifact is
+  correct (S3, S6, S7 → pass).
+- **Next:** T14 — `catalog.json` entry + delete `snake` from `demoData.ts`
+  (own commit, pull first). Then T3 art on quota, T15 device pass.
+- **Blocked by:** device for the SW runtime check; `agy-image` quota for art.
 
 ### 2026-09-10 — T7 UI + T9/T10/T11/T12 wired; game playable end to end
 
