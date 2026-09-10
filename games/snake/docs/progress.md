@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| Status | **Gate 2 → 3** — code complete; art (T3) + device pass (T15) remain |
-| Tasks done | 13 / 15 |
+| Status | **Gate 2 → 3** — code + art complete; device pass (T15) remains |
+| Tasks done | 14 / 15 |
 | Last updated | 2026-09-10 |
 
 ## 1. Tasks
@@ -15,7 +15,7 @@ case ID as evidence.
 | --- | --- | --- | --- | --- |
 | T1 | Scaffold from `games/2048/` | done | dev server serves the board at `/g/snake/`; `pnpm --filter @game/snake typecheck` clean; verified at 375px + 320px, no console errors | field drawing in `main.ts` is throwaway, `render.ts` replaces it at T4 |
 | T2 | Pure core `src/snake.ts` + unit tests | done | `test/snake.test.ts` — 39 cases across U1–U24, all pass; `typecheck` clean | save shape + validator went in `src/save.ts`, not `session.ts` (§4) |
-| T3 | Write `docs/art-assets.json`; image agent → `public/art/*.webp` + `assets.ts` | partial | `src/assets.ts` done (chroma-key loader, graceful 404 → procedural fallback); `docs/art-assets.json` is the finished spec (3 assets, verbatim prompts, chroma-key + accept checks) | **art files not yet generated** — hand `art-assets.json` + `docs/templates/game-docs/art-assets.prompt.md` to an image agent, drop the 3 `.webp` in, rebuild; scope is 3 files (field, apple, title) — head/face is canvas, see §4 |
+| T3 | Write `docs/art-assets.json`; image agent → `public/art/*.webp` + `assets.ts` | done | all 3 `.webp` in `public/art/` (`field` 512², `apple` 128², `title` 384²); `src/assets.ts` chroma-key loader with graceful 404 → procedural fallback; `pnpm --filter @game/snake build` → all 3 in `dist/art/` and the SW precache; S3 + S10 pass | `title` came from the owner as a 1024² png — background flattened to `#FF00FF`, a stray corner sparkle painted out, resized to 384², saved lossy webp (9.7KB). Head/face stay canvas (§4 row 3). |
 | T4 | `render.ts` — field, body path, apple, interpolation | done | `src/render.ts`; verified in-browser — movement, interpolation, eat (score/len/speed), wall death; 320px + desktop | procedural now; bitmaps slot in when the webp files land |
 | T5 | Reactive face + crash effect | done | `src/render.ts` — chomp face (pink mouth, 150ms), dizzy dead face, dead-tint, shake + white flash; verified via `__snake.paintFace` + pixel sampling | reduced-motion keeps tint, drops shake/flash |
 | T6 | `input.ts` — swipe + keyboard → `queueTurn` | done | `test/input.test.ts` — U25 swipe decode, U26 key decode; `typecheck` clean | `createInput` binds it; decode is two pure fns |
@@ -61,6 +61,27 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-10 — T3 art files landed (field, apple, title)
+
+- **Did:** All three bitmaps are now in `games/snake/public/art/`. `field.webp`
+  (512², green checker) and `apple.webp` (128², apple on flat `#FF00FF`) were
+  already generated to spec. The owner supplied `title` as a 1024² PNG with a
+  cartoon coiled-snake mascot; processed it with Pillow — flattened the pink
+  background to exact `#FF00FF`, painted out a stray decorative sparkle in the
+  bottom-right corner (it is white, so the chroma-key would not have removed it),
+  resized to 384², saved as lossy webp q80 (9.7 KB). Deleted the source PNG.
+- **Verified:** eyeballed all three — no text/letters/numbers (S10 → pass).
+  `apple` and `title` backgrounds key out cleanly over the board / card blue
+  (checked by applying the `src/assets.ts` distance-64 key in a script and
+  compositing; only a faint edge fringe on `title`, which `render.ts` covers
+  with its white halo). `pnpm --filter @game/snake build` clean — `dist/art/`
+  has all three and the SW precache lists all three (10 entries, 59 KiB).
+  `typecheck` + 57 tests still green (no code touched). S3 → pass.
+- **Next:** T15 device pass — M4, M11, M14, M17 (offline), M21 (install) + a
+  real-phone confirmation; then S0 (`pnpm game:check snake`) and the Gate 4
+  handover entry.
+- **Blocked by:** a physical phone (T15). Nothing else.
 
 ### 2026-09-10 — art pipeline: drop the named skill, use a spec file
 
