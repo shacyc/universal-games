@@ -1,0 +1,75 @@
+{
+  "$comment": "Machine-readable run-list for the Snake game's bitmap art. Hand this to an image-generating agent. Every string in `prompt` is passed to the model verbatim -- do not paraphrase. Human context and the what/why is in art-assets.md.",
+  "game": "snake",
+  "repoRelativeRoot": "games/snake",
+  "outputDir": "games/snake/public/art",
+  "tool": {
+    "name": "agy-image",
+    "script": "~/.claude/skills/agy-image/scripts/agy_image.py",
+    "invocation": "python3 ~/.claude/skills/agy-image/scripts/agy_image.py --prompt \"<prompt>\" --aspect <aspect> --resize <resize> --out <out>",
+    "notes": [
+      "The image model has its own daily quota, separate from any chat quota. On 429 it prints the reset time; wait, do not retry in a loop.",
+      "The model paints a solid background, not an alpha channel. Sprites that need transparency are generated on flat magenta #FF00FF and colour-keyed at load time by src/assets.ts.",
+      "Output format is chosen by the --out extension. Use .webp."
+    ]
+  },
+  "globalConstraints": [
+    "No text, no letters, no numbers anywhere in any image (a word baked into a PNG is a string the i18n layer cannot translate).",
+    "Flat vector / sticker style, clean edges, even flat lighting, no photorealism.",
+    "Keep each file small -- it is precached by the service worker and downloaded before the game is playable offline.",
+    "public/icon.svg and the catalog `cover` are NOT in this list -- they stay hand-authored vector."
+  ],
+  "assets": [
+    {
+      "id": "field",
+      "file": "field.webp",
+      "path": "games/snake/public/art/field.webp",
+      "role": "Grass board texture, drawn stretched over the whole square board under the snake.",
+      "transparency": false,
+      "background": "opaque, fills the frame",
+      "aspect": "1:1",
+      "resize": "512x512",
+      "prompt": "Top-down grass texture for a game board, flat vector style, two very close shades of bright lime green forming a soft subtle checkerboard, gentle organic mottling, no grass blades, no outlines, even flat lighting, seamless tileable. No text, no letters, no numbers.",
+      "command": "python3 ~/.claude/skills/agy-image/scripts/agy_image.py --prompt \"Top-down grass texture for a game board, flat vector style, two very close shades of bright lime green forming a soft subtle checkerboard, gentle organic mottling, no grass blades, no outlines, even flat lighting, seamless tileable. No text, no letters, no numbers.\" --aspect 1:1 --resize 512x512 --out games/snake/public/art/field.webp",
+      "postProcess": "none",
+      "acceptCheck": "Reads as flat grass; no visible seam line through the middle; no lettering."
+    },
+    {
+      "id": "apple",
+      "file": "apple.webp",
+      "path": "games/snake/public/art/apple.webp",
+      "role": "The food, drawn at roughly one grid cell, gently pulsing.",
+      "transparency": true,
+      "background": "flat magenta #FF00FF, no gradient, no shadow on the background",
+      "chromaKey": "src/assets.ts keys out pixels within distance 64 of #FF00FF",
+      "aspect": "1:1",
+      "resize": "128x128",
+      "prompt": "A single glossy cartoon apple, bright cherry red, one small curved green leaf at the top, one soft white highlight, flat vector sticker style with a thin clean darker-red edge, front view, centered, filling most of the frame, on a solid flat magenta background hex FF00FF, no drop shadow. No text, no letters, no numbers.",
+      "command": "python3 ~/.claude/skills/agy-image/scripts/agy_image.py --prompt \"A single glossy cartoon apple, bright cherry red, one small curved green leaf at the top, one soft white highlight, flat vector sticker style with a thin clean darker-red edge, front view, centered, filling most of the frame, on a solid flat magenta background hex FF00FF, no drop shadow. No text, no letters, no numbers.\" --aspect 1:1 --resize 128x128 --out games/snake/public/art/apple.webp",
+      "postProcess": "Background must be an even magenta with no gradient, or the chroma-key leaves a halo.",
+      "acceptCheck": "Apple fills the frame, background is uniform magenta, no lettering."
+    },
+    {
+      "id": "title",
+      "file": "title.webp",
+      "path": "games/snake/public/art/title.webp",
+      "role": "The mascot on the blue start card.",
+      "transparency": true,
+      "background": "flat magenta #FF00FF, no gradient, no shadow on the background",
+      "chromaKey": "src/assets.ts keys out pixels within distance 64 of #FF00FF; render draws a soft white halo behind it",
+      "aspect": "1:1",
+      "resize": "384x384",
+      "prompt": "A cute coiled cartoon snake mascot, rounded royal blue hex 3B5BC0 body, big friendly white eyes with dark pupils, small happy smile, curled up resting in a spiral, front view, centered, filling most of the frame, flat vector sticker style with a thin white outline, soft even lighting, on a solid flat magenta background hex FF00FF, no drop shadow. No text, no letters, no numbers.",
+      "command": "python3 ~/.claude/skills/agy-image/scripts/agy_image.py --prompt \"A cute coiled cartoon snake mascot, rounded royal blue hex 3B5BC0 body, big friendly white eyes with dark pupils, small happy smile, curled up resting in a spiral, front view, centered, filling most of the frame, flat vector sticker style with a thin white outline, soft even lighting, on a solid flat magenta background hex FF00FF, no drop shadow. No text, no letters, no numbers.\" --aspect 1:1 --resize 384x384 --out games/snake/public/art/title.webp",
+      "postProcess": "Background must be an even magenta with no gradient. The thin white outline helps the blue body read against the blue card.",
+      "acceptCheck": "Friendly coiled snake, uniform magenta background, thin white outline present, no lettering."
+    }
+  ],
+  "afterGenerating": [
+    "Eyeball every file: zero text/letters/numbers (testplan S10).",
+    "For apple.webp and title.webp confirm the background is a single flat magenta.",
+    "Run `pnpm build` from the repo root; confirm dist/g/snake/art/ contains all three (they precache via the `webp` glob, testplan S3).",
+    "`git add games/snake/public/art` and commit as task T3.",
+    "In games/snake/docs/progress.md: set T3 to done, tick the art parts of testplan M17 and S10."
+  ]
+}
