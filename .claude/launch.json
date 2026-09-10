@@ -29,7 +29,8 @@
         "@game/snake",
         "dev"
       ],
-      "port": 5175
+      "port": 5175,
+      "autoPort": false
     }
   ]
 }

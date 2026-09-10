@@ -3,8 +3,8 @@
 | | |
 | --- | --- |
 | Status | **Gate 2** — plan approved 2026-09-09; implementing |
-| Tasks done | 5 / 15 |
-| Last updated | 2026-09-09 |
+| Tasks done | 11 / 15 |
+| Last updated | 2026-09-10 |
 
 ## 1. Tasks
 
@@ -19,12 +19,12 @@ case ID as evidence.
 | T4 | `render.ts` — field, body path, apple, interpolation | done | `src/render.ts`; verified in-browser — movement, interpolation, eat (score/len/speed), wall death; 320px + desktop | procedural now; bitmaps slot in when the webp files land |
 | T5 | Reactive face + crash effect | done | `src/render.ts` — chomp face (pink mouth, 150ms), dizzy dead face, dead-tint, shake + white flash; verified via `__snake.paintFace` + pixel sampling | reduced-motion keeps tint, drops shake/flash |
 | T6 | `input.ts` — swipe + keyboard → `queueTurn` | done | `test/input.test.ts` — U25 swipe decode, U26 key decode; `typecheck` clean | `createInput` binds it; decode is two pure fns |
-| T7 | `ui.ts` — HUD, start card, idle/paused overlays, countdown | todo | | needs T4 |
-| T8 | `session.ts` — save/load via `createSaveSlot` | partial | `src/session.ts` written, `typecheck` clean, dev server not broken | code complete; M5 (kill tab mid-run → paused restore) needs the loop from T4/T7 to verify |
-| T9 | Lifecycle — `gameStart`/`gameOver` | todo | | M13 |
-| T10 | Ads — rewarded revive + interstitial on New game | todo | | M7–M9 |
-| T11 | Pause/resume — one pair, idempotent resume | todo | | M10–M12 |
-| T12 | i18n `en`+`vi` (done early) + settings screen | partial | `test/i18n.test.ts` (S11) — `src/i18n/en.ts` `vi.ts` `index.ts` done; settings screen still `todo` (needs T7) | M18–M20 |
+| T7 | `ui.ts` — HUD, start card, idle/paused overlays, countdown | done | `src/ui.ts` + `styles.css`; verified in-browser — start card, idle hint, paused overlay, 3-2-1 countdown, game-over card, settings sheet | |
+| T8 | `session.ts` — save/load via `createSaveSlot` | done | verified end-to-end: run persists (restore-paused seen on reload), save/load round-trip via IndexedDB host | M5 crash-restore observed working |
+| T9 | Lifecycle — `gameStart`/`gameOver` | done | `startRunNow` on new + restored run; `endRunOnce` guarded; verified: start→run, death→gameover, revive keeps one run | full M13 pass on device at T15 |
+| T10 | Ads — rewarded revive + interstitial on New game | done | verified: revive button → stub `showRewarded` 3s modal → `reviveRun` (L5, score kept) → countdown → running; "New game" → `showInterstitial('run_end')` (suppressed first session, handled) | M7–M9 |
+| T11 | Pause/resume — one pair, idempotent resume | done | `pause()`/`resume()` fed from `onPause`/`onResume` + `visibilitychange` + `pagehide`; both guarded (no-op unless running/paused); ad pause/resume were no-ops on the game-over board | M10–M12 |
+| T12 | i18n `en`+`vi` + settings screen | done | `test/i18n.test.ts` (S11); settings sheet verified — language page (en/vi self-named + `lang` + radio), live re-render on switch with **no reload**, back-to-hub row | M18–M20 |
 | T13 | PWA — manifest, icon, SW scoped to `/g/snake/` | todo | | M17, M21 |
 | T14 | Register — `catalog.json` + `demoData.ts` deletion | todo | | own commit, pull first |
 | T15 | Manual pass on device | todo | | testplan §2 |
@@ -61,6 +61,37 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-10 — T7 UI + T9/T10/T11/T12 wired; game playable end to end
+
+- **Did:** `src/ui.ts` — HUD (🍎/🏆 + gear), start card (stats + drawn mascot +
+  Play/Settings), idle hint, tap-to-resume paused overlay, 3-2-1 countdown,
+  game-over card (score/best + "Continue with ad" when `!revived` + "New game"),
+  and the settings sheet (root + language pages, `LOCALE_NAMES` self-named,
+  `lang` attrs, radio semantics, Escape steps back). `styles.css` rewritten for
+  all of it. `src/main.ts` rewritten as the full phase machine
+  (`start/idle/running/paused/gameover`) wiring `session.ts`: `startRunNow` on
+  new **and restored** runs, `endRunOnce` guard, revive flow
+  (`offerRevive` → `reviveRun` → countdown), `newGame` (`endRunOnce` →
+  `interstitialBeforeNewGame` → start card), one `pause()`/`resume()` pair fed
+  from `onPause`/`onResume` + `visibilitychange` + `pagehide` (both idempotent),
+  `onLocaleChange` → `stringsFor` → `ui.setStrings` re-render, `onMuteChange`
+  reflected to `data-muted`, boot restore-paused from `session.load()`.
+- **Verified in-browser** (standalone, `en` + `vi`): start → Play → idle →
+  first key → running (`gameStart`); eat/score/grow/speed; wall death →
+  game-over card; **revive**: button → stub 3s ad → Continue → `reviveRun`
+  (length 5, score kept) → 3-2-1 → running; "New game" → interstitial
+  (suppressed first session, handled) → start card; settings sheet → language
+  page → pick `vi` → **whole UI + start card re-render live, no reload**;
+  `visibilitychange`→hidden pauses (fires a lot under the automated browser —
+  correct behaviour, just noisy there). `typecheck` + 57 tests clean.
+- **Fixes made while verifying:** revive now saves the revived run explicitly
+  (`snapshot()` saw phase `gameover` and wrote `run: null`); idle hint moved
+  below centre so it doesn't cover the resting snake.
+- **Next:** T13 (PWA — `pnpm build`, static preview, SW scope, offline), T14
+  (`catalog.json` entry + delete `snake` from `demoData.ts`), T3 art files when
+  the `agy-image` quota is up, T15 device pass.
+- **Blocked by:** nothing for T13/T14; `agy-image` quota for the 3 art files.
 
 ### 2026-09-09 — T4 + T5 render (procedural), T3 loader, dev hook
 
