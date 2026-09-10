@@ -134,43 +134,86 @@ export function createRenderer(
     ctx.restore();
   }
 
-  /** Interpolated centre-points of the body, head first. */
-  function bodyPoints(run: Run, prev: Run | null, t: number, reduced: boolean): Point[] {
-    const pts: Point[] = run.body.map((idx) => ({ x: centreX(idx), y: centreY(idx) }));
-    if (reduced || prev === null || t <= 0 || pts.length === 0) return pts;
+  const cell = (idx: number): Point => ({ x: centreX(idx), y: centreY(idx) });
+  const lerpPt = (a: Point, b: Point, k: number): Point => ({
+    x: lerp(a.x, b.x, k),
+    y: lerp(a.y, b.y, k),
+  });
 
-    // Every segment slides from the cell it held last tick to the cell it holds
-    // now — for i >= 1 that is the cell the segment ahead of it just vacated, so
-    // the whole body trails the head. The one segment with no previous cell (the
-    // one appended on an eating tick) has no `prev.body[i]` and stays put: the
-    // snake grows into the space the tail would have cleared, with no lurch.
-    for (let i = 0; i < pts.length; i += 1) {
-      const from = prev.body[i];
-      const to = pts[i];
-      if (from !== undefined && to) {
-        pts[i] = { x: lerp(centreX(from), to.x, t), y: lerp(centreY(from), to.y, t) };
-      }
+  /**
+   * The spine as a polyline, head first. The interior segments stay *exactly* on
+   * cell centres so every corner is a clean right angle — only the two ends move
+   * within a tick: the head slides out of the neck toward its new cell, and the
+   * tail slides from the cell it held last tick toward the cell it holds now.
+   * On a growth tick `prev` tail === current tail, so the tail holds still and
+   * the body simply lengthens from the front — no kick.
+   */
+  function bodyPoints(run: Run, prev: Run | null, t: number, reduced: boolean): Point[] {
+    const pts: Point[] = run.body.map(cell);
+    if (reduced || prev === null || t <= 0 || pts.length < 2) return pts;
+
+    const neck = run.body[1];
+    if (neck !== undefined) pts[0] = lerpPt(cell(neck), pts[0]!, t);
+
+    const prevTail = prev.body[prev.body.length - 1];
+    const curTail = run.body[run.body.length - 1];
+    if (prevTail !== undefined && curTail !== undefined && prevTail !== curTail) {
+      // a retracting stub past the current tail cell, shrinking to nothing at t=1
+      pts.push(lerpPt(cell(prevTail), cell(curTail), t));
     }
     return pts;
   }
 
+  /**
+   * The body as a dense chain of overlapping discs whose radius is full for
+   * most of the length and eases down over the last few points to a thin tip —
+   * a real snake's taper. Discs (not a stroked path) mean every turn reads as a
+   * smooth round bend with no diagonal shortcut and no overlapping-segment
+   * shimmer; one `fill()` unions them, so there are no seams.
+   */
   function drawSnakeBody(pts: Point[], dead: boolean): void {
     if (pts.length === 0) return;
     const head = pts[0];
     if (!head) return;
 
-    ctx.strokeStyle = dead ? COLORS.snakeDead : COLORS.snake;
-    ctx.lineWidth = cellSize() * 0.8;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
+    const baseR = cellSize() * 0.41;
+    const tipR = cellSize() * 0.14;
+    const taper = Math.min(5, pts.length - 1); // last N points shrink toward the tip
+    const radiusAt = (seg: number): number => {
+      const fromTail = pts.length - 1 - seg;
+      if (fromTail >= taper || taper <= 0) return baseR;
+      const k = Math.max(0, fromTail / taper); // 0 at the tip … 1 where the taper starts
+      return tipR + (baseR - tipR) * (k * k * (3 - 2 * k)); // smoothstep
+    };
+
+    ctx.fillStyle = dead ? COLORS.snakeDead : COLORS.snake;
     ctx.beginPath();
-    ctx.moveTo(head.x, head.y);
-    for (let i = 1; i < pts.length; i += 1) {
-      const p = pts[i];
-      if (p) ctx.lineTo(p.x, p.y);
+
+    const STEP = 0.34; // sub-cell disc spacing — < 2·(min radius / cell) so discs always overlap
+    for (let i = 0; i < pts.length - 1; i += 1) {
+      const a = pts[i];
+      const b = pts[i + 1];
+      if (!a || !b) continue;
+      for (let f = 0; f < 1; f += STEP) {
+        const r = radiusAt(i + f);
+        const x = a.x + (b.x - a.x) * f;
+        const y = a.y + (b.y - a.y) * f;
+        ctx.moveTo(x + r, y);
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+      }
     }
-    if (pts.length === 1) ctx.lineTo(head.x + 0.01, head.y);
-    ctx.stroke();
+    const tail = pts[pts.length - 1];
+    if (tail) {
+      const r = radiusAt(pts.length - 1);
+      ctx.moveTo(tail.x + r, tail.y);
+      ctx.arc(tail.x, tail.y, r, 0, Math.PI * 2);
+    }
+    // a slightly fuller head blob (brief §4)
+    const hr = baseR * 1.08;
+    ctx.moveTo(head.x + hr, head.y);
+    ctx.arc(head.x, head.y, hr, 0, Math.PI * 2);
+
+    ctx.fill();
   }
 
   /**

@@ -62,6 +62,31 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 
 ## 3. Session log
 
+### 2026-09-10 — body render rework: no diagonal on turns, tapered tail (testplan §4 #6–#8)
+
+- **Did:** Owner reported the body cutting a diagonal across corners with a
+  shimmer, and asked for a tapered tail.
+  - `render.ts` `bodyPoints()`: interior spine vertices now stay *exactly* on
+    cell centres, so every corner is a true right angle. Only the head slides
+    out of the neck and the tail retracts (`prevTailCell → curTailCell`, which
+    are the same cell on a growth tick → the tail holds still, no lurch — also
+    finishes off §4 #6). The old code lerped every vertex, so mid-turn two
+    neighbours were offset on both axes and the line between them ran diagonally.
+  - `drawSnakeBody()`: no longer strokes a polyline. It fills one path built
+    from a dense chain of overlapping discs along the spine — corners read as
+    smooth round bends, overlaps union invisibly, no join shimmer. Disc radius
+    eases (smoothstep) from `0.41·cell` to `0.14·cell` over the last 5 points
+    for the taper; the head disc is `1.08×`.
+- **Verified:** `typecheck` + 57 tests green. Screenshot in the Browser pane
+  shows a clean tapered body (full head → thin tip), no segment shimmer. A
+  clean mid-turn corner shot wasn't capturable — the pane throttles rAF to
+  ~2 fps so the snake jumps cells between frames — so the corner smoothness and
+  overall feel are a T15 device check. Geometry is sound by construction
+  (interior frozen on cell centres = right angles; discs follow the grid path,
+  never a diagonal).
+- **Next:** T15 device pass; then S0 and the Gate 4 handover.
+- **Blocked by:** a physical phone (T15).
+
 ### 2026-09-10 — game-feel fixes: input latency + eating jerk (testplan §4 #5, #6)
 
 - **Did:** Two render/loop bugs the owner reported.
