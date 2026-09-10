@@ -28,6 +28,8 @@ async function boot(): Promise<void> {
   let locale = 'en';
   let strings: Strings = stringsFor(locale);
 
+  const assets = await loadAssets().catch(() => EMPTY_ASSETS);
+
   const ui = createUi(
     root,
     {
@@ -43,9 +45,9 @@ async function boot(): Promise<void> {
     },
     strings,
     locale,
+    assets.title,
   );
 
-  const assets = await loadAssets().catch(() => EMPTY_ASSETS);
   const renderer = createRenderer(ui.canvas, ui.surface, assets);
 
   const rng = Math.random;

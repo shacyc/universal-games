@@ -67,6 +67,7 @@ export function createUi(
   handlers: UiHandlers,
   strings: Strings,
   locale: string,
+  mascot: CanvasImageSource | null = null,
 ): Ui {
   let s = strings;
   let current = locale;
@@ -119,7 +120,13 @@ export function createUi(
 
   // ---- start card ----------------------------------------------------
   const startMascot = el('div', 'card__mascot');
-  startMascot.append(mascotSvg());
+  startMascot.append(
+    // The generated `title.webp` (assets.ts has already keyed its magenta
+    // background to transparent) when it loaded; a hand-drawn snake otherwise.
+    mascot instanceof HTMLCanvasElement || mascot instanceof HTMLImageElement
+      ? mascot
+      : mascotSvg(),
+  );
 
   const startCard = (): void => {
     const stats = el('div', 'card__stats');

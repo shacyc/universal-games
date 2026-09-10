@@ -71,6 +71,13 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
   background to exact `#FF00FF`, painted out a stray decorative sparkle in the
   bottom-right corner (it is white, so the chroma-key would not have removed it),
   resized to 384², saved as lossy webp q80 (9.7 KB). Deleted the source PNG.
+- **Wired `title` into the start card.** `assets.ts` loaded and keyed `title`
+  but nothing consumed it — `ui.ts` always drew the hand SVG. `createUi` now
+  takes the keyed `assets.title` and appends it when present (`main.ts` loads
+  assets before `createUi`); `mascotSvg()` stays the fallback. `styles.css`
+  `.card__mascot :is(img, canvas)` gains the soft white halo the art spec asks
+  for. Verified in-browser: the start card shows the mascot, magenta gone, no
+  console errors; the board shows `field` + `apple` bitmaps in play.
 - **Verified:** eyeballed all three — no text/letters/numbers (S10 → pass).
   `apple` and `title` backgrounds key out cleanly over the board / card blue
   (checked by applying the `src/assets.ts` distance-64 key in a script and
