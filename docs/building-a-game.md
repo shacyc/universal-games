@@ -689,7 +689,7 @@ fill it in. Each entry in `assets[]` carries:
 | --- | --- |
 | `id`, `file`, `path` | short name, filename, and the exact output path under `games/<slug>/public/art/` |
 | `role` | one line: where the image is drawn and how |
-| `prompt` | subject, then style, palette, lighting, framing — **English, concrete, reaches the model verbatim**, and ends with "No text, no letters, no numbers" |
+| `prompt` | **one self-contained paragraph** — subject, style, palette *with hex codes*, framing, aspect ratio, background, all inside the string, ending with "Do not include any text, letters, numbers, logos or watermarks". English, concrete, reaches the model verbatim. The test: someone can paste this one value into any image model and run it with no other context. The sibling fields are not extra instructions the prompt is missing — they restate facts in machine form and drive post-processing |
 | `aspect`, `resize` | the ratio, and the pixel size you actually draw at — keep it small, it is precached and downloaded before the game plays offline |
 | `transparency` | `true` if the image needs an alpha edge |
 | `background`, `chromaKey` | when `transparency` is true: image models paint an opaque background, so generate the sprite on a flat keyable colour (`#FF00FF`) and key it out at load in `src/assets.ts` (Euclidean distance ≤ 64) |

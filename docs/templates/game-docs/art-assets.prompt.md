@@ -23,7 +23,10 @@ WHAT TO DO
 1. Parse the JSON. It is the single source of truth.
 2. For every object in "assets", generate exactly one image:
    - Use "prompt" VERBATIM. Do not paraphrase, translate, shorten, extend or
-     "improve" it. Whatever the string says is what you render.
+     "improve" it. Whatever the string says is what you render. Each "prompt" is
+     already self-contained — it states subject, style, palette, framing, aspect
+     ratio, background and the no-text rule — so pass it to the model exactly as
+     written; the other fields only repeat facts and drive post-processing.
    - Honour "aspect" if given. Produce the image at the "resize" dimensions if
      given (generate larger, then downscale, if your model cannot hit them
      directly).

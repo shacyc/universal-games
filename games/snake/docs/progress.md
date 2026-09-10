@@ -75,8 +75,17 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
   alone). Snake's own docs brought in line: `art-assets.json` lost its `tool`
   block and per-asset `command` fields (schema otherwise unchanged);
   `art-assets.md`, `brief.md` §4 + header note, `plan.md` R2 + T3, and §4/§5
-  here all reworded. No rule changed — same 3 files, same prompts, same
-  chroma-key, same accept checks.
+  here all reworded. No rule changed — same 3 files, same chroma-key, same
+  accept checks.
+- **Also (same session):** rewrote each `prompt` in `art-assets.json` to be
+  fully self-contained — subject, style, palette *with hex*, framing, aspect
+  ratio, magenta background and the no-text rule are all inside the one string,
+  so it drops into any image model as-is. The template JSON, `building-a-game.md`
+  §8's `prompt` row and `art-assets.prompt.md` state this as the convention.
+- **Checked the art on disk:** `field.webp` (512×512) and `apple.webp`
+  (128×128) are present but **untracked** and match the spec sizes;
+  `title.webp` (384×384 mascot) is **still missing**. T3 stays `partial` until
+  all three are generated, committed and in `dist/g/snake/art/`.
 - **Verified:** `grep -rn "agy" .` is clean outside append-only session-log
   history. `art-assets.json` still parses. `pnpm --filter @game/snake typecheck`
   + 57 tests still clean (no code touched).
