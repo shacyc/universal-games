@@ -61,6 +61,7 @@ async function boot(): Promise<void> {
   let runReported = false;
   let bestBeatenFired = false;
   let startedAt = 0;
+  let endedAt = 0;
   let countdownTimer: number | null = null;
 
   const tickMs = (): number => 1000 / run.speed;
@@ -106,6 +107,7 @@ async function boot(): Promise<void> {
     runReported = false;
     bestBeatenFired = false;
     startedAt = performance.now();
+    endedAt = 0;
   };
 
   const beginCountdown = (): void => {
@@ -136,12 +138,15 @@ async function boot(): Promise<void> {
     session.endRun({
       score: run.score,
       length: run.body.length,
-      durationMs: Math.max(0, Math.round(performance.now() - startedAt)),
+      // The run's length, not the time the player took to dismiss the card:
+      // measure to the death tick, not to "New game".
+      durationMs: Math.max(0, Math.round((endedAt || performance.now()) - startedAt)),
     });
   };
 
   const onDeath = (now: number): void => {
     deadAt = now;
+    endedAt = performance.now();
     acc = 0;
     cancelCountdown();
 

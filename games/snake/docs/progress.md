@@ -27,7 +27,7 @@ case ID as evidence.
 | T12 | i18n `en`+`vi` + settings screen | done | `test/i18n.test.ts` (S11); settings sheet verified — language page (en/vi self-named + `lang` + radio), live re-render on switch with **no reload**, back-to-hub row | M18–M20 |
 | T13 | PWA — manifest, icon, SW scoped to `/g/snake/` | partial | `pnpm --filter @game/snake build` OK; `dist/` has index/assets/icon/manifest/sw.js; sw.js = classic worker scoped `/g/snake/`, precache 7 entries all snake-only, `snake-` cache prefix; index links absolute; DEV `__snake` hook stripped from the prod bundle; registration fixed (direct call — `load` had already fired) | **SW runtime + offline + install → device pass (T15)**: the Browser pane blocks all Service Workers (a 1-line noop SW fails identically) |
 | T14 | Register — `catalog.json` + `demoData.ts` deletion | done | catalog entry added (title "Snake", `arcade`, tagline en+vi, theme/bg match, devPort 5175, data-driven cover); `snake` deleted from `DEMO_GAMES`. `pnpm build` assembles `-> /g/snake/`; hub grid shows one real SNAKE card, no "SOON"; click → embedded iframe `/g/snake/` runs. All workspace tests pass (shell i18n validates the tagline locales). | |
-| T15 | Manual pass on device | todo | | testplan §2 |
+| T15 | Manual pass on device | partial | testplan §2: 15 rows `pass (dev)` in the Browser pane, M10 N/A, M15 structural; **6 device-only rows remain** (M4 notch, M11 full, M14 reduced-motion, M17 offline, M21 install) + a real-phone confirmation pass | needs a phone |
 
 ## 2. Definition of done
 
@@ -61,6 +61,29 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-10 — in-browser sweep of testplan §2; two bugs fixed
+
+- **Did:** Ran every manual case the desktop Browser pane can exercise. 15 rows
+  now `pass (dev)` (M1–M3, M5–M9, M12, M13, M16, M18–M20, M22); M10 is N/A for
+  snake (no clock runs under an ad); M15 is structural (the shell ships no mute
+  toggle in v0 — snake reads `watchMute`, has no audio, draws no control, same
+  as 2048). Six rows still need a phone: M4 notch, M11 full app-switch, M14
+  reduced-motion, M17 offline, M21 install, plus a confirmation pass.
+- **Bugs found & fixed** (testplan §4): (2) `run_end` `duration_ms` was
+  measuring to "New game", not to death — now captured in `onDeath` via
+  `endedAt`. (3) idle hint covered the snake — moved below centre. (4) a revive
+  lost if the tab died during the countdown — `takeRevive` now saves the
+  revived run explicitly. (1) the T13 SW-registration timing bug.
+- **Verified:** M13 shows exactly one `run_started`/`run_ended` (host) + one
+  `run_start`/`run_end` (track) per run, revive included; M7 revive keeps score
+  + length 5 and defers `run_end`; M9 interstitial suppressed 1st session then
+  shown on the 2nd "New game"; M19 exit navigates in both modes; M20 settings
+  opens over the game-over card and closing it leaves the card intact.
+  `typecheck` + 57 tests clean.
+- **Next:** T3 art (quota), T15 device pass (6 rows + confirmation), S10, then
+  Gate 4 handover.
+- **Blocked by:** `agy-image` quota (T3); a real phone (T15).
 
 ### 2026-09-10 — T14 registered in the catalog
 

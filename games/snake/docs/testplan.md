@@ -52,33 +52,35 @@ U23.
 
 ## 2. Manual cases — device and integration
 
-Not automatable. Run the whole table before calling the game done, on a real
-phone at least once. Record the date and device above.
+Not automatable. **`pass (dev)`** = verified in the desktop Browser pane this
+milestone; the full table still has to be run **on a real phone once** before
+Gate 3 (esp. the device-only rows: M4, M10, M11, M14, M17, M21). Record the
+date and device above when that pass happens.
 
 | ID | Case | Steps | Expected | Status |
 | --- | --- | --- | --- | --- |
-| M1 | Standalone | open `http://localhost:5175/g/snake/` | plays fully; no shell needed | todo |
-| M2 | Embedded | open `http://localhost:5173/play/snake` | identical behaviour to M1 | todo |
-| M3 | Narrow portrait | 320px wide viewport, both locales | fully playable one-handed; nothing clipped; hit targets >= 44px | todo |
-| M4 | Safe area | notched phone, portrait | no control or HUD under the notch or the home indicator | todo |
-| M5 | Crash restore | kill the tab mid-run, reopen | exact board returns, **paused**, with the resume overlay | todo |
-| M6 | Fresh boot | no save present | the start card, no error, no "continue?" prompt | todo |
-| M7 | Rewarded accepted | die, take the revive ad to completion | snake resumes: 5 centred segments, score + speed kept, food respawned, 3-2-1 countdown; `gameOver` has **not** fired yet | todo |
-| M8 | Rewarded declined | die, dismiss the revive ad | straight to the game-over card; no penalty, no toast; score intact; `gameOver` fires once | todo |
-| M9 | Interstitial timing | game over → "New game" | interstitial fires there, after the score was shown; never on the game-over card itself, never mid-run | todo |
-| M10 | Clock under an ad | open the revive ad mid-death and a rewarded flow | the tick clock does not advance under the overlay | todo |
-| M11 | Hidden tab | switch apps mid-run, come back | paused on leave; explicit resume with a countdown; nothing advanced while away | todo |
-| M12 | Idempotent resume | trigger a **suppressed** interstitial (two "New game"s inside 90s), then an ad from the game-over card | no countdown over a dead board; no loop restarted that was not running | todo |
-| M13 | Run lifecycle | play a full run with the console open | exactly one `gameStart` and one `gameOver` per run, including a revived run | todo |
-| M14 | Reduced motion | OS "reduce motion" on | interpolation snaps, apple stops pulsing, crash shake + flash gone — the dead-tint and dead face **remain**; the game still plays | todo |
-| M15 | Mute | toggle mute in the shell | the game reflects it (icon state); the game renders no interactive mute control of its own | todo |
-| M16 | Reactive face | eat an apple; then die | chomp/open-mouth face on the eating tick, snapping back ~150ms later; dizzy dead face on death | todo |
-| M17 | Generated art offline | installed, airplane mode | field, apple, faces and the start-card illustration all render (precached); no blank rectangles | todo |
-| M18 | Settings — language | open settings, switch `en` ⇄ `vi` | the whole game re-renders with no reload; the settings screen itself re-renders; each language is named in itself with `lang` set | todo |
-| M19 | Settings — exit | open settings, tap "Back to the hub" (embedded and standalone) | embedded: shell takes over; standalone: browser navigates; a save happened before the call | todo |
-| M20 | Settings reachable over game-over | die, open settings from the game-over card | settings opens; closing it leaves the game-over card exactly as it was | todo |
-| M21 | Install | Android, "add to home screen" | own icon, own window, opens at `/g/snake/` full-screen | todo |
-| M22 | Hub card | after the catalog entry lands | exactly one card, correct art, no "COMING SOON" duplicate | todo |
+| M1 | Standalone | open `http://localhost:5175/g/snake/` | plays fully; no shell needed | pass (dev) |
+| M2 | Embedded | open `http://localhost:5173/play/snake` | identical behaviour to M1 | pass (dev) — iframe `/g/snake/`, start card + play verified |
+| M3 | Narrow portrait | 320px wide viewport, both locales | fully playable one-handed; nothing clipped; hit targets >= 44px | pass (dev) at 320×560 and 375×812; `game.css` gives 44px min — reconfirm on device |
+| M4 | Safe area | notched phone, portrait | no control or HUD under the notch or the home indicator | todo (device) |
+| M5 | Crash restore | kill the tab mid-run, reopen | exact board returns, **paused**, with the resume overlay | pass (dev) — reload mid-run → phase `paused`, board restored |
+| M6 | Fresh boot | no save present | the start card, no error, no "continue?" prompt | pass (dev) |
+| M7 | Rewarded accepted | die, take the revive ad to completion | snake resumes: 5 centred segments, score + speed kept, food respawned, 3-2-1 countdown; `gameOver` has **not** fired yet | pass (dev) — revived to length 5, score kept, countdown, no `run_end` until later |
+| M8 | Rewarded declined | die, dismiss the revive ad | straight to the game-over card; no penalty, no toast; score intact; `gameOver` fires once | code path verified (`ok===false` → `reviveSpent()` + `endRunOnce()`, no mutation of `run`/`score`); timing-sensitive UI decline → device |
+| M9 | Interstitial timing | game over → "New game" | interstitial fires there, after the score was shown; never on the game-over card itself, never mid-run | pass (dev) — suppressed 1st session, shown on the 2nd "New game", auto-closed to the start card |
+| M10 | Clock under an ad | open the revive ad mid-death and a rewarded flow | the tick clock does not advance under the overlay | N/A — snake runs no clock under an ad: ads are between sessions (interstitial) or on the already-dead board (revive). Host `pause`/`resume` around them are no-ops here. |
+| M11 | Hidden tab | switch apps mid-run, come back | paused on leave; explicit resume with a countdown; nothing advanced while away | pass (dev, mechanism) — `visibilitychange`→hidden pauses; resume runs the 3-2-1. Full app-switch behaviour → device |
+| M12 | Idempotent resume | trigger a **suppressed** interstitial, then an ad from the game-over card | no countdown over a dead board; no loop restarted that was not running | pass (dev) — interstitial between sessions started no countdown; ad on the dead board = no-op resume |
+| M13 | Run lifecycle | play a full run with the console open | exactly one `gameStart` and one `gameOver` per run, including a revived run | pass (dev) — one `run_started`/`run_ended` (host) + one `run_start`/`run_end` (track) per run; revive keeps it one run |
+| M14 | Reduced motion | OS "reduce motion" on | interpolation snaps, apple stops pulsing, crash shake + flash gone — the dead-tint and dead face **remain**; the game still plays | todo (device) — `render.ts` branches on `frame.reducedMotion` for all four; verify on device |
+| M15 | Mute | toggle mute in the shell | the game reflects it; the game renders no interactive mute control of its own | pass (structural) — the shell ships **no** mute toggle in v0; snake reads `watchMute` → `data-muted`, has no audio and no mute control. Same as 2048. |
+| M16 | Reactive face | eat an apple; then die | chomp/open-mouth face on the eating tick, snapping back ~150ms later; dizzy dead face on death | pass (dev) — chomp (pink mouth) vs cruise vs dizzy distinct by canvas pixel sampling |
+| M17 | Generated art offline | installed, airplane mode | field, apple, faces and the start-card illustration all render (precached); no blank rectangles | todo (device) — Browser pane blocks all Service Workers; art also pending T3 |
+| M18 | Settings — language | open settings, switch `en` ⇄ `vi` | the whole game re-renders with no reload; the settings screen itself re-renders; each language is named in itself with `lang` set | pass (dev) — pick `vi` → HUD + start card + sheet re-render live, `lang` attrs present |
+| M19 | Settings — exit | open settings, tap "Back to the hub" (embedded and standalone) | embedded: shell takes over; standalone: browser navigates; a save happened before the call | pass (dev) — embedded → shell nav `/play/snake`→`/`, iframe removed; standalone → browser navigates to `/`; `session.save()` runs first |
+| M20 | Settings reachable over game-over | die, open settings from the game-over card | settings opens; closing it leaves the game-over card exactly as it was | pass (dev) — sheet opens over the card; closing the scrim leaves the card untouched |
+| M21 | Install | Android, "add to home screen" | own icon, own window, opens at `/g/snake/` full-screen | todo (device) |
+| M22 | Hub card | after the catalog entry lands | exactly one card, correct art, no "COMING SOON" duplicate | pass (dev) — one SNAKE card, cover art correct, no "SOON", no duplicate |
 
 ## 3. Static checks
 
@@ -104,3 +106,7 @@ before it is fixed.
 
 | # | Symptom | Cause | Fixed in | Test added |
 | --- | --- | --- | --- | --- |
+| 1 | SW never registered in a prod build | registration was on `window` `load`, which has already fired by the time the async `boot()` reaches it | `main.ts` — direct `register()` call (commit `10e70f7`) | device (M17/M21) |
+| 2 | `run_end` `duration_ms` counted time spent on the game-over card, not the run length | duration measured `performance.now() - startedAt` at "New game", not at death | `main.ts` — `endedAt` captured in `onDeath`, used by `endRunOnce` | M13 (dev) |
+| 3 | idle "swipe to start" hint covered the resting snake | overlay `place-items: center` put the pill on the centre cell | `styles.css` — `.overlay__hint { align-self: end; margin-bottom: 18% }` | M6 (dev) |
+| 4 | revive could be lost if the tab died during the 3-2-1 countdown | `session.save(snapshot())` saw phase `gameover` → wrote `run: null` right after reviving | `main.ts` — `takeRevive` saves `toSavedRun(run)` explicitly | M7 (dev) |
