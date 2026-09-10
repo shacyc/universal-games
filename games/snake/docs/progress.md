@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| Status | **Gate 2** — plan approved 2026-09-09; implementing |
-| Tasks done | 11 / 15 |
+| Status | **Gate 2 → 3** — code complete; art (T3) + device pass (T15) remain |
+| Tasks done | 13 / 15 |
 | Last updated | 2026-09-10 |
 
 ## 1. Tasks
@@ -26,7 +26,7 @@ case ID as evidence.
 | T11 | Pause/resume — one pair, idempotent resume | done | `pause()`/`resume()` fed from `onPause`/`onResume` + `visibilitychange` + `pagehide`; both guarded (no-op unless running/paused); ad pause/resume were no-ops on the game-over board | M10–M12 |
 | T12 | i18n `en`+`vi` + settings screen | done | `test/i18n.test.ts` (S11); settings sheet verified — language page (en/vi self-named + `lang` + radio), live re-render on switch with **no reload**, back-to-hub row | M18–M20 |
 | T13 | PWA — manifest, icon, SW scoped to `/g/snake/` | partial | `pnpm --filter @game/snake build` OK; `dist/` has index/assets/icon/manifest/sw.js; sw.js = classic worker scoped `/g/snake/`, precache 7 entries all snake-only, `snake-` cache prefix; index links absolute; DEV `__snake` hook stripped from the prod bundle; registration fixed (direct call — `load` had already fired) | **SW runtime + offline + install → device pass (T15)**: the Browser pane blocks all Service Workers (a 1-line noop SW fails identically) |
-| T14 | Register — `catalog.json` + `demoData.ts` deletion | todo | | own commit, pull first |
+| T14 | Register — `catalog.json` + `demoData.ts` deletion | done | catalog entry added (title "Snake", `arcade`, tagline en+vi, theme/bg match, devPort 5175, data-driven cover); `snake` deleted from `DEMO_GAMES`. `pnpm build` assembles `-> /g/snake/`; hub grid shows one real SNAKE card, no "SOON"; click → embedded iframe `/g/snake/` runs. All workspace tests pass (shell i18n validates the tagline locales). | |
 | T15 | Manual pass on device | todo | | testplan §2 |
 
 ## 2. Definition of done
@@ -61,6 +61,23 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-10 — T14 registered in the catalog
+
+- **Did:** Added the `snake` entry to `catalog.json` (title "Snake", genre
+  `arcade`, tagline `{en, vi}`, `themeColor #4a7a2c` / `backgroundColor
+  #8ecc39` matching the manifest and index, `devPort 5175`, a 6-shape
+  data-driven `cover` — blue snake segments + red apple on grass). Deleted the
+  `snake` entry from `DEMO_GAMES` in `apps/shell/src/demo/demoData.ts` (the one
+  allowed shell edit). Left `SPOTLIGHT`/`STATS`/`copy.*` alone.
+- **Verified:** `pnpm build` → `assembled game "snake" -> /g/snake/`. All
+  workspace tests pass (shell `i18n.test.ts` validates catalog taglines carry
+  every shell locale). Hub grid at `:5173` shows a single real **SNAKE** card
+  (2nd, after 2048), correct cover, "Eat, grow, don't crash.", no "SOON" badge,
+  no duplicate. Clicking it → `/play/snake` → embedded iframe `/g/snake/`, the
+  game runs identically to standalone.
+- **Next:** T3 art files (quota), T15 device pass. Code is complete.
+- **Blocked by:** `agy-image` quota (T3); a real phone (T15 / SW runtime).
 
 ### 2026-09-10 — art run-list → JSON; T13 PWA build
 
