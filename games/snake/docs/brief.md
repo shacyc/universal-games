@@ -7,8 +7,10 @@ spec's rules. §4 (rendering), §8 (screens) and §9 (out of scope) were revised
 Snake look, asked for a reactive snake face and a crash effect, and directed
 that bitmap art be generated from an art spec (§4); the game was
 retitled from "Neon Snake" to "Snake" in the same pass. Frozen 2026-09-09.
-(2026-09-10: §4's art-pipeline wording only — spec file instead of a named
-skill, no rule changed. Still Frozen.)
+(2026-09-10: §4 only — art pipeline is a spec file, not a named skill; and the
+grass field moved to canvas drawing (owner's call, the generated tile looked
+wrong), leaving `apple` + `title` as the generated set. No gameplay rule
+changed. Still Frozen.)
 
 | | |
 | --- | --- |
@@ -72,11 +74,11 @@ the owner's mockups. Same DPR / square-fit sizing approach as
 **Art assets are generated from `docs/art-assets.json`** (rule 13) by an image
 agent, committed under `games/snake/public/art/` as `.webp` sized to draw
 resolution, and precached by the service worker so the game plays offline. The
-generated set:
-the grass **field** tile, the **apple**, the snake's three **face** states
-(cruise / eat / dead) as a small sprite sheet, and the start-card **snake
-illustration**. The moving snake **body** is a canvas-drawn rounded path (it
-bends and interpolates every frame — a sprite cannot). `public/icon.svg` and
+generated set: the **apple** and the start-card **snake illustration**.
+The grass **field**, the snake **body** and the three **face** states are
+canvas-drawn — the field is a plain two-green checkerboard (a generated tile
+came out blocky and seamed), the body bends and interpolates every frame.
+`public/icon.svg` and
 the catalog `cover` stay hand-authored flat vector in the same palette. **No
 generated image contains any text** — every word is a translated key (§7).
 The exact file list and sizes are settled in `plan.md`.

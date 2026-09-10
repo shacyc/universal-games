@@ -25,12 +25,12 @@ to an image-generating agent. This page is the human context.
 
 | Drawn in canvas (no asset) | Why |
 | --- | --- |
+| the grass **field** | the classic two-green checkerboard is a handful of `fillRect`s — crisp at any size, nothing to precache. A generated tile came out blocky and seamed; canvas is cleaner. Deviation from brief §4's "grass field tile" — `progress.md` §4. |
 | the snake body, head, all three face states, the crash tint / shake / flash | it bends and interpolates every frame, rotates to four directions, switches state on the eating tick. A keyed sprite over the canvas body fringes and cannot do any of that crisply. Deviation from brief §4's "face sheet" — `progress.md` §4 row 3. |
 | the 3-2-1 countdown, every text label | text is a translated string (rule 11), never baked into an image |
 
-So the generated set is **three files** — `field.webp`, `apple.webp`,
-`title.webp` — all clean composites: a background, a sprite on the green board,
-a sprite on the blue card. Full spec in `art-assets.json`.
+So the generated set is **two files** — `apple.webp` and `title.webp` — a sprite
+on the green board and a sprite on the blue card. Full spec in `art-assets.json`.
 
 ## `icon.svg` and the catalog `cover` are NOT generated
 

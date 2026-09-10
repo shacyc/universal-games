@@ -89,14 +89,14 @@ date and device above when that pass happens.
 | S0 | Gates and invariants | `pnpm game:check snake` | todo |
 | S1 | Types | `pnpm --filter @game/snake typecheck` (both tsconfigs) | pass |
 | S2 | Unit tests | `pnpm --filter @game/snake test` | pass |
-| S3 | Build output | `pnpm build`, then `dist/g/snake/` exists with the art | pass — `pnpm --filter @game/snake build` clean; `games/snake/dist/art/` has `field`/`apple`/`title.webp`; all three in the SW precache (10 entries) |
+| S3 | Build output | `pnpm build`, then `dist/g/snake/` exists with the art | pass — `pnpm build` clean; `dist/g/snake/art/` has `apple.webp` + `title.webp`; both in the SW precache. (The grass field is canvas-drawn, not a file.) |
 | S4 | No forbidden platform access | `.githooks/pre-commit`; `pnpm game:status` reports it too | auto |
 | S5 | Only `session.ts` imports the SDK client | `.githooks/pre-commit` | auto |
 | S6 | SW scope | `src/sw.ts` returns early outside `/g/snake/`; registration is scoped | pass — built sw.js only `respondWith`s when `pathname.startsWith("/g/snake/")`; `register('/g/snake/sw.js',{scope:'/g/snake/'})` |
 | S7 | Absolute paths | no relative `manifest.webmanifest` / icon / art links in `index.html` | pass — built index.html links are all `/g/snake/...` |
 | S8 | Blast radius | each commit touches only `games/snake/`, `catalog.json`, one `demoData.ts` line | pass — all commits `games/snake/**` except the T14 commit (`catalog.json` + one `demoData.ts` deletion) |
 | S9 | Dev port | `5175` is not used by another `catalog.json` entry | pass — 2048=5174, snake=5175, unique |
-| S10 | No text in generated art | eyeball every `public/art/*.webp`; a word there is a string rule 11 can't reach | pass — `field`/`apple`/`title.webp` all eyeballed, no text/letters/numbers; `apple` + `title` backgrounds are flat `#FF00FF` and chroma-key cleanly (a stray sparkle in the supplied `title` was painted out) |
+| S10 | No text in generated art | eyeball every `public/art/*.webp`; a word there is a string rule 11 can't reach | pass — `apple.webp` + `title.webp` eyeballed, no text/letters/numbers; both backgrounds are flat `#FF00FF` and chroma-key cleanly (a stray sparkle in the supplied `title` was painted out). The grass field is canvas-drawn. |
 | S11 | i18n integrity | `test/i18n.test.ts` — fallback first, no empty string, `vi` not a copy of `en`, numbers via `Intl`, `LOCALE_NAMES` self-named | pass |
 
 ## 4. Bugs found

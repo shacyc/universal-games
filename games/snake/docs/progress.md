@@ -15,7 +15,7 @@ case ID as evidence.
 | --- | --- | --- | --- | --- |
 | T1 | Scaffold from `games/2048/` | done | dev server serves the board at `/g/snake/`; `pnpm --filter @game/snake typecheck` clean; verified at 375px + 320px, no console errors | field drawing in `main.ts` is throwaway, `render.ts` replaces it at T4 |
 | T2 | Pure core `src/snake.ts` + unit tests | done | `test/snake.test.ts` — 39 cases across U1–U24, all pass; `typecheck` clean | save shape + validator went in `src/save.ts`, not `session.ts` (§4) |
-| T3 | Write `docs/art-assets.json`; image agent → `public/art/*.webp` + `assets.ts` | done | all 3 `.webp` in `public/art/` (`field` 512², `apple` 128², `title` 384²); `src/assets.ts` chroma-key loader with graceful 404 → procedural fallback; `pnpm --filter @game/snake build` → all 3 in `dist/art/` and the SW precache; S3 + S10 pass | `title` came from the owner as a 1024² png — background flattened to `#FF00FF`, a stray corner sparkle painted out, resized to 384², saved lossy webp (9.7KB). Head/face stay canvas (§4 row 3). |
+| T3 | Write `docs/art-assets.json`; image agent → `public/art/*.webp` + `assets.ts` | done | 2 `.webp` in `public/art/` (`apple` 128², `title` 384²); `src/assets.ts` chroma-key loader; `pnpm build` → both in `dist/art/` + SW precache; S3 + S10 pass | `title` came from the owner as a 1024² png — bg flattened to `#FF00FF`, stray corner sparkle painted out, resized 384², lossy webp (9.7KB). Grass field + head/face are canvas, not bitmaps (§4). |
 | T4 | `render.ts` — field, body path, apple, interpolation | done | `src/render.ts`; verified in-browser — movement, interpolation, eat (score/len/speed), wall death; 320px + desktop | procedural now; bitmaps slot in when the webp files land |
 | T5 | Reactive face + crash effect | done | `src/render.ts` — chomp face (pink mouth, 150ms), dizzy dead face, dead-tint, shake + white flash; verified via `__snake.paintFace` + pixel sampling | reduced-motion keeps tint, drops shake/flash |
 | T6 | `input.ts` — swipe + keyboard → `queueTurn` | done | `test/input.test.ts` — U25 swipe decode, U26 key decode; `typecheck` clean | `createInput` binds it; decode is two pure fns |
@@ -61,6 +61,24 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-10 — grass field back to canvas (owner: the generated tile looked wrong)
+
+- **Did:** Owner said `field.webp` was not right — reverted the grass field to
+  canvas drawing. Deleted `games/snake/public/art/field.webp`; removed `field`
+  from `src/assets.ts` (`Assets`, `EMPTY_ASSETS`, `loadAssets`) and the
+  `if (assets.field)` branch in `render.ts` `drawField()` — it now always draws
+  the two-green `fillRect` checker. Pulled `field` out of `art-assets.json`
+  (2 sprites left: `apple`, `title`) and updated `art-assets.md`, `brief.md`
+  §4 + header, `plan.md` D1/T3, `testplan.md` S3/S10, and §4 here (deviation
+  row 5).
+- **Verified:** `pnpm --filter @game/snake typecheck` + 57 tests green;
+  `pnpm build` assembles `dist/g/snake/art/` with just `apple.webp` +
+  `title.webp` in the precache; the board renders the checker in the Browser
+  pane, apple + start-card mascot bitmaps still fine.
+- **Next:** T15 device pass (M4, M11, M14, M17, M21 + confirmation); then S0
+  and the Gate 4 handover entry.
+- **Blocked by:** a physical phone (T15).
 
 ### 2026-09-10 — T3 art files landed (field, apple, title)
 
@@ -424,8 +442,9 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 | --- | --- | --- | --- | --- |
 | 1 | plan §1: save shape + `isSaveState` live in `session.ts` | they live in `src/save.ts`; `session.ts` will import them | pure functions with no SDK import, so `test/snake.test.ts` covers the round-trip (U22/U23) without pulling in the client | yes — plan §1 module map adds `save.ts` |
 | 2 | plan §9: T12 is "i18n + settings screen" | the i18n string modules (`en`/`vi`/`index`) were built during the T6 session | `session.ts` needs `SUPPORTED`, and the strings are art-free work that was ready while T3 was quota-blocked | yes — T12 marked `partial`, task note updated |
-| 3 | brief §4 / plan §1: the snake's three **face states** are a generated sprite sheet | the whole snake — body, head, all three faces, crash tint — is **canvas-drawn**; only field / apple / title are bitmaps (3 files, not 4 + a sheet) | an image model paints a background, not alpha; a magenta-keyed head sprite over the canvas-blue body fringes and cannot rotate to 4 dirs crisply or switch state in one frame. Canvas gives sharp palette-exact faces. Documented in `docs/art-assets.md`. | yes — `art-assets.md`, brief §4 note pending owner ack |
+| 3 | brief §4 / plan §1: the snake's three **face states** are a generated sprite sheet | the whole snake — body, head, all three faces, crash tint — is **canvas-drawn**; the bitmaps are `apple` + `title` only | an image model paints a background, not alpha; a magenta-keyed head sprite over the canvas-blue body fringes and cannot rotate to 4 dirs crisply or switch state in one frame. Canvas gives sharp palette-exact faces. Documented in `docs/art-assets.md`. | yes — `art-assets.md`, brief §4 note |
 | 4 | none (tooling) | `main.ts` has a `import.meta.env.DEV`-only `window.__snake` hook (`state`, `feedAhead`, `paintFace`) for verifying sub-150ms render states from a still screenshot | screenshot latency exceeds the chomp/flash windows; stripped from any production build | n/a — dev-only |
+| 5 | brief §4: the grass **field** is a generated `.webp` tile | the field is **canvas-drawn** — the plain two-green checker in `render.ts` `drawField()`; `field.webp` deleted, dropped from `art-assets.json` and `assets.ts` | owner's call: the generated tile came out blocky with a visible seam. A 15-line `fillRect` checker is crisp at any size and precaches nothing. | yes — brief §4 + header note, `art-assets.*`, `plan.md` D1/T3, testplan S3/S10 |
 
 ## 5. Open questions for the owner
 

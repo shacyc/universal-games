@@ -15,15 +15,13 @@ const KEY_B = 255;
 const KEY_TOLERANCE = 64;
 
 export interface Assets {
-  /** Grass board texture, drawn stretched under the snake. */
-  field: CanvasImageSource | null;
   /** The food sprite, magenta keyed out. */
   apple: CanvasImageSource | null;
   /** The start-card mascot, magenta keyed out. */
   title: CanvasImageSource | null;
 }
 
-export const EMPTY_ASSETS: Assets = { field: null, apple: null, title: null };
+export const EMPTY_ASSETS: Assets = { apple: null, title: null };
 
 function loadImage(name: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -58,14 +56,12 @@ function chromaKey(img: HTMLImageElement): CanvasImageSource {
 }
 
 export async function loadAssets(): Promise<Assets> {
-  const [field, apple, title] = await Promise.all([
-    loadImage('field.webp'),
+  const [apple, title] = await Promise.all([
     loadImage('apple.webp'),
     loadImage('title.webp'),
   ]);
 
   return {
-    field,
     apple: apple ? chromaKey(apple) : null,
     title: title ? chromaKey(title) : null,
   };

@@ -196,7 +196,7 @@ from `watchLocale`. Nothing here is outside `docs/platform-sdk.md` §4.
 
 | # | Decision | Alternative rejected | Why | Date |
 | --- | --- | --- | --- | --- |
-| D1 | The snake **body** is a canvas-drawn rounded path; only the field, apple, head-face sheet and start illustration are generated bitmaps. | A full sprite-sheet snake. | The body bends and interpolates every frame; a sheet large enough for every turn/length combination is huge and still not smooth. | 2026-09-09 |
+| D1 | The snake **body** is a canvas-drawn rounded path; the generated bitmaps are just `apple` and the start illustration (`title`). The field and the three face states are canvas too — see `progress.md` §4. | A full sprite-sheet snake; a generated grass tile. | The body bends and interpolates every frame; a face sheet is huge and still not smooth; the generated grass tile came out blocky and seamed, a two-colour checker is cleaner. | 2026-09-09, field added 2026-09-10 |
 | D2 | `pendingTurns` is not persisted. | Persisting the queue. | A restored run is paused and re-oriented by the player; an empty queue also can't restore a self-reversing state. | 2026-09-09 |
 | D3 | The three faces (cruise / eat / dead) are one `.webp` sprite sheet. | Three files. | One decode, one precache entry, one load path. | 2026-09-09 |
 | D4 | `step()` on a `dead` run returns it unchanged; `justAte` / `dead` are recomputed, never stored. | A separate "is the run over" flag owned by `main.ts`. | The core already knows; a second owner is a second source of truth. | 2026-09-09 |
@@ -212,7 +212,7 @@ Each task is a few hours, has a verifiable "done when", and its ID is what
 | --- | --- | --- | --- |
 | T1 | Scaffold from `games/2048/` — config, `index.html`, manifest, empty `src/`, `webp` in globPatterns | `pnpm --filter @game/snake dev` serves a blank board at `/g/snake/`; `typecheck` clean | — |
 | T2 | `src/snake.ts` pure core + `test/snake.test.ts` | every case in `testplan.md` §1 is green | T1 |
-| T3 | Write `docs/art-assets.json`; hand it to an image agent → `public/art/*.webp` (field tile, apple, start illustration); `src/assets.ts` loader | assets decode; no text in any image; files committed under `games/snake/public/art/` | T1 |
+| T3 | Write `docs/art-assets.json`; hand it to an image agent → `public/art/*.webp` (apple, start illustration); `src/assets.ts` loader | assets decode; no text in any image; files committed under `games/snake/public/art/` | T1 |
 | T4 | `src/render.ts` — field, body path, apple, inter-tick interpolation | a run renders and moves smoothly at 60fps; no persistence yet | T2, T3 |
 | T5 | Reactive face + crash effect in `render.ts` | eat-face on the `justAte` tick; dead tint + face + shake + flash on death; `prefers-reduced-motion` keeps the tint, drops shake/flash | T4 |
 | T6 | `src/input.ts` — swipe (24px, larger axis) + arrows/WASD → `queueTurn` | turns queue to depth 2, 180° rejected, `touch-action: none` on the surface | T2 |

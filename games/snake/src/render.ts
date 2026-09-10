@@ -91,10 +91,8 @@ export function createRenderer(
   const centreY = (idx: number): number => (Math.floor(idx / GRID) + 0.5) * cellSize();
 
   function drawField(): void {
-    if (assets.field) {
-      ctx.drawImage(assets.field, 0, 0, size, size);
-      return;
-    }
+    // Drawn, not a bitmap: the classic two-green checkerboard is a handful of
+    // fillRects, stays crisp at any size, and needs nothing precached.
     const c = cellSize();
     for (let y = 0; y < GRID; y += 1) {
       for (let x = 0; x < GRID; x += 1) {

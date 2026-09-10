@@ -1,5 +1,5 @@
 {
-  "$comment": "Machine-readable run-list for the Snake game's bitmap art. Each `prompt` is fully self-contained: it already states the subject, style, palette (with hex), framing, aspect ratio, background and the no-text rule, so you can paste any single `prompt` value into any image model and run it as-is -- no other field is a missing instruction. The sibling fields (`aspect`, `resize`, `transparency`, `background`, `chromaKey`) only restate the key facts in machine form and drive post-processing. Do not paraphrase a `prompt`. Human context and the what/why is in art-assets.md.",
+  "$comment": "Machine-readable run-list for the Snake game's bitmap art -- two sprites (apple, title). The grass field is drawn in canvas, not a bitmap. Each `prompt` is fully self-contained: it already states the subject, style, palette (with hex), framing, aspect ratio, background and the no-text rule, so you can paste any single `prompt` value into any image model and run it as-is -- no other field is a missing instruction. The sibling fields (`aspect`, `resize`, `transparency`, `background`, `chromaKey`) only restate the key facts in machine form and drive post-processing. Do not paraphrase a `prompt`. Human context and the what/why is in art-assets.md.",
   "game": "snake",
   "repoRelativeRoot": "games/snake",
   "outputDir": "games/snake/public/art",
@@ -11,19 +11,6 @@
     "For any asset with transparency:true the image model paints an opaque background, not an alpha channel -- the prompt asks for a flat magenta #FF00FF fill; src/assets.ts colour-keys it out at load."
   ],
   "assets": [
-    {
-      "id": "field",
-      "file": "field.webp",
-      "path": "games/snake/public/art/field.webp",
-      "role": "Grass board texture, drawn stretched over the whole square board under the snake.",
-      "transparency": false,
-      "background": "opaque, the texture fills the frame",
-      "aspect": "1:1",
-      "resize": "512x512",
-      "prompt": "A seamless top-down grass texture for a mobile game board, square 1:1 aspect ratio, high resolution, flat vector illustration style with no photorealism and no drop shadows. Two very close shades of bright lime green arranged as a soft, subtle checkerboard of large squares, with gentle organic mottling inside each square. No individual grass blades, no outlines, no border, even flat lighting across the whole image. The texture fills the entire frame edge to edge and tiles seamlessly on all four sides. Do not include any text, letters, numbers, logos or watermarks.",
-      "postProcess": "none",
-      "acceptCheck": "Reads as flat grass; no visible seam line through the middle; no lettering."
-    },
     {
       "id": "apple",
       "file": "apple.webp",
@@ -54,9 +41,9 @@
     }
   ],
   "afterGenerating": [
-    "Eyeball every file: zero text/letters/numbers (testplan S10).",
+    "Eyeball both files: zero text/letters/numbers (testplan S10).",
     "For apple.webp and title.webp confirm the background is a single flat magenta.",
-    "Run `pnpm build` from the repo root; confirm dist/g/snake/art/ contains all three (they precache via the `webp` glob, testplan S3).",
+    "Run `pnpm build` from the repo root; confirm dist/g/snake/art/ contains apple.webp and title.webp (they precache via the `webp` glob, testplan S3).",
     "`git add games/snake/public/art` and commit as task T3.",
     "In games/snake/docs/progress.md: set T3 to done, tick the art parts of testplan M17 and S10."
   ]
