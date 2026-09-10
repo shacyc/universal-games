@@ -166,11 +166,9 @@ export function createRenderer(
   }
 
   /**
-   * One smooth body. The full-width run is a plain round-joined **stroke** — so
-   * every corner is a clean round bend and there is nothing to shimmer — and
-   * only the last few cells are drawn as a **filled ribbon** that eases from the
-   * body width down to a point, the way a real tail narrows. A disc at the seam
-   * hides the join.
+   * One smooth body: a plain round-joined, round-capped **stroke** of constant
+   * width down the whole spine — every corner is a clean round bend, nothing to
+   * shimmer — plus a slightly fuller head blob (brief §4). No tail taper.
    */
   function drawSnakeBody(pts: Point[], dead: boolean): void {
     if (pts.length === 0) return;
@@ -183,59 +181,18 @@ export function createRenderer(
     ctx.strokeStyle = col;
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
-
-    if (pts.length === 1) {
-      ctx.beginPath();
-      ctx.arc(head.x, head.y, w / 2, 0, Math.PI * 2);
-      ctx.fill();
-      return;
-    }
-
-    const taper = Math.min(5, pts.length - 1); // last N points narrow to the tip
-    const seam = pts.length - 1 - taper; // stroke pts[0..seam+1]; ribbon pts[seam..end]
-
-    // 1) full-width body — a round-capped stroke keeps corners smooth
     ctx.lineWidth = w;
+
     ctx.beginPath();
     ctx.moveTo(head.x, head.y);
-    for (let i = 1; i <= Math.max(1, seam + 1); i += 1) {
+    for (let i = 1; i < pts.length; i += 1) {
       const p = pts[i];
       if (p) ctx.lineTo(p.x, p.y);
     }
+    if (pts.length === 1) ctx.lineTo(head.x + 0.01, head.y); // a dot needs a segment
     ctx.stroke();
 
-    // 2) tapering tail — a filled ribbon from full width at `start` to a point
-    const start = Math.max(0, seam);
-    const halfAt = (i: number): number => {
-      const k = Math.max(0, Math.min(1, (pts.length - 1 - i) / taper)); // 1 at start .. 0 at tip
-      return (w / 2) * (k * k * (3 - 2 * k)); // smoothstep
-    };
-    const left: Point[] = [];
-    const right: Point[] = [];
-    for (let i = start; i < pts.length; i += 1) {
-      const p = pts[i]!;
-      const a = pts[Math.max(start, i - 1)]!;
-      const b = pts[Math.min(pts.length - 1, i + 1)]!;
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const len = Math.hypot(dx, dy) || 1;
-      const nx = -dy / len;
-      const ny = dx / len;
-      const h = halfAt(i);
-      left.push({ x: p.x + nx * h, y: p.y + ny * h });
-      right.push({ x: p.x - nx * h, y: p.y - ny * h });
-    }
     ctx.beginPath();
-    ctx.moveTo(left[0]!.x, left[0]!.y);
-    for (let i = 1; i < left.length; i += 1) ctx.lineTo(left[i]!.x, left[i]!.y);
-    for (let i = right.length - 1; i >= 0; i -= 1) ctx.lineTo(right[i]!.x, right[i]!.y);
-    ctx.closePath();
-    ctx.fill();
-
-    // 3) round the seam and a slightly fuller head blob (brief §4)
-    const s = pts[start]!;
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, w / 2, 0, Math.PI * 2);
     ctx.arc(head.x, head.y, w * 0.6, 0, Math.PI * 2);
     ctx.fill();
   }

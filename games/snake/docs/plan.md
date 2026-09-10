@@ -141,15 +141,20 @@ Real-time. One RAF loop in `main.ts`.
   `TURN_LAT_MS` (55 ms), clamped so a tick never fires sooner than
   `tickMs − TURN_LAT_MS` after the last one (`lastStepAt`). A turn phase-shifts
   the clock; it is never a free step, so average speed is unchanged. (§4 #5)
+- **Wall grace:** if `willHitWall(run)` (pure core — next head cell off-grid
+  under the same turn-resolution as `step`), the fatal tick is held for
+  `WALL_GRACE_MS` (50 ms): `acc` is pinned at `tickMs − 1` (the snake hangs at
+  the brink) and re-checked each frame, so a turn queued inside the window makes
+  `willHitWall` false and the step turns away instead of dying. Walls only;
+  self-collision is not held. (brief §2, testplan §4 #9)
 - **Interpolation:** interior spine vertices stay *exactly* on cell centres so
   corners are clean right angles; within a tick only the head slides out of the
   neck and the tail retracts `prevTailCell → curTailCell` (identical on a growth
   tick, so it holds still — no lurch). `render.ts` `bodyPoints`. (§4 #6, #7)
-- **Body shape:** `drawSnakeBody` **strokes** the full-width run (round
-  `lineJoin`/`lineCap` → smooth corners, no shimmer) and fills a short ribbon
-  for the taper only — half-width eases `0.41·cell → 0` over the last ≤5 cells.
-  A disc hides the seam; the head blob is ~1.2× body width. `drawTongue` adds a
-  cosmetic flicking forked tongue. (§4 #7, #8)
+- **Body shape:** `drawSnakeBody` is one constant-width **stroke** down the
+  spine (round `lineJoin`/`lineCap` → smooth corners, no shimmer) plus a head
+  blob ~1.2× body width. No tail taper (tried, owner dropped it). `drawTongue`
+  adds a cosmetic flicking forked tongue. (§4 #7, #8)
 - `prefers-reduced-motion`: `render` ignores `t` (snaps per tick), stops the
   apple pulse, and drops the crash shake + flash — but keeps the dead-tint and
   the dead face, which are information (brief §4, §10).

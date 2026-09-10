@@ -12,6 +12,7 @@ import {
   spawnFood,
   speedAfter,
   step,
+  willHitWall,
 } from '../src/snake.js';
 import { fromSavedRun, isSaveState, toSavedRun, type SaveState } from '../src/save.js';
 
@@ -289,5 +290,37 @@ describe('newRun — matches the brief (U24)', () => {
     expect(run.food).toBeGreaterThanOrEqual(0);
     expect(run.food).toBeLessThan(CELLS);
     expect(run.body).not.toContain(run.food);
+  });
+});
+
+describe('willHitWall — the wall-grace predicate (U27)', () => {
+  it('willHitWall: true when the current heading leaves the board', () => {
+    // head on the top row, heading up
+    const run = make([at(5, 0), at(5, 1), at(5, 2)], 'up');
+    expect(willHitWall(run)).toBe(true);
+  });
+
+  it('willHitWall: false when the head stays on the board', () => {
+    const run = make([at(5, 5), at(5, 6), at(5, 7)], 'up');
+    expect(willHitWall(run)).toBe(false);
+  });
+
+  it('willHitWall: a queued turn that clears the wall flips it to false', () => {
+    // head on the right column heading right — fatal — but a turn down is queued
+    const run = make([at(GRID - 1, 5), at(GRID - 2, 5), at(GRID - 3, 5)], 'right', {
+      pendingTurns: ['down'],
+    });
+    expect(willHitWall(run)).toBe(false);
+  });
+
+  it('willHitWall: a queued reversal is ignored, so the wall still bites', () => {
+    // heading up into the top wall; a queued 'down' reverses and is dropped
+    const run = make([at(5, 0), at(5, 1), at(5, 2)], 'up', { pendingTurns: ['down'] });
+    expect(willHitWall(run)).toBe(true);
+  });
+
+  it('willHitWall: a dead run never reports a wall', () => {
+    const run = make([at(5, 0), at(5, 1), at(5, 2)], 'up', { dead: true });
+    expect(willHitWall(run)).toBe(false);
   });
 });

@@ -7,10 +7,12 @@ spec's rules. §4 (rendering), §8 (screens) and §9 (out of scope) were revised
 Snake look, asked for a reactive snake face and a crash effect, and directed
 that bitmap art be generated from an art spec (§4); the game was
 retitled from "Neon Snake" to "Snake" in the same pass. Frozen 2026-09-09.
-(2026-09-10: §4 only — art pipeline is a spec file, not a named skill; and the
-grass field moved to canvas drawing (owner's call, the generated tile looked
-wrong), leaving `apple` + `title` as the generated set. No gameplay rule
-changed. Still Frozen.)
+(2026-09-10, owner-directed, still Frozen: art pipeline is a spec file not a
+named skill; the grass field moved to canvas drawing (generated tile looked
+wrong), leaving `apple` + `title` generated; a forked tongue was added and the
+tail taper tried then dropped (§4); and a ~50ms hold was added before a wall
+death so a last-instant turn lands (§2) — a feel softener, the fatal-wall rule
+itself is unchanged.)
 
 | | |
 | --- | --- |
@@ -41,6 +43,9 @@ wrong about pausing, this game finds it — see decision 12 in
   the next food.
 - **Walls are fatal.** No wrap-around. Running into your own body is fatal.
   Moving into the cell the tail is about to vacate this tick is **legal**.
+  A fatal *wall* tick is held ~50ms (a "hang at the brink") so a last-instant
+  turn still registers — the clock, not the rule, is softened; self-collision
+  gets no such reprieve. Added 2026-09-10.
 - Score per food: `10 + floor(level)`, where `level = floor((speed - 6) / 0.35)`
   — i.e. the count of food eaten so far, capped once speed caps (level 22, so
   the 23rd food onward is a flat `32`). Formula lives in the pure core so it is
@@ -90,8 +95,8 @@ The exact file list and sizes are settled in `plan.md`.
 - **Snake:** one continuous rounded body in a single royal blue, rounded caps,
   width ≈ 0.8 of a cell, corners rounded where it turns — not a row of squares.
   The head is a rounded blob with two white eyes and dark pupils, and a small
-  red forked tongue that flicks in and out. The last ~5 cells taper to a thin
-  tip (a real snake's tail). Tongue + taper added 2026-09-10.
+  red forked tongue that flicks in and out. The body is one constant width end
+  to end (round tail cap, no taper). Tongue added 2026-09-10.
 - **Apple:** red circle with a short green leaf and a small highlight. Pulses
   gently. A brief flash on the cell when eaten.
 - **Reactive face — required:**

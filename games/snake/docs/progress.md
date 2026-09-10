@@ -14,7 +14,7 @@ case ID as evidence.
 | ID | Task | Status | Evidence | Note |
 | --- | --- | --- | --- | --- |
 | T1 | Scaffold from `games/2048/` | done | dev server serves the board at `/g/snake/`; `pnpm --filter @game/snake typecheck` clean; verified at 375px + 320px, no console errors | field drawing in `main.ts` is throwaway, `render.ts` replaces it at T4 |
-| T2 | Pure core `src/snake.ts` + unit tests | done | `test/snake.test.ts` — 39 cases across U1–U24, all pass; `typecheck` clean | save shape + validator went in `src/save.ts`, not `session.ts` (§4) |
+| T2 | Pure core `src/snake.ts` + unit tests | done | `test/snake.test.ts` — 44 cases across U1–U24 + U27 (`willHitWall`), all pass; `typecheck` clean | save shape + validator went in `src/save.ts`, not `session.ts` (§4); `willHitWall` added later for the wall-grace window |
 | T3 | Write `docs/art-assets.json`; image agent → `public/art/*.webp` + `assets.ts` | done | 2 `.webp` in `public/art/` (`apple` 128², `title` 384²); `src/assets.ts` chroma-key loader; `pnpm build` → both in `dist/art/` + SW precache; S3 + S10 pass | `title` came from the owner as a 1024² png — bg flattened to `#FF00FF`, stray corner sparkle painted out, resized 384², lossy webp (9.7KB). Grass field + head/face are canvas, not bitmaps (§4). |
 | T4 | `render.ts` — field, body path, apple, interpolation | done | `src/render.ts`; verified in-browser — movement, interpolation, eat (score/len/speed), wall death; 320px + desktop | procedural now; bitmaps slot in when the webp files land |
 | T5 | Reactive face + crash effect | done | `src/render.ts` — chomp face (pink mouth, 150ms), dizzy dead face, dead-tint, shake + white flash; verified via `__snake.paintFace` + pixel sampling | reduced-motion keeps tint, drops shake/flash |
@@ -61,6 +61,27 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-10 — drop the tail taper; 50ms wall-grace window
+
+- **Did:** Two owner requests.
+  - **No taper.** `drawSnakeBody()` is now one constant-width round stroke down
+    the whole spine + a head blob — the tail is a plain round cap. The ribbon /
+    disc-taper code is gone. Tongue kept.
+  - **Wall grace.** New pure `willHitWall(run)` in `snake.ts` (next head cell
+    off-grid under the same turn-resolution `step` uses). `main.ts`'s loop, when
+    it's true, pins `acc = tickMs − 1` and holds the fatal tick for
+    `WALL_GRACE_MS` (50 ms), re-checking each frame — a turn queued in that
+    window flips `willHitWall` false and the snake turns away instead of dying.
+    Held for walls only; self-collision is unchanged. `wallGraceSince` resets in
+    `clearFresh`, on countdown-clear, and after each `step`.
+- **Verified:** `typecheck` clean; **62 tests** (snake 44 — added U27,
+  `willHitWall` × 5). `pnpm build` clean. In the Browser pane the body reads as
+  a smooth even tube (frozen-frame). The 50 ms grace can't be timed here (pane
+  rAF ~2 fps → the hold collapses to ~1 frame) — a T15 device confirm; the
+  predicate itself is unit-tested.
+- **Next:** T15 device pass; then S0 and the Gate 4 handover.
+- **Blocked by:** a physical phone (T15).
 
 ### 2026-09-10 — body is a smooth stroke again (disc-chain was lumpy), + tongue
 

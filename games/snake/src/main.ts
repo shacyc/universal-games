@@ -5,7 +5,7 @@
  * (`ui.ts`) and the platform (`session.ts`).
  */
 import './styles.css';
-import { newRun, queueTurn, reviveRun, step, type Dir, type Run } from './snake.js';
+import { newRun, queueTurn, reviveRun, step, willHitWall, type Dir, type Run } from './snake.js';
 import { toSavedRun, fromSavedRun, type SaveState } from './save.js';
 import { createInput } from './input.js';
 import { EMPTY_ASSETS, loadAssets } from './assets.js';
@@ -18,6 +18,8 @@ const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
 const COUNTDOWN_FROM = 3;
 /** Longest a turn press waits before the snake acts on it (ms). */
 const TURN_LAT_MS = 55;
+/** A wall-death tick is held this long so a last-instant turn still lands (brief §2). */
+const WALL_GRACE_MS = 50;
 
 type Phase = 'start' | 'idle' | 'running' | 'paused' | 'gameover';
 
@@ -63,6 +65,9 @@ async function boot(): Promise<void> {
   // TURN_LAT_MS, but never closer to this than (tickMs - TURN_LAT_MS) — a turn
   // phase-shifts the clock, it does not raise the average speed.
   let lastStepAt = 0;
+  // When the head first pointed into a wall, or null. Holds the fatal tick for
+  // WALL_GRACE_MS so a last-instant turn still counts.
+  let wallGraceSince: number | null = null;
   let best = 0;
   let ateAt: number | null = null;
   let deadAt: number | null = null;
@@ -88,6 +93,7 @@ async function boot(): Promise<void> {
     deadAt = null;
     runReported = false;
     bestBeatenFired = false;
+    wallGraceSince = null;
   };
 
   const setView = (v: View): void => {
@@ -131,6 +137,7 @@ async function boot(): Promise<void> {
         cancelCountdown();
         last = performance.now();
         lastStepAt = last;
+        wallGraceSince = null;
         acc = tickMs(); // "GO" moves the snake now, not one tick later
         setView('running');
         return;
@@ -276,10 +283,23 @@ async function boot(): Promise<void> {
       acc += dt;
       let guard = 0;
       while (acc >= tickMs() && guard++ < 8) {
+        // Hold a fatal wall tick for WALL_GRACE_MS: the snake hangs at the brink
+        // and a turn that arrives inside the window still saves it (brief §2).
+        if (willHitWall(run)) {
+          wallGraceSince ??= now;
+          if (now - wallGraceSince < WALL_GRACE_MS) {
+            acc = tickMs() - 1;
+            break;
+          }
+        } else {
+          wallGraceSince = null;
+        }
+
         prev = run;
         run = step(run, rng);
         acc -= tickMs();
         lastStepAt = now;
+        wallGraceSince = null;
 
         if (run.justAte) {
           ateAt = now;

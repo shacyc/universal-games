@@ -177,6 +177,25 @@ export function step(run: Run, rng: () => number): Run {
 }
 
 /**
+ * Would the *next* `step` run the head off the board? Uses the same
+ * turn-resolution as `step` (the first queued turn unless it reverses `dir`).
+ * `main.ts` calls this to hold a fatal wall tick for a short grace window so a
+ * last-instant turn still registers (brief §2). Self-collision is not covered —
+ * only walls get the reprieve.
+ */
+export function willHitWall(run: Run): boolean {
+  if (run.dead) return false;
+  const head = run.body[0];
+  if (head === undefined) return false;
+  const queued = run.pendingTurns[0];
+  const dir = queued !== undefined && queued !== OPPOSITE[run.dir] ? queued : run.dir;
+  const [dx, dy] = DELTA[dir];
+  const nx = xOf(head) + dx;
+  const ny = yOf(head) + dy;
+  return nx < 0 || nx >= GRID || ny < 0 || ny >= GRID;
+}
+
+/**
  * Spend a revive (brief §6, Q2–Q5): the old body is cleared and replaced with
  * exactly REVIVE_LENGTH fresh segments at the centre heading right, the score
  * and speed are kept, the food is respawned clear of the new body, and
