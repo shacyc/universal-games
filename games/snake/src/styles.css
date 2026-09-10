@@ -184,14 +184,6 @@ body {
   margin: 4px 0 14px;
 }
 
-.card__mascot :is(img, canvas) {
-  width: 150px;
-  height: auto;
-  /* the "soft white halo behind it" the art spec calls for — also hides any
-     faint fringe left by the magenta chroma-key */
-  filter: drop-shadow(0 0 9px rgba(255, 255, 255, 0.55));
-}
-
 .card__title {
   margin: 0 0 6px;
   font-size: 22px;

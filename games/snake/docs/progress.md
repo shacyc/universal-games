@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | **Gate 2 → 3** — code + art complete; device pass (T15) remains |
+| Status | **Gate 2 → 3** — code complete (no bitmap art); device pass (T15) remains |
 | Tasks done | 14 / 15 |
 | Last updated | 2026-09-10 |
 
@@ -15,8 +15,8 @@ case ID as evidence.
 | --- | --- | --- | --- | --- |
 | T1 | Scaffold from `games/2048/` | done | dev server serves the board at `/g/snake/`; `pnpm --filter @game/snake typecheck` clean; verified at 375px + 320px, no console errors | field drawing in `main.ts` is throwaway, `render.ts` replaces it at T4 |
 | T2 | Pure core `src/snake.ts` + unit tests | done | `test/snake.test.ts` — 44 cases across U1–U24 + U27 (`willHitWall`), all pass; `typecheck` clean | save shape + validator went in `src/save.ts`, not `session.ts` (§4); `willHitWall` added later for the wall-grace window |
-| T3 | Write `docs/art-assets.json`; image agent → `public/art/*.webp` + `assets.ts` | done | 2 `.webp` in `public/art/` (`apple` 128², `title` 384²); `src/assets.ts` chroma-key loader; `pnpm build` → both in `dist/art/` + SW precache; S3 + S10 pass | `title` came from the owner as a 1024² png — bg flattened to `#FF00FF`, stray corner sparkle painted out, resized 384², lossy webp (9.7KB). Grass field + head/face are canvas, not bitmaps (§4). |
-| T4 | `render.ts` — field, body path, apple, interpolation | done | `src/render.ts`; verified in-browser — movement, interpolation, eat (score/len/speed), wall death; 320px + desktop | procedural now; bitmaps slot in when the webp files land |
+| T3 | ~~Art~~ — **dropped**: no bitmap art | done (nothing to do) | `public/art/`, `src/assets.ts`, `docs/art-assets.*` all removed; field/apple/snake/faces drawn in `render.ts`, mascot is inline SVG, `icon.svg` + `cover` hand vector | generated `.webp` tried over 2026-09-10 and reverted at the owner's call — see §4 row 5 and the session log |
+| T4 | `render.ts` — field, body path, apple, interpolation | done | `src/render.ts`; verified in-browser — movement, interpolation, eat (score/len/speed), wall death; 320px + desktop | all drawn in code |
 | T5 | Reactive face + crash effect | done | `src/render.ts` — chomp face (pink mouth, 150ms), dizzy dead face, dead-tint, shake + white flash; verified via `__snake.paintFace` + pixel sampling | reduced-motion keeps tint, drops shake/flash |
 | T6 | `input.ts` — swipe + keyboard → `queueTurn` | done | `test/input.test.ts` — U25 swipe decode, U26 key decode; `typecheck` clean | `createInput` binds it; decode is two pure fns |
 | T7 | `ui.ts` — HUD, start card, idle/paused overlays, countdown | done | `src/ui.ts` + `styles.css`; verified in-browser — start card, idle hint, paused overlay, 3-2-1 countdown, game-over card, settings sheet | |
@@ -61,6 +61,27 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-10 — remove all generated art; draw everything in code
+
+- **Did:** Owner: "bỏ các image đã generate đi, sử dụng code như cũ." Deleted
+  `games/snake/public/art/` (`apple.webp`, `title.webp`), `src/assets.ts`, and
+  `docs/art-assets.json` + `art-assets.md`. `render.ts`: dropped the `assets`
+  param and the `assets.apple` branch — the apple is always the drawn circle +
+  leaf + highlight; `createRenderer(canvas, container)`. `ui.ts`: dropped the
+  `mascot` param — the start card always uses `mascotSvg()` (inline SVG);
+  removed the now-dead `.card__mascot :is(img,canvas)` CSS. `main.ts`: no
+  `loadAssets`. `vite.config.ts`: `webp` out of the `injectManifest` glob.
+- **Verified:** `typecheck` clean; **62 tests** pass; `grep` for `assets`/`webp`/
+  `art` in `src` is clean. `pnpm build` clean — `dist/g/snake/` has no `art/`.
+  In the Browser pane the board (drawn checker), apple (drawn) and start-card
+  mascot (SVG) all render, no console errors.
+- **Docs:** brief §4 + header note, plan §1/§7/§8/§9, testplan S3/S10(N/A)/M17,
+  progress §4 row 5 all updated. `catalog.json` `cover` is data-driven vector —
+  untouched. Platform docs (`CLAUDE.md`, `building-a-game.md`, templates) left
+  as-is: the spec-file rule stands, snake simply needs no bitmap art.
+- **Next:** T15 device pass; then S0 and the Gate 4 handover.
+- **Blocked by:** a physical phone (T15).
 
 ### 2026-09-10 — drop the tail taper; 50ms wall-grace window
 
@@ -535,9 +556,9 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 | --- | --- | --- | --- | --- |
 | 1 | plan §1: save shape + `isSaveState` live in `session.ts` | they live in `src/save.ts`; `session.ts` will import them | pure functions with no SDK import, so `test/snake.test.ts` covers the round-trip (U22/U23) without pulling in the client | yes — plan §1 module map adds `save.ts` |
 | 2 | plan §9: T12 is "i18n + settings screen" | the i18n string modules (`en`/`vi`/`index`) were built during the T6 session | `session.ts` needs `SUPPORTED`, and the strings are art-free work that was ready while T3 was quota-blocked | yes — T12 marked `partial`, task note updated |
-| 3 | brief §4 / plan §1: the snake's three **face states** are a generated sprite sheet | the whole snake — body, head, all three faces, crash tint — is **canvas-drawn**; the bitmaps are `apple` + `title` only | an image model paints a background, not alpha; a magenta-keyed head sprite over the canvas-blue body fringes and cannot rotate to 4 dirs crisply or switch state in one frame. Canvas gives sharp palette-exact faces. Documented in `docs/art-assets.md`. | yes — `art-assets.md`, brief §4 note |
+| 3 | *(folded into #5)* brief §4 / plan §1 called for generated art (sprite-sheet faces, `.webp` field / apple / mascot) | | | |
 | 4 | none (tooling) | `main.ts` has a `import.meta.env.DEV`-only `window.__snake` hook (`state`, `feedAhead`, `paintFace`) for verifying sub-150ms render states from a still screenshot | screenshot latency exceeds the chomp/flash windows; stripped from any production build | n/a — dev-only |
-| 5 | brief §4: the grass **field** is a generated `.webp` tile | the field is **canvas-drawn** — the plain two-green checker in `render.ts` `drawField()`; `field.webp` deleted, dropped from `art-assets.json` and `assets.ts` | owner's call: the generated tile came out blocky with a visible seam. A 15-line `fillRect` checker is crisp at any size and precaches nothing. | yes — brief §4 + header note, `art-assets.*`, `plan.md` D1/T3, testplan S3/S10 |
+| 5 | brief §4 / plan §1: the field, apple and the three face states are **generated `.webp`** and the mascot is a generated illustration | **nothing is a bitmap.** field / apple / snake / faces are drawn in `render.ts`; the mascot is inline SVG (`ui.ts` `mascotSvg`). `public/art/`, `src/assets.ts`, `docs/art-assets.*` and the `webp` glob are all removed | tried the whole set over 2026-09-10 — the field tile was blocky, the disc/ribbon body lumpy, a keyed head sprite can't restate crisply. Owner: drop it all, use code. Sharper, smaller, translatable, precaches nothing. | yes — brief §2-note/§4, `plan.md` §1/§7 R2/§8 D1·D3/§9 T1·T3·T4·T13, testplan S3/S10/M17, `vite.config.ts` |
 
 ## 5. Open questions for the owner
 

@@ -22,8 +22,7 @@ anything touching the DOM or canvas is verified by hand (testplan §2).
 | `src/snake.ts` | game rules — `newRun`, `queueTurn`, `step`, `reviveRun`, scoring, speed | **yes** |
 | `src/save.ts` | save shape (`SaveState`), `toSavedRun` / `fromSavedRun`, the `isSaveState` boundary validator | **yes** |
 | `src/input.ts` | swipe + keyboard → a `Dir`, fed to `queueTurn` | no |
-| `src/assets.ts` | loads the generated `.webp` art, decodes to `ImageBitmap`, exposes it ready-or-throwing | no |
-| `src/render.ts` | canvas: field, snake body path, head-face sprite, apple, inter-tick interpolation, crash shake/flash | no |
+| `src/render.ts` | canvas: field, snake body path + face, apple, inter-tick interpolation, crash shake/flash — all drawn, no bitmaps | no |
 | `src/ui.ts` | DOM chrome — HUD, start card, idle / paused / game-over overlays, 3-2-1 countdown, the settings screen | no |
 | `src/i18n/en.ts` `vi.ts` `index.ts` | strings (factories), `SUPPORTED`, `LOCALE_NAMES` | — |
 | `src/styles.css` | the look; imports `@platform/sdk/game.css` first | — |
@@ -31,8 +30,9 @@ anything touching the DOM or canvas is verified by hand (testplan §2).
 
 Config (`package.json`, `vite.config.ts`, `tsconfig*.json`, `index.html`,
 `public/manifest.webmanifest`) is copied from `games/2048/` verbatim with the
-slug and dev port (`5175`) swapped, **plus** `webp` added to the VitePWA
-`injectManifest.globPatterns` so the art precaches.
+slug and dev port (`5175`) swapped. No bitmap art — the field, apple, snake and
+faces are all drawn in `render.ts`, the start-card mascot is inline SVG, and
+`public/icon.svg` + the catalog `cover` stay hand vector.
 
 ## 2. The pure core
 
@@ -205,9 +205,7 @@ from `watchLocale`. Nothing here is outside `docs/platform-sdk.md` §4.
 | # | Risk / gap | Impact | Mitigation |
 | --- | --- | --- | --- |
 | R1 | The 180° rule in brief §3 ("check against the direction actually moved last, not the last input") still allows right → queue up → queue down, which reverses the snake into itself on the second consumed turn. | A frozen-brief rule that kills the player. | §8 D6: validate each turn against the last *pending* turn (or `dir` if the queue is empty). Owner to confirm at approval. |
-| R2 | The image agent's output may carry stray glyphs or an off palette. | Rule 13 violation; a word rule 11 can't translate. | Every `prompt` in `art-assets.json` ends "no text, no letters, no numbers", and `globalConstraints` repeats it; every asset reviewed before commit; regenerate on any drift. |
-| R3 | `.webp` not precached → blank art offline. | Breaks the offline promise. | `webp` added to `injectManifest.globPatterns`; art referenced by absolute `/g/snake/` path; verified against `pnpm build` + static preview, not dev. |
-| R4 | Sprite face rotated to `dir` at the interpolated head position could shimmer at turns. | Cosmetic jank. | Body is a canvas path (§8 D1); the face is a single small sprite drawn last, snapped to the head cell's interpolated centre and rotated in 90° steps only. |
+| R2 | *(was: generated-art glitches)* — resolved 2026-09-10: the game ships **no bitmap art**. Field, apple, snake and faces are drawn in `render.ts`; the mascot is inline SVG; `icon.svg` + `cover` are hand vector. Nothing to precache, nothing to eyeball for text. |
 | R5 | HUD + board + overlay at 320px portrait. | Clipped controls, unplayable. | Board = `min(viewport)` minus HUD and safe-area; every overlay tested at 320px in both locales (testplan M3, and §1 layout rows). |
 | — | No SDK gap. | | The brief needs no method outside §4. |
 
@@ -215,9 +213,9 @@ from `watchLocale`. Nothing here is outside `docs/platform-sdk.md` §4.
 
 | # | Decision | Alternative rejected | Why | Date |
 | --- | --- | --- | --- | --- |
-| D1 | The snake **body** is a canvas-drawn rounded path; the generated bitmaps are just `apple` and the start illustration (`title`). The field and the three face states are canvas too — see `progress.md` §4. | A full sprite-sheet snake; a generated grass tile. | The body bends and interpolates every frame; a face sheet is huge and still not smooth; the generated grass tile came out blocky and seamed, a two-colour checker is cleaner. | 2026-09-09, field added 2026-09-10 |
+| D1 | **Nothing is a bitmap.** The field, apple, snake body and all face states are drawn in `render.ts`; the start-card mascot is inline SVG. `public/icon.svg` and the catalog `cover` stay hand vector. | Generated `.webp` for field / apple / faces / mascot. | Tried over 2026-09-10 and dropped: the field tile came out blocky, the disc/ribbon body looked lumpy, and a keyed head sprite can't rotate or restate crisply. Code is sharp at any size, translatable, and precaches nothing. | 2026-09-09, finalised 2026-09-10 |
 | D2 | `pendingTurns` is not persisted. | Persisting the queue. | A restored run is paused and re-oriented by the player; an empty queue also can't restore a self-reversing state. | 2026-09-09 |
-| D3 | The three faces (cruise / eat / dead) are one `.webp` sprite sheet. | Three files. | One decode, one precache entry, one load path. | 2026-09-09 |
+| D3 | *(void)* The faces were to be a `.webp` sprite sheet — superseded by D1: they are drawn in `render.ts`. | | | 2026-09-09, void 2026-09-10 |
 | D4 | `step()` on a `dead` run returns it unchanged; `justAte` / `dead` are recomputed, never stored. | A separate "is the run over" flag owned by `main.ts`. | The core already knows; a second owner is a second source of truth. | 2026-09-09 |
 | D5 | `best` is top-level in the save, updated in memory when beaten, written on the normal `save()` calls. | A dedicated `saveBest()` path. | It survives the run ending and needs no extra call; Q7 wants it live anyway. | 2026-09-09 |
 | D6 | `queueTurn` validates a turn against the **last pending turn** (or `dir` when the queue is empty), not only against `dir`. | Brief §3's literal "check against the direction actually moved last". | The literal rule lets two fast queued turns reverse the snake into itself — the very thing brief §3 says the rule exists to prevent. **Owner to confirm at approval.** | 2026-09-09 |
@@ -229,10 +227,10 @@ Each task is a few hours, has a verifiable "done when", and its ID is what
 
 | ID | Task | Done when | Depends on |
 | --- | --- | --- | --- |
-| T1 | Scaffold from `games/2048/` — config, `index.html`, manifest, empty `src/`, `webp` in globPatterns | `pnpm --filter @game/snake dev` serves a blank board at `/g/snake/`; `typecheck` clean | — |
+| T1 | Scaffold from `games/2048/` — config, `index.html`, manifest, empty `src/` | `pnpm --filter @game/snake dev` serves a blank board at `/g/snake/`; `typecheck` clean | — |
 | T2 | `src/snake.ts` pure core + `test/snake.test.ts` | every case in `testplan.md` §1 is green | T1 |
-| T3 | Write `docs/art-assets.json`; hand it to an image agent → `public/art/*.webp` (apple, start illustration); `src/assets.ts` loader | assets decode; no text in any image; files committed under `games/snake/public/art/` | T1 |
-| T4 | `src/render.ts` — field, body path, apple, inter-tick interpolation | a run renders and moves smoothly at 60fps; no persistence yet | T2, T3 |
+| T3 | *(dropped)* No bitmap art — the field, apple, snake and faces are drawn in `render.ts`, the mascot is inline SVG. Nothing to generate, no `assets.ts`. | n/a | — |
+| T4 | `src/render.ts` — field, body path, apple, inter-tick interpolation | a run renders and moves smoothly at 60fps; no persistence yet | T2 |
 | T5 | Reactive face + crash effect in `render.ts` | eat-face on the `justAte` tick; dead tint + face + shake + flash on death; `prefers-reduced-motion` keeps the tint, drops shake/flash | T4 |
 | T6 | `src/input.ts` — swipe (24px, larger axis) + arrows/WASD → `queueTurn` | turns queue to depth 2, 180° rejected, `touch-action: none` on the surface | T2 |
 | T7 | `src/ui.ts` — HUD, start card, idle + paused overlays, 3-2-1 countdown | navigable; Play → board idle; resume always counts in, never straight to motion | T4 |
@@ -241,6 +239,6 @@ Each task is a few hours, has a verifiable "done when", and its ID is what
 | T10 | Ads — `showRewarded('revive')` before `gameOver`, `showInterstitial('run_end')` on "New game"; wire `reviveRun` | declining the ad changes nothing; interstitial never on the game-over screen itself | T9 |
 | T11 | Pause/resume — all three sources into one pair, idempotent `resume` | clock does not advance under an ad overlay or a hidden tab; a suppressed interstitial starts no countdown over a dead board | T8 |
 | T12 | i18n `en` + `vi`; settings screen (Language + Back to the hub) | both locales render at 320px with no missing key; switching re-renders with no reload; settings reachable while the game-over card is up; works standalone | T7 |
-| T13 | PWA — `manifest.webmanifest`, `public/icon.svg` (hand vector), `src/sw.ts` scoped to `/g/snake/` | `pnpm build` then a static preview: installs on Android, plays offline including the art | T3, T7 |
+| T13 | PWA — `manifest.webmanifest`, `public/icon.svg` (hand vector), `src/sw.ts` scoped to `/g/snake/` | `pnpm build` then a static preview: installs on Android, plays offline | T7 |
 | T14 | Register — one `catalog.json` entry + delete the `snake` line in `apps/shell/src/demo/demoData.ts`; own commit, pull first | one hub card, no "COMING SOON" duplicate | T13 |
 | T15 | Manual pass on a real phone | `testplan.md` §2 all green, date + device recorded | all |

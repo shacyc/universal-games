@@ -7,12 +7,11 @@ spec's rules. §4 (rendering), §8 (screens) and §9 (out of scope) were revised
 Snake look, asked for a reactive snake face and a crash effect, and directed
 that bitmap art be generated from an art spec (§4); the game was
 retitled from "Neon Snake" to "Snake" in the same pass. Frozen 2026-09-09.
-(2026-09-10, owner-directed, still Frozen: art pipeline is a spec file not a
-named skill; the grass field moved to canvas drawing (generated tile looked
-wrong), leaving `apple` + `title` generated; a forked tongue was added and the
-tail taper tried then dropped (§4); and a ~50ms hold was added before a wall
-death so a last-instant turn lands (§2) — a feel softener, the fatal-wall rule
-itself is unchanged.)
+(2026-09-10, owner-directed, still Frozen: §4 — all generated `.webp` art was
+tried then dropped, the game now draws everything in code (mascot is inline
+SVG); a forked tongue was added, the tail taper tried then dropped, the body is
+one constant width. §2 — a ~50ms hold before a wall death so a last-instant turn
+lands, a feel softener; the fatal-wall rule itself is unchanged.)
 
 | | |
 | --- | --- |
@@ -76,17 +75,12 @@ Plain `<canvas>`, no engine. Classic **Google-Snake visual language**, matching
 the owner's mockups. Same DPR / square-fit sizing approach as
 `games/2048/src/canvas.ts` — read it, do not import it.
 
-**Art assets are generated from `docs/art-assets.json`** (rule 13) by an image
-agent, committed under `games/snake/public/art/` as `.webp` sized to draw
-resolution, and precached by the service worker so the game plays offline. The
-generated set: the **apple** and the start-card **snake illustration**.
-The grass **field**, the snake **body** and the three **face** states are
-canvas-drawn — the field is a plain two-green checkerboard (a generated tile
-came out blocky and seamed), the body bends and interpolates every frame.
-`public/icon.svg` and
-the catalog `cover` stay hand-authored flat vector in the same palette. **No
-generated image contains any text** — every word is a translated key (§7).
-The exact file list and sizes are settled in `plan.md`.
+**Nothing is a bitmap.** The field, apple, snake body and all three face states
+are drawn in `render.ts`; the start-card mascot is inline SVG; `public/icon.svg`
+and the catalog `cover` stay hand-authored flat vector in the same palette.
+Generated `.webp` art was tried over 2026-09-10 (field / apple / mascot) and
+dropped — the results looked wrong and code is sharper, smaller and translatable
+(`progress.md` §4). No image in the game carries text (§7).
 
 - 60fps on a mid-range Android device. Board sized from the smaller viewport
   dimension, 320px wide up to desktop.

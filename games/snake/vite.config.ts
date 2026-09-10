@@ -23,9 +23,7 @@ export default defineConfig({
       scope: BASE,
       base: BASE,
       injectManifest: {
-        // `webp` is here so the generated art under public/art/ is precached
-        // and the game plays offline (brief §4, plan §7 R3).
-        globPatterns: ['**/*.{js,css,html,svg,webmanifest,webp}'],
+        globPatterns: ['**/*.{js,css,html,svg,webmanifest}'],
       },
     }),
   ],

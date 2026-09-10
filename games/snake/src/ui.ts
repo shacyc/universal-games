@@ -67,7 +67,6 @@ export function createUi(
   handlers: UiHandlers,
   strings: Strings,
   locale: string,
-  mascot: CanvasImageSource | null = null,
 ): Ui {
   let s = strings;
   let current = locale;
@@ -120,13 +119,7 @@ export function createUi(
 
   // ---- start card ----------------------------------------------------
   const startMascot = el('div', 'card__mascot');
-  startMascot.append(
-    // The generated `title.webp` (assets.ts has already keyed its magenta
-    // background to transparent) when it loaded; a hand-drawn snake otherwise.
-    mascot instanceof HTMLCanvasElement || mascot instanceof HTMLImageElement
-      ? mascot
-      : mascotSvg(),
-  );
+  startMascot.append(mascotSvg());
 
   const startCard = (): void => {
     const stats = el('div', 'card__stats');
@@ -409,7 +402,7 @@ function checkIcon(): SVGElement {
   return svg(20, ['M20 6 9 17l-5-5'], 2.6);
 }
 
-/** The start-card snake, drawn when `public/art/title.webp` is not present. */
+/** The start-card snake — a small hand-drawn vector, no bitmap. */
 function mascotSvg(): SVGElement {
   const node = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   node.setAttribute('viewBox', '0 0 120 90');

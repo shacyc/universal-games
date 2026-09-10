@@ -8,7 +8,6 @@ import './styles.css';
 import { newRun, queueTurn, reviveRun, step, willHitWall, type Dir, type Run } from './snake.js';
 import { toSavedRun, fromSavedRun, type SaveState } from './save.js';
 import { createInput } from './input.js';
-import { EMPTY_ASSETS, loadAssets } from './assets.js';
 import { createRenderer } from './render.js';
 import { createUi, type View } from './ui.js';
 import { createSession } from './session.js';
@@ -32,8 +31,6 @@ async function boot(): Promise<void> {
   let locale = 'en';
   let strings: Strings = stringsFor(locale);
 
-  const assets = await loadAssets().catch(() => EMPTY_ASSETS);
-
   const ui = createUi(
     root,
     {
@@ -49,10 +46,9 @@ async function boot(): Promise<void> {
     },
     strings,
     locale,
-    assets.title,
   );
 
-  const renderer = createRenderer(ui.canvas, ui.surface, assets);
+  const renderer = createRenderer(ui.canvas, ui.surface);
 
   const rng = Math.random;
 

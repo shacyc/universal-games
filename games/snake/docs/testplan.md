@@ -76,7 +76,7 @@ date and device above when that pass happens.
 | M14 | Reduced motion | OS "reduce motion" on | interpolation snaps, apple stops pulsing, crash shake + flash gone — the dead-tint and dead face **remain**; the game still plays | todo (device) — `render.ts` branches on `frame.reducedMotion` for all four; verify on device |
 | M15 | Mute | toggle mute in the shell | the game reflects it; the game renders no interactive mute control of its own | pass (structural) — the shell ships **no** mute toggle in v0; snake reads `watchMute` → `data-muted`, has no audio and no mute control. Same as 2048. |
 | M16 | Reactive face | eat an apple; then die | chomp/open-mouth face on the eating tick, snapping back ~150ms later; dizzy dead face on death | pass (dev) — chomp (pink mouth) vs cruise vs dizzy distinct by canvas pixel sampling |
-| M17 | Generated art offline | installed, airplane mode | field, apple, faces and the start-card illustration all render (precached); no blank rectangles | todo (device) — art files present and in the precache (S3); only the offline SW check remains, and the Browser pane blocks all Service Workers |
+| M17 | Renders offline | installed, airplane mode | field, apple, snake, faces, mascot all render (all drawn in code — no bitmaps to miss); no blank rectangles | todo (device) — nothing to precache but the JS/CSS/SVG bundle; only the offline SW check remains, and the Browser pane blocks all Service Workers |
 | M18 | Settings — language | open settings, switch `en` ⇄ `vi` | the whole game re-renders with no reload; the settings screen itself re-renders; each language is named in itself with `lang` set | pass (dev) — pick `vi` → HUD + start card + sheet re-render live, `lang` attrs present |
 | M19 | Settings — exit | open settings, tap "Back to the hub" (embedded and standalone) | embedded: shell takes over; standalone: browser navigates; a save happened before the call | pass (dev) — embedded → shell nav `/play/snake`→`/`, iframe removed; standalone → browser navigates to `/`; `session.save()` runs first |
 | M20 | Settings reachable over game-over | die, open settings from the game-over card | settings opens; closing it leaves the game-over card exactly as it was | pass (dev) — sheet opens over the card; closing the scrim leaves the card untouched |
@@ -90,14 +90,14 @@ date and device above when that pass happens.
 | S0 | Gates and invariants | `pnpm game:check snake` | todo |
 | S1 | Types | `pnpm --filter @game/snake typecheck` (both tsconfigs) | pass |
 | S2 | Unit tests | `pnpm --filter @game/snake test` | pass |
-| S3 | Build output | `pnpm build`, then `dist/g/snake/` exists with the art | pass — `pnpm build` clean; `dist/g/snake/art/` has `apple.webp` + `title.webp`; both in the SW precache. (The grass field is canvas-drawn, not a file.) |
+| S3 | Build output | `pnpm build`, then `dist/g/snake/` exists | pass — `pnpm build` clean; `dist/g/snake/` has index/assets/icon/manifest/sw.js. No `art/` — the game draws everything in code. |
 | S4 | No forbidden platform access | `.githooks/pre-commit`; `pnpm game:status` reports it too | auto |
 | S5 | Only `session.ts` imports the SDK client | `.githooks/pre-commit` | auto |
 | S6 | SW scope | `src/sw.ts` returns early outside `/g/snake/`; registration is scoped | pass — built sw.js only `respondWith`s when `pathname.startsWith("/g/snake/")`; `register('/g/snake/sw.js',{scope:'/g/snake/'})` |
 | S7 | Absolute paths | no relative `manifest.webmanifest` / icon / art links in `index.html` | pass — built index.html links are all `/g/snake/...` |
 | S8 | Blast radius | each commit touches only `games/snake/`, `catalog.json`, one `demoData.ts` line | pass — all commits `games/snake/**` except the T14 commit (`catalog.json` + one `demoData.ts` deletion) |
 | S9 | Dev port | `5175` is not used by another `catalog.json` entry | pass — 2048=5174, snake=5175, unique |
-| S10 | No text in generated art | eyeball every `public/art/*.webp`; a word there is a string rule 11 can't reach | pass — `apple.webp` + `title.webp` eyeballed, no text/letters/numbers; both backgrounds are flat `#FF00FF` and chroma-key cleanly (a stray sparkle in the supplied `title` was painted out). The grass field is canvas-drawn. |
+| S10 | No text in generated art | eyeball every `public/art/*` | N/A — the game ships no bitmap art; everything is drawn in `render.ts` or is inline SVG. `public/art/` does not exist. |
 | S11 | i18n integrity | `test/i18n.test.ts` — fallback first, no empty string, `vi` not a copy of `en`, numbers via `Intl`, `LOCALE_NAMES` self-named | pass |
 
 ## 4. Bugs found

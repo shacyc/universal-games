@@ -1,14 +1,12 @@
 /**
  * Canvas drawing: the grass field, the apple, the snake as a rounded path with
  * inter-tick interpolation, and (T5) the reactive face and the crash effect.
- * The snake is drawn, not blitted — it bends, interpolates and rotates every
- * frame. Bitmaps are used for the field and the apple when `assets` has them,
- * and a procedural fallback is drawn when it does not (see `assets.ts`).
+ * Everything here is drawn in code — no bitmaps. The snake bends, interpolates
+ * and rotates every frame; the field and apple are a few shapes each.
  *
  * No game rules here. State comes in through `Frame`; nothing is mutated.
  */
 import { GRID, type Dir, type Run } from './snake.js';
-import type { Assets } from './assets.js';
 
 const COLORS = {
   grassA: '#8ecc39',
@@ -61,11 +59,7 @@ type Point = { x: number; y: number };
 
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
-export function createRenderer(
-  canvas: HTMLCanvasElement,
-  container: HTMLElement,
-  assets: Assets,
-): Renderer {
+export function createRenderer(canvas: HTMLCanvasElement, container: HTMLElement): Renderer {
   const maybeCtx = canvas.getContext('2d');
   if (!maybeCtx) throw new Error('2d canvas context is unavailable');
   const ctx: CanvasRenderingContext2D = maybeCtx;
@@ -110,12 +104,6 @@ export function createRenderer(
     const pulse = reduced ? 1 : 1 + 0.06 * Math.sin(now / 300);
     const x = centreX(idx);
     const y = centreY(idx);
-
-    if (assets.apple) {
-      const d = r * 2.3 * pulse;
-      ctx.drawImage(assets.apple, x - d / 2, y - d / 2, d, d);
-      return;
-    }
 
     ctx.save();
     ctx.translate(x, y);
