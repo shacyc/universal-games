@@ -184,13 +184,16 @@ Full detail in `docs/game-process.md`. The parts that are not negotiable:
   a §3 rule mechanically, and warns when `progress.md` was not updated. Blocking
   is reserved for code that is objectively wrong — see `docs/game-process.md`.
 - **Art is generated, not sourced.** A game that needs a real image file — a
-  texture, a background, a sprite — generates it with the `agy-image` skill and
-  commits it under `games/<slug>/public/`. Nothing is downloaded, hotlinked, or
-  left as a placeholder: an installed game plays offline and the licence on
-  borrowed art is nobody's to untangle later. `public/icon.svg` and the catalog
-  `cover` stay hand-authored vector, and no generated image contains words —
-  a word inside a PNG is a string rule 6 cannot translate.
-  See `docs/building-a-game.md` §3 rule 13 and §8.
+  texture, a background, a sprite — describes it in `games/<slug>/docs/art-assets.json`,
+  a machine-readable spec (one object per image: the verbatim `prompt`, the
+  output `path`, size, and any chroma-key note), and that spec is handed to an
+  image-generating AI agent — with `docs/templates/game-docs/art-assets.prompt.md`
+  — which writes the files under `games/<slug>/public/`. No particular image
+  tool is assumed. Nothing is downloaded, hotlinked, or left as a placeholder:
+  an installed game plays offline and the licence on borrowed art is nobody's to
+  untangle later. `public/icon.svg` and the catalog `cover` stay hand-authored
+  vector, and no generated image contains words — a word inside a bitmap is a
+  string rule 6 cannot translate. See `docs/building-a-game.md` §3 rule 13 and §8.
 
 **Starting a game session, in any assistant:**
 

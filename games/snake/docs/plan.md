@@ -186,7 +186,7 @@ from `watchLocale`. Nothing here is outside `docs/platform-sdk.md` §4.
 | # | Risk / gap | Impact | Mitigation |
 | --- | --- | --- | --- |
 | R1 | The 180° rule in brief §3 ("check against the direction actually moved last, not the last input") still allows right → queue up → queue down, which reverses the snake into itself on the second consumed turn. | A frozen-brief rule that kills the player. | §8 D6: validate each turn against the last *pending* turn (or `dir` if the queue is empty). Owner to confirm at approval. |
-| R2 | `agy-image` output may carry stray glyphs or an off palette. | Rule 13 violation; a word rule 11 can't translate. | Prompt states "no text, no letters, no numbers"; every asset reviewed before commit; regenerate on any drift. |
+| R2 | The image agent's output may carry stray glyphs or an off palette. | Rule 13 violation; a word rule 11 can't translate. | Every `prompt` in `art-assets.json` ends "no text, no letters, no numbers", and `globalConstraints` repeats it; every asset reviewed before commit; regenerate on any drift. |
 | R3 | `.webp` not precached → blank art offline. | Breaks the offline promise. | `webp` added to `injectManifest.globPatterns`; art referenced by absolute `/g/snake/` path; verified against `pnpm build` + static preview, not dev. |
 | R4 | Sprite face rotated to `dir` at the interpolated head position could shimmer at turns. | Cosmetic jank. | Body is a canvas path (§8 D1); the face is a single small sprite drawn last, snapped to the head cell's interpolated centre and rotated in 90° steps only. |
 | R5 | HUD + board + overlay at 320px portrait. | Clipped controls, unplayable. | Board = `min(viewport)` minus HUD and safe-area; every overlay tested at 320px in both locales (testplan M3, and §1 layout rows). |
@@ -212,7 +212,7 @@ Each task is a few hours, has a verifiable "done when", and its ID is what
 | --- | --- | --- | --- |
 | T1 | Scaffold from `games/2048/` — config, `index.html`, manifest, empty `src/`, `webp` in globPatterns | `pnpm --filter @game/snake dev` serves a blank board at `/g/snake/`; `typecheck` clean | — |
 | T2 | `src/snake.ts` pure core + `test/snake.test.ts` | every case in `testplan.md` §1 is green | T1 |
-| T3 | Generate art with `agy-image` → `public/art/*.webp` (field tile, apple, face sheet, start illustration); `src/assets.ts` loader | assets decode; no text in any image; files committed under `games/snake/public/art/` | T1 |
+| T3 | Write `docs/art-assets.json`; hand it to an image agent → `public/art/*.webp` (field tile, apple, start illustration); `src/assets.ts` loader | assets decode; no text in any image; files committed under `games/snake/public/art/` | T1 |
 | T4 | `src/render.ts` — field, body path, apple, inter-tick interpolation | a run renders and moves smoothly at 60fps; no persistence yet | T2, T3 |
 | T5 | Reactive face + crash effect in `render.ts` | eat-face on the `justAte` tick; dead tint + face + shake + flash on death; `prefers-reduced-motion` keeps the tint, drops shake/flash | T4 |
 | T6 | `src/input.ts` — swipe (24px, larger axis) + arrows/WASD → `queueTurn` | turns queue to depth 2, 180° rejected, `touch-action: none` on the surface | T2 |

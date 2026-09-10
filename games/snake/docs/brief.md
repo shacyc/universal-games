@@ -5,8 +5,10 @@ for what that spec left undefined). §2, §3, §5, §6 and §10 carry the origin
 spec's rules. §4 (rendering), §8 (screens) and §9 (out of scope) were revised on
 2026-09-09 when the owner set the visual direction to the classic green-field
 Snake look, asked for a reactive snake face and a crash effect, and directed
-that bitmap art be generated with the `agy-image` skill (§4); the game was
+that bitmap art be generated from an art spec (§4); the game was
 retitled from "Neon Snake" to "Snake" in the same pass. Frozen 2026-09-09.
+(2026-09-10: §4's art-pipeline wording only — spec file instead of a named
+skill, no rule changed. Still Frozen.)
 
 | | |
 | --- | --- |
@@ -67,9 +69,10 @@ Plain `<canvas>`, no engine. Classic **Google-Snake visual language**, matching
 the owner's mockups. Same DPR / square-fit sizing approach as
 `games/2048/src/canvas.ts` — read it, do not import it.
 
-**Art assets are generated with the `agy-image` skill** (rule 13), committed
-under `games/snake/public/art/` as `.webp` sized to draw resolution, and
-precached by the service worker so the game plays offline. The generated set:
+**Art assets are generated from `docs/art-assets.json`** (rule 13) by an image
+agent, committed under `games/snake/public/art/` as `.webp` sized to draw
+resolution, and precached by the service worker so the game plays offline. The
+generated set:
 the grass **field** tile, the **apple**, the snake's three **face** states
 (cruise / eat / dead) as a small sprite sheet, and the start-card **snake
 illustration**. The moving snake **body** is a canvas-drawn rounded path (it

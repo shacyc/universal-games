@@ -15,7 +15,7 @@ case ID as evidence.
 | --- | --- | --- | --- | --- |
 | T1 | Scaffold from `games/2048/` | done | dev server serves the board at `/g/snake/`; `pnpm --filter @game/snake typecheck` clean; verified at 375px + 320px, no console errors | field drawing in `main.ts` is throwaway, `render.ts` replaces it at T4 |
 | T2 | Pure core `src/snake.ts` + unit tests | done | `test/snake.test.ts` — 39 cases across U1–U24, all pass; `typecheck` clean | save shape + validator went in `src/save.ts`, not `session.ts` (§4) |
-| T3 | Generate art with `agy-image` → `public/art/*.webp` + `assets.ts` | partial | `src/assets.ts` done (chroma-key loader, graceful 404 → procedural fallback); `docs/art-assets.md` has the 3 prompts + commands | **art generation itself blocked on the image-model daily quota** (resets ~20:45 local); scope cut to 3 files (field, apple, title) — head/face is canvas, see §4 |
+| T3 | Write `docs/art-assets.json`; image agent → `public/art/*.webp` + `assets.ts` | partial | `src/assets.ts` done (chroma-key loader, graceful 404 → procedural fallback); `docs/art-assets.json` is the finished spec (3 assets, verbatim prompts, chroma-key + accept checks) | **art files not yet generated** — hand `art-assets.json` + `docs/templates/game-docs/art-assets.prompt.md` to an image agent, drop the 3 `.webp` in, rebuild; scope is 3 files (field, apple, title) — head/face is canvas, see §4 |
 | T4 | `render.ts` — field, body path, apple, interpolation | done | `src/render.ts`; verified in-browser — movement, interpolation, eat (score/len/speed), wall death; 320px + desktop | procedural now; bitmaps slot in when the webp files land |
 | T5 | Reactive face + crash effect | done | `src/render.ts` — chomp face (pink mouth, 150ms), dizzy dead face, dead-tint, shake + white flash; verified via `__snake.paintFace` + pixel sampling | reduced-motion keeps tint, drops shake/flash |
 | T6 | `input.ts` — swipe + keyboard → `queueTurn` | done | `test/input.test.ts` — U25 swipe decode, U26 key decode; `typecheck` clean | `createInput` binds it; decode is two pure fns |
@@ -61,6 +61,29 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 - [ ] Deviations in §4, SDK gaps in §6.
 
 ## 3. Session log
+
+### 2026-09-10 — art pipeline: drop the named skill, use a spec file
+
+- **Did:** No game code. Owner directed that the art rule stop naming the
+  `agy-image` skill and instead be "write a JSON art spec, hand it to an image
+  agent". Platform docs updated: `CLAUDE.md` (the *Art is generated* bullet),
+  `docs/building-a-game.md` §3 rule 13 + §8 *Art* (now describes
+  `docs/art-assets.json`, its fields, and the handoff) + §5 file list (the
+  optional doc). Added two templates: `docs/templates/game-docs/art-assets.json`
+  (the canonical schema) and `docs/templates/game-docs/art-assets.prompt.md`
+  (the generic, game-agnostic agent prompt — drives the whole run from the JSON
+  alone). Snake's own docs brought in line: `art-assets.json` lost its `tool`
+  block and per-asset `command` fields (schema otherwise unchanged);
+  `art-assets.md`, `brief.md` §4 + header note, `plan.md` R2 + T3, and §4/§5
+  here all reworded. No rule changed — same 3 files, same prompts, same
+  chroma-key, same accept checks.
+- **Verified:** `grep -rn "agy" .` is clean outside append-only session-log
+  history. `art-assets.json` still parses. `pnpm --filter @game/snake typecheck`
+  + 57 tests still clean (no code touched).
+- **Next:** unchanged — T3 (generate the 3 `.webp` from `art-assets.json`),
+  T15 device pass, then Gate 4 handover.
+- **Blocked by:** T3 now just needs an assistant with image generation — the
+  spec is ready. T15 still needs a phone.
 
 ### 2026-09-10 — in-browser sweep of testplan §2; two bugs fixed
 
@@ -364,7 +387,7 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 | --- | --- | --- | --- | --- |
 | 1 | plan §1: save shape + `isSaveState` live in `session.ts` | they live in `src/save.ts`; `session.ts` will import them | pure functions with no SDK import, so `test/snake.test.ts` covers the round-trip (U22/U23) without pulling in the client | yes — plan §1 module map adds `save.ts` |
 | 2 | plan §9: T12 is "i18n + settings screen" | the i18n string modules (`en`/`vi`/`index`) were built during the T6 session | `session.ts` needs `SUPPORTED`, and the strings are art-free work that was ready while T3 was quota-blocked | yes — T12 marked `partial`, task note updated |
-| 3 | brief §4 / plan §1: the snake's three **face states** are a generated sprite sheet | the whole snake — body, head, all three faces, crash tint — is **canvas-drawn**; only field / apple / title are bitmaps (3 files, not 4 + a sheet) | the `agy-image` model paints a background, not alpha; a magenta-keyed head sprite over the canvas-blue body fringes and cannot rotate to 4 dirs crisply or switch state in one frame. Canvas gives sharp palette-exact faces. Documented in `docs/art-assets.md`. | yes — `art-assets.md`, brief §4 note pending owner ack |
+| 3 | brief §4 / plan §1: the snake's three **face states** are a generated sprite sheet | the whole snake — body, head, all three faces, crash tint — is **canvas-drawn**; only field / apple / title are bitmaps (3 files, not 4 + a sheet) | an image model paints a background, not alpha; a magenta-keyed head sprite over the canvas-blue body fringes and cannot rotate to 4 dirs crisply or switch state in one frame. Canvas gives sharp palette-exact faces. Documented in `docs/art-assets.md`. | yes — `art-assets.md`, brief §4 note pending owner ack |
 | 4 | none (tooling) | `main.ts` has a `import.meta.env.DEV`-only `window.__snake` hook (`state`, `feedAhead`, `paintFace`) for verifying sub-150ms render states from a still screenshot | screenshot latency exceeds the chomp/flash windows; stripped from any production build | n/a — dev-only |
 
 ## 5. Open questions for the owner
@@ -388,7 +411,7 @@ New this session:
 | Q8 | Visual identity vs. the "Neon Snake" name | retitle to "Snake", classic green-field look | resolved 2026-09-09 |
 | Q9 | Mockup's "Daily challenge" button | dropped, added to brief §9 | resolved 2026-09-09 |
 | Q10 | Mockup's speaker icon vs. rule 3 | no game-drawn mute toggle; dropped / reflect-only | resolved 2026-09-09 |
-| Q11 | Art pipeline | owner: generate bitmap art with the `agy-image` skill (brief §4) | resolved 2026-09-09 |
+| Q11 | Art pipeline | owner: bitmap art is specified in `docs/art-assets.json` and generated by an image agent — no named skill (brief §4). Superseded 2026-09-10; see the session log. | resolved 2026-09-09, revised 2026-09-10 |
 | Q12 | 180° rule (plan §8 D6) — brief §3's literal wording lets a queued pair self-reverse | validate against the last *pending* turn | resolved 2026-09-09 — owner confirmed D6 at plan approval |
 
 ## 6. Platform gaps hit
