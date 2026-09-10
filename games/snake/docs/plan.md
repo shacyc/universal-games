@@ -134,8 +134,16 @@ Real-time. One RAF loop in `main.ts`.
   step(run); acc -= tickMs; if (run.dead) break; }`. Tick progress is `acc /
   tickMs`, passed to `render` for interpolation — never read from
   `performance.now()` directly, or paused time leaks in.
-- **Interpolation:** head and body slide `previous + (next - previous) * t`.
-  On restore and on resume, `acc = 0` so the snake sits on cell boundaries.
+- **Start / resume prime:** when a run begins (first input) or a 3-2-1 countdown
+  clears, `acc = tickMs` so the first `step` lands on the next frame instead of
+  a full tick later — the snake never freezes on "GO". (testplan §4 #5)
+- **Turn nudge:** an accepted turn pulls the next tick forward to within
+  `TURN_LAT_MS` (55 ms), clamped so a tick never fires sooner than
+  `tickMs − TURN_LAT_MS` after the last one (`lastStepAt`). A turn phase-shifts
+  the clock; it is never a free step, so average speed is unchanged. (§4 #5)
+- **Interpolation:** every segment slides `previous_cell → current_cell` by `t`
+  (`render.ts` `bodyPoints`). A segment with no previous cell — the one appended
+  on an eating tick — holds still, so growth has no lurch. (§4 #6)
 - `prefers-reduced-motion`: `render` ignores `t` (snaps per tick), stops the
   apple pulse, and drops the crash shake + flash — but keeps the dead-tint and
   the dead face, which are information (brief §4, §10).

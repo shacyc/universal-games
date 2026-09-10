@@ -16,6 +16,8 @@ import { stringsFor, type Strings } from './i18n/index.js';
 
 const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
 const COUNTDOWN_FROM = 3;
+/** Longest a turn press waits before the snake acts on it (ms). */
+const TURN_LAT_MS = 55;
 
 type Phase = 'start' | 'idle' | 'running' | 'paused' | 'gameover';
 
@@ -57,6 +59,10 @@ async function boot(): Promise<void> {
   let phase: Phase = 'start';
   let acc = 0;
   let last = performance.now();
+  // When the last tick fired. A turn may pull the next tick forward to within
+  // TURN_LAT_MS, but never closer to this than (tickMs - TURN_LAT_MS) — a turn
+  // phase-shifts the clock, it does not raise the average speed.
+  let lastStepAt = 0;
   let best = 0;
   let ateAt: number | null = null;
   let deadAt: number | null = null;
@@ -124,7 +130,8 @@ async function boot(): Promise<void> {
         countdownTimer = null;
         cancelCountdown();
         last = performance.now();
-        acc = 0;
+        lastStepAt = last;
+        acc = tickMs(); // "GO" moves the snake now, not one tick later
         setView('running');
         return;
       }
@@ -240,9 +247,22 @@ async function boot(): Promise<void> {
       startRunNow();
       setView('running');
       last = performance.now();
+      lastStepAt = last;
+      acc = tickMs(); // step on the next frame — no dead ~1-tick pause after the first input
       return;
     }
-    if (phase === 'running') run = queueTurn(run, dir);
+    if (phase !== 'running') return;
+
+    const turned = queueTurn(run, dir);
+    if (turned === run) return; // 180°, a repeat, or the queue is full — nothing changed
+    run = turned;
+
+    // Pull the next tick forward so the turn is felt within ~TURN_LAT_MS,
+    // clamped so it never lands sooner than (tickMs - TURN_LAT_MS) after the
+    // last tick: responsiveness without a free step.
+    const nowMs = performance.now();
+    const earliest = lastStepAt + tickMs() - TURN_LAT_MS;
+    acc = Math.max(acc, nowMs >= earliest ? tickMs() : tickMs() - (earliest - nowMs));
   };
   const input = createInput(ui.surface, onTurn);
 
@@ -259,6 +279,7 @@ async function boot(): Promise<void> {
         prev = run;
         run = step(run, rng);
         acc -= tickMs();
+        lastStepAt = now;
 
         if (run.justAte) {
           ateAt = now;

@@ -62,6 +62,34 @@ From `docs/building-a-game.md` §10. Nothing is ticked; nothing has been built.
 
 ## 3. Session log
 
+### 2026-09-10 — game-feel fixes: input latency + eating jerk (testplan §4 #5, #6)
+
+- **Did:** Two render/loop bugs the owner reported.
+  - **Input latency.** The tick accumulator started at 0, so after the first
+    input the snake sat still for a full `tickMs` (~167 ms at speed 6), and every
+    mid-run turn waited for the next tick boundary. `main.ts` now primes
+    `acc = tickMs()` when a run or a 3-2-1 countdown starts (first step on the
+    next frame), and a turn nudges the next tick forward to within `TURN_LAT_MS`
+    (55 ms) — clamped so a tick never fires sooner than `tickMs − TURN_LAT_MS`
+    after the previous one, so it is a phase shift, never a free step. Added
+    `lastStepAt`, set on every `step`.
+  - **Eating jerk.** `render.ts` `bodyPoints()` only interpolated the head and
+    the tail; on a growth tick the tail branch was skipped and the middle
+    segments snapped a cell forward while the prior frame had the tail slid a
+    cell inward → the tail visibly kicked back. It now slides every segment from
+    its previous cell to its current one; the segment appended on an eating tick
+    has no `prev.body[i]` and holds still, so the body grows into the vacated
+    space smoothly. Same change fixes a latent off-by-one where the tail was
+    always rendered a cell too far retracted (invisible on straight runs).
+- **Verified:** `typecheck` + 57 tests green. In the Browser pane: first turn
+  from idle now registers in ~38 ms (was up to ~167). Eat / score / death /
+  dead-tint all still correct. Smoothness and true turn latency can't be
+  measured here — the pane throttles `requestAnimationFrame` to ~2 fps
+  regardless of visibility — so the *feel* is a T15 device check.
+- **Next:** T15 device pass (M4, M11, M14, M17, M21, + confirm the feel fix);
+  then S0 and the Gate 4 handover.
+- **Blocked by:** a physical phone (T15).
+
 ### 2026-09-10 — grass field back to canvas (owner: the generated tile looked wrong)
 
 - **Did:** Owner said `field.webp` was not right — reverted the grass field to

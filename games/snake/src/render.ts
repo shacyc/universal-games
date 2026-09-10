@@ -139,21 +139,16 @@ export function createRenderer(
     const pts: Point[] = run.body.map((idx) => ({ x: centreX(idx), y: centreY(idx) }));
     if (reduced || prev === null || t <= 0 || pts.length === 0) return pts;
 
-    const grew = prev.body.length !== run.body.length;
-
-    const prevHead = prev.body[0];
-    const head = pts[0];
-    if (prevHead !== undefined && head) {
-      pts[0] = { x: lerp(centreX(prevHead), head.x, t), y: lerp(centreY(prevHead), head.y, t) };
-    }
-
-    // The tail retracts toward the next segment — unless the snake grew, when
-    // the tail stays put for a tick.
-    if (!grew && pts.length >= 2) {
-      const tail = pts[pts.length - 1];
-      const ahead = pts[pts.length - 2];
-      if (tail && ahead) {
-        pts[pts.length - 1] = { x: lerp(tail.x, ahead.x, t), y: lerp(tail.y, ahead.y, t) };
+    // Every segment slides from the cell it held last tick to the cell it holds
+    // now — for i >= 1 that is the cell the segment ahead of it just vacated, so
+    // the whole body trails the head. The one segment with no previous cell (the
+    // one appended on an eating tick) has no `prev.body[i]` and stays put: the
+    // snake grows into the space the tail would have cleared, with no lurch.
+    for (let i = 0; i < pts.length; i += 1) {
+      const from = prev.body[i];
+      const to = pts[i];
+      if (from !== undefined && to) {
+        pts[i] = { x: lerp(centreX(from), to.x, t), y: lerp(centreY(from), to.y, t) };
       }
     }
     return pts;
